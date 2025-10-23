@@ -1,19 +1,64 @@
 ﻿import { useEffect, useState } from 'react'
 import defaults from '../data/defaultProfile.json'
-import { loadProfile, saveProfile, isAuthed, setAuth } from '../utils/storage'
+// ⛳️ استبدلنا التخزين المحلي بدوال السحابة
+import { getProfile, upsertProfile } from '../services/cloudStorage'
 import { useI18n } from '../i18n/i18n'
 
+// نفس باسورد صفحة التعديل مؤقتًا
 const PASSWORD = 'ZZxxZZxx55'
 
 export default function Edit() {
   const { t, lang } = useI18n()
-  const [auth, setAuthState] = useState(isAuthed())
-  const [data, setData] = useState(() => loadProfile(defaults))
-  const dir = lang === 'ar' ? 'rtl' : 'ltr'
 
+  // ✅ حالة الدخول (لحد ما نفعّل Auth حقيقية)
+  const [auth, setAuthState] = useState(false)
+
+  // ✅ بيانات الفورم
+  const [data, setData] = useState(defaults)
+
+  // ✅ حالة تحميل/حفظ لواجهة أحسن
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  // اتجاه الواجهة
+  const dir = lang === 'ar' ? 'rtl' : 'ltr'
   useEffect(() => {
     document.documentElement.setAttribute('dir', dir)
   }, [dir])
+
+  // محاولة دخول بباسورد مبسطة (مؤقتًا)
+  function tryAuth(e) {
+    e.preventDefault()
+    const pass = new FormData(e.currentTarget).get('password')
+    if (pass === PASSWORD) {
+      setAuthState(true)
+    } else {
+      alert(t.wrong_password)
+    }
+  }
+
+  // لغة التحرير داخل صفحة Edit (مستقلة عن لغة واجهة الموقع)
+  const [editLang, setEditLang] = useState('en') // 'en' | 'ar'
+
+  // ⬇️ جلب البيانات من Supabase أول ما الصفحة تتفتح بعد ما المستخدم يتوثّق
+  useEffect(() => {
+    if (!auth) return
+    (async () => {
+      try {
+        setLoading(true)
+        const remote = await getProfile()
+        // لو مفيش داتا على السحابة، نبدأ بالـ defaults
+        setData(remote || defaults)
+      } catch (e) {
+        console.error('load profile failed', e)
+        // لو حصل خطأ برضه خلي عندك defaults عشان تقدر تعدّل وتعمل حفظ
+        setData(defaults)
+      } finally {
+        setLoading(false)
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth])
 
   // مهاجرة بيانات قديمة → نملأ *_en/*_ar من القيمة القديمة مرة واحدة
   useEffect(() => {
@@ -29,16 +74,6 @@ export default function Edit() {
       return changed ? next : prev
     })
   }, [])
-
-  function tryAuth(e) {
-    e.preventDefault()
-    const pass = new FormData(e.currentTarget).get('password')
-    if (pass === PASSWORD) { setAuth(true); setAuthState(true) }
-    else alert(t.wrong_password)
-  }
-
-  // لغة التحرير داخل صفحة Edit (مستقلة عن لغة واجهة الموقع)
-  const [editLang, setEditLang] = useState('en') // 'en' | 'ar'
 
   // bind helper لحقول ثنائية اللغة
   const bind = (key) => ({
@@ -97,12 +132,22 @@ export default function Edit() {
   }
   function removePdf() { setData((prev) => ({ ...prev, cv: '' })) }
 
-  function onSave(e) {
+  // ✅ حفظ على Supabase بدل LocalStorage
+  async function onSave(e) {
     e.preventDefault()
-    const ok = saveProfile(data)
-    alert(ok ? t.saved : 'فشل الحفظ — غالبًا الحجم كبير.')
+    try {
+      setSaving(true)
+      await upsertProfile(data) // ← هنا السحر كله
+      alert(t.saved)
+    } catch (err) {
+      console.error(err)
+      alert('فشل الحفظ — حاول تاني')
+    } finally {
+      setSaving(false)
+    }
   }
 
+  // شاشة كلمة السر المؤقتة
   if (!auth) {
     return (
       <section className="card max-w-md mx-auto p-6">
@@ -112,6 +157,15 @@ export default function Edit() {
           <input name="password" type="password" placeholder={t.password} className="input" />
           <button className="btn btn-primary w-full">{t.continue}</button>
         </form>
+      </section>
+    )
+  }
+
+  if (loading) {
+    return (
+      <section className="card p-6">
+        <h2 className="text-xl font-bold mb-2">Edit Profile</h2>
+        <p>Loading...</p>
       </section>
     )
   }
@@ -147,7 +201,7 @@ export default function Edit() {
         <input className="input" {...bind('title')} placeholder={editLang === 'ar' ? 'المسمى الوظيفي' : 'Title'} />
         <textarea className="input md:col-span-2" {...bind('about')} placeholder={editLang === 'ar' ? 'نبذة' : 'About'} />
 
-        {/* أرقام + تسميات (الـlabels ثنائية اللغة) */}
+        {/* أرقام + تسميات */}
         <input className="input" name="phone"  value={data.phone || ''}  onChange={onChange} placeholder="Phone (+20...)" />
         <input className="input" {...bind('phoneLabel')}
                placeholder={editLang === 'ar' ? 'اسم رقم الهاتف (مثلاً: الشخصي)' : 'Phone label (e.g. Personal)'} />
@@ -200,7 +254,9 @@ export default function Edit() {
         </div>
 
         <div className="md:col-span-2 flex gap-3">
-          <button className="btn btn-primary" type="submit">{t.save}</button>
+          <button className="btn btn-primary" type="submit" disabled={saving}>
+            {saving ? 'Saving…' : t.save}
+          </button>
         </div>
       </form>
     </section>

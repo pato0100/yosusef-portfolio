@@ -20,6 +20,8 @@ useEffect(() => {
 document.title = `Youssef | ${t.profile}`
 }, [loc, t])
 
+console.log(import.meta.env.VITE_SUPABASE_URL);
+
 
 return (
 <div className="min-h-screen">
