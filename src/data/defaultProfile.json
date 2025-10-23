@@ -1,0 +1,22 @@
+﻿{
+  "name": "Youssef Mahmoud",
+  "title": "Data Engineer | Digital Marketer",
+  "about": "I’m a passionate data engineer who loves solving problems, analyzing ideas, and building efficient systems.",
+  "email": "almasrygrop0100@gmail.com",
+ "phone": "+201090860829",
+  "phoneLabel": "Vodafone",
+  "phone2": "",
+  "phone2Label": "Etisalat" ,
+  "whatsapp": "+201090860829",
+  "image": "/assets/profile.jpg",
+  "cv": "/assets/cv.pdf",
+  "socials": {
+    "linkedin": "https://linkedin.com/in/your-link",
+    "github": "https://github.com/your-link",
+    "x": "https://x.com/your-link",
+    "facebook": "",
+    "instagram": "",
+    "youtube": "",
+    "tiktok": ""
+  }
+}

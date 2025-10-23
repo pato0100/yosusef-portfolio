@@ -1,0 +1,628 @@
+/* =========================================
+   Tailwind
+========================================= */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================
+   Base helpers
+========================================= */
+:root { --radius: 16px; }
+
+body {
+  @apply bg-gradient-to-br from-sky-50 via-white to-cyan-50 text-gray-800 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 dark:text-gray-100;
+  font-feature-settings: "rlig" 1, "calt" 1;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 20% 0%, var(--bg-from), transparent 60%),
+    radial-gradient(1200px 700px at 90% 10%, var(--bg-to), transparent 55%),
+    linear-gradient(180deg, var(--bg-from), var(--bg-to));
+}
+
+.container-max { @apply max-w-5xl mx-auto px-4; }
+
+.card {
+  @apply rounded-2xl shadow-sm backdrop-blur;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+}
+
+.btn { @apply inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition shadow-sm hover:opacity-90 active:scale-[0.98]; }
+.btn-primary { background: var(--brand); color: var(--brand-contrast); }
+.btn-outline { border: 1px solid var(--card-border); background: transparent; color: var(--text); }
+.btn-ghost   { background: rgba(255,255,255,0.7); color: var(--text); }
+.dark .btn-ghost, html[data-theme="dark"] .btn-ghost { background: rgba(255,255,255,0.08); }
+
+.input {
+  @apply w-full rounded-lg px-4 py-2;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+}
+
+/* RTL helper */
+[dir='rtl'] .rtl\:text-right { text-align: right; }
+
+/* Glass surfaces */
+.card, .navbar, .btn {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background-blend-mode: overlay;
+}
+
+/* =========================================
+   THEME TOKENS
+   (light/dark + باقة كبيرة مودرن)
+========================================= */
+
+/* Default Light */
+:root {
+  --bg-from: #f6fbff;
+  --bg-to:   #eef7ff;
+  --card-bg: rgba(255,255,255,0.85);
+  --card-border: rgba(255,255,255,0.6);
+  --text: #0f172a;
+  --muted: #6b7280;
+  --brand: #1eaafc;
+  --brand-contrast: #ffffff;
+}
+
+/* Dark (base) */
+html[data-theme="dark"], .dark {
+  --bg-from: #0b1220;
+  --bg-to:   #0a0f1a;
+  --card-bg: rgba(255,255,255,0.05);
+  --card-border: rgba(255,255,255,0.12);
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --brand: #60a5fa;
+  --brand-contrast: #0b1220;
+  color-scheme: dark;
+}
+
+/* Ocean */
+html[data-theme="ocean"] {
+  --bg-from: #e6f8ff; --bg-to:#eafdf6; --card-bg: rgba(255,255,255,0.9);
+  --card-border: rgba(14,165,233,0.18); --text:#0f172a; --muted:#64748b;
+  --brand:#0891b2; --brand-contrast:#fff;
+}
+
+/* Sunset */
+html[data-theme="sunset"] {
+  --bg-from:#fff1f1; --bg-to:#fff7ea; --card-bg:rgba(255,255,255,0.9);
+  --card-border:rgba(234,88,12,0.18); --text:#0f172a; --muted:#64748b;
+  --brand:#f97316; --brand-contrast:#fff;
+}
+
+/* Mint */
+html[data-theme="mint"] {
+  --bg-from:#ecfff6; --bg-to:#f4fffb; --card-bg:rgba(255,255,255,0.9);
+  --card-border:rgba(16,185,129,0.18); --text:#0f172a; --muted:#64748b;
+  --brand:#10b981; --brand-contrast:#fff;
+}
+
+/* Cyberpunk (dark) */
+html[data-theme="cyberpunk"] {
+  --bg-from:#0a0012; --bg-to:#160026;
+  --card-bg:rgba(32,0,48,0.55); --card-border:rgba(255,87,246,0.2);
+  --text:#ffe8ff; --muted:#fca7ff; --brand:#ff57f6; --brand-contrast:#140014;
+  color-scheme: dark;
+}
+
+/* Matrix (dark) */
+html[data-theme="matrix"] {
+  --bg-from:#000; --bg-to:#051a0a;
+  --card-bg:rgba(10,40,15,0.6); --card-border:rgba(34,197,94,0.25);
+  --text:#dcfce7; --muted:#86efac; --brand:#22c55e; --brand-contrast:#00240b;
+  color-scheme: dark;
+}
+
+/* Aurora (light) */
+html[data-theme="aurora"] {
+  --bg-from:#e6fffa; --bg-to:#f0f9ff; --card-bg:rgba(255,255,255,0.9);
+  --card-border:rgba(20,184,166,0.15); --text:#0f172a; --muted:#64748b;
+  --brand:#0ea5e9; --brand-contrast:#fff;
+}
+
+/* === Agogovich Technology (animated dark) === */
+@keyframes agogovichFlow {
+  0%   { background-position:   0% 50%, center; filter: brightness(1); }
+  50%  { background-position: 100% 50%, center; filter: brightness(1.15); }
+  100% { background-position:   0% 50%, center; filter: brightness(1); }
+}
+html[data-theme="agogovich"] {
+  --bg-from:#000510; --bg-to:#001020;
+  --card-bg:rgba(255,255,255,0.06); --card-border:rgba(0,255,255,0.2);
+  --text:#e0f2ff; --muted:#8bafd9; --brand:#00c9ff; --brand-contrast:#001020;
+  /* التدرج المتحرك أول طبقة ثم الصورة */
+  background-image:
+    linear-gradient(120deg, #001122, #002244, #004466, #002244, #001122),
+    url("/assets/themes/agogovich-bg.png");
+  background-size: 300% 300%, cover;
+  background-position: 0% 50%, center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  animation: agogovichFlow 18s ease-in-out infinite;
+  color-scheme: dark;
+}
+
+/* Tech (light) */
+html[data-theme="tech"] {
+  --bg-from:#f5f6f7; --bg-to:#e8eaed; --card-bg:rgba(255,255,255,0.95);
+  --card-border:rgba(156,163,175,0.2); --text:#0f172a; --muted:#6b7280;
+  --brand:#3b82f6; --brand-contrast:#fff;
+}
+
+/* Galaxy (dark) */
+html[data-theme="galaxy"] {
+  --bg-from:#0a011a; --bg-to:#15002e;
+  --card-bg:rgba(32,0,48,0.55); --card-border:rgba(168,85,247,0.2);
+  --text:#ede9fe; --muted:#c4b5fd; --brand:#8b5cf6; --brand-contrast:#1e1b4b;
+  color-scheme: dark;
+}
+
+/* Nord (light) */
+html[data-theme="nord"] {
+  --bg-from:#e5f0f4; --bg-to:#f2f7fa; --card-bg:rgba(255,255,255,0.9);
+  --card-border:rgba(107,114,128,0.15); --text:#0f172a; --muted:#64748b;
+  --brand:#2563eb; --brand-contrast:#fff;
+}
+
+/* Slate Neon (dark) */
+html[data-theme="slate-neon"] {
+  --bg-from:#0f172a; --bg-to:#020617;
+  --card-bg:rgba(15,23,42,0.85); --card-border:rgba(96,165,250,0.25);
+  --text:#e2e8f0; --muted:#94a3b8; --brand:#38bdf8; --brand-contrast:#082f49;
+  color-scheme: dark;
+}
+
+/* Future Blue (light) */
+html[data-theme="future-blue"] {
+  --bg-from:#f0f7ff; --bg-to:#e7efff; --card-bg:rgba(255,255,255,0.95);
+  --card-border:rgba(59,130,246,0.18); --text:#0f172a; --muted:#475569;
+  --brand:#2563eb; --brand-contrast:#fff;
+}
+
+/* Lava Burst (dark) */
+html[data-theme="lava-burst"] {
+  --bg-from:#1a0a05; --bg-to:#2b0e07;
+  --card-bg:rgba(255,69,0,0.2); --card-border:rgba(255,140,0,0.25);
+  --text:#ffece6; --muted:#ffb89e; --brand:#ff4500; --brand-contrast:#1a0a05;
+  color-scheme: dark;
+}
+
+/* Chrome Green (dark) */
+html[data-theme="chrome-green"] {
+  --bg-from:#0d1f11; --bg-to:#132816;
+  --card-bg:rgba(0,255,128,0.1); --card-border:rgba(0,255,128,0.2);
+  --text:#dfffe8; --muted:#8feebd; --brand:#00ff80; --brand-contrast:#0a1d11;
+  color-scheme: dark;
+}
+
+/* Solar Flare (light) */
+html[data-theme="solar-flare"] {
+  --bg-from:#fff8f0; --bg-to:#fffef8; --card-bg:rgba(255,248,240,0.9);
+  --card-border:rgba(255,140,0,0.2); --text:#231a10; --muted:#8f7e6d;
+  --brand:#ff8c00; --brand-contrast:#fff;
+}
+
+/* Midnight Glow (dark) */
+html[data-theme="midnight-glow"] {
+  --bg-from:#06022a; --bg-to:#0b043b;
+  --card-bg:rgba(22,12,58,0.65); --card-border:rgba(100,200,255,0.2);
+  --text:#e8f4ff; --muted:#aac9ff; --brand:#6194ff; --brand-contrast:#000a1f;
+  color-scheme: dark;
+}
+
+/* Beta Tech (light) */
+html[data-theme="beta-tech"] {
+  --bg-from:#f2f4f6; --bg-to:#eceff2; --card-bg:rgba(255,255,255,0.95);
+  --card-border:rgba(16,185,129,0.25); --text:#0d131b; --muted:#64748b;
+  --brand:#10b981; --brand-contrast:#fff;
+}
+
+/* Neon Synth (dark) */
+html[data-theme="neon-synth"] {
+  --bg-from:#0a0014; --bg-to:#1a0030;
+  --card-bg:rgba(255,255,255,0.08); --card-border:rgba(255,0,255,0.3);
+  --text:#e0e0ff; --muted:#a29bfe; --brand:#c084fc; --brand-contrast:#120024;
+  color-scheme: dark;
+}
+
+/* Hologram (light) */
+html[data-theme="hologram"] {
+  --bg-from:#f8f0ff; --bg-to:#eaf7ff; --card-bg:rgba(255,255,255,0.85);
+  --card-border:rgba(186,85,211,0.25); --text:#1a1a2e; --muted:#6b7280;
+  --brand:#e879f9; --brand-contrast:#fff;
+}
+
+/* Quantum (dark) */
+html[data-theme="quantum"] {
+  --bg-from:#05011a; --bg-to:#070a2f;
+  --card-bg:rgba(255,255,255,0.06); --card-border:rgba(59,130,246,0.25);
+  --text:#dbeafe; --muted:#94a3b8; --brand:#3b82f6; --brand-contrast:#0a0f1a;
+  color-scheme: dark;
+}
+
+/* Plasma Energy (dark) */
+html[data-theme="plasma"] {
+  --bg-from:#0b1d29; --bg-to:#092434;
+  --card-bg:rgba(255,255,255,0.08); --card-border:rgba(56,189,248,0.25);
+  --text:#e0f2fe; --muted:#7dd3fc; --brand:#06b6d4; --brand-contrast:#022c3a;
+  color-scheme: dark;
+}
+
+/* Carbon Fiber (dark) */
+html[data-theme="carbon-fiber"] {
+  --bg-from:#0d0d0d; --bg-to:#1a1a1a;
+  --card-bg:rgba(40,40,40,0.6); --card-border:rgba(255,255,255,0.08);
+  --text:#e5e5e5; --muted:#9ca3af; --brand:#737373; --brand-contrast:#000;
+  color-scheme: dark;
+}
+
+/* Glass White (light) */
+html[data-theme="glass-white"] {
+  --bg-from:#fff; --bg-to:#f7f9fb; --card-bg:rgba(255,255,255,0.75);
+  --card-border:rgba(200,200,200,0.3); --text:#0f172a; --muted:#475569;
+  --brand:#2563eb; --brand-contrast:#fff;
+}
+
+/* Hyper Orange (dark) */
+html[data-theme="hyper-orange"] {
+  --bg-from:#2b0000; --bg-to:#000;
+  --card-bg:rgba(255,255,255,0.08); --card-border:rgba(255,80,0,0.3);
+  --text:#ffe4cc; --muted:#ff9966; --brand:#ff4500; --brand-contrast:#1a0000;
+  color-scheme: dark;
+}
+
+/* Polar Night (dark) */
+html[data-theme="polar-night"] {
+  --bg-from:#0b1120; --bg-to:#1e293b;
+  --card-bg:rgba(255,255,255,0.07); --card-border:rgba(255,255,255,0.12);
+  --text:#dbeafe; --muted:#94a3b8; --brand:#60a5fa; --brand-contrast:#0f172a;
+  color-scheme: dark;
+}
+
+/* Nano Green (dark) */
+html[data-theme="nano-green"] {
+  --bg-from:#02130a; --bg-to:#022b14;
+  --card-bg:rgba(255,255,255,0.08); --card-border:rgba(34,197,94,0.25);
+  --text:#dcfce7; --muted:#4ade80; --brand:#22c55e; --brand-contrast:#012b15;
+  color-scheme: dark;
+}
+
+/* Infrared (dark) */
+html[data-theme="infrared"] {
+  --bg-from:#200000; --bg-to:#400000;
+  --card-bg:rgba(255,255,255,0.08); --card-border:rgba(239,68,68,0.3);
+  --text:#fee2e2; --muted:#f87171; --brand:#ef4444; --brand-contrast:#1a0000;
+  color-scheme: dark.
+}
+
+/* Neptune (dark) */
+html[data-theme="neptune"] {
+  --bg-from:#000820; --bg-to:#00173b;
+  --card-bg:rgba(255,255,255,0.08); --card-border:rgba(59,130,246,0.3);
+  --text:#bfdbfe; --muted:#93c5fd; --brand:#2563eb; --brand-contrast:#000820;
+  color-scheme: dark;
+}
+
+/* Lunar Dust (light) */
+html[data-theme="lunar-dust"] {
+  --bg-from:#e5e7eb; --bg-to:#f3f4f6; --card-bg:rgba(255,255,255,0.85);
+  --card-border:rgba(107,114,128,0.2); --text:#1f2937; --muted:#6b7280;
+  --brand:#4b5563; --brand-contrast:#fff;
+}
+
+/* Stellar Blue (dark) */
+html[data-theme="stellar-blue"] {
+  --bg-from:#0a1128; --bg-to:#001f54;
+  --card-bg:rgba(255,255,255,0.07); --card-border:rgba(56,189,248,0.3);
+  --text:#e0f2fe; --muted:#7dd3fc; --brand:#38bdf8; --brand-contrast:#00111f;
+  color-scheme: dark;
+}
+
+/* Silver Core (light) */
+html[data-theme="silver-core"] {
+  --bg-from:#e5e7eb; --bg-to:#d1d5db; --card-bg:rgba(255,255,255,0.9);
+  --card-border:rgba(107,114,128,0.25); --text:#111827; --muted:#4b5563;
+  --brand:#6b7280; --brand-contrast:#fff;
+}
+
+/* Iceberg (light) */
+html[data-theme="iceberg"] {
+  --bg-from:#e0f2fe; --bg-to:#bae6fd; --card-bg:rgba(255,255,255,0.9);
+  --card-border:rgba(59,130,246,0.25); --text:#0f172a; --muted:#475569;
+  --brand:#3b82f6; --brand-contrast:#fff;
+}
+
+/* Volt (dark) */
+html[data-theme="volt"] {
+  --bg-from:#0a0a00; --bg-to:#1a1a00;
+  --card-bg:rgba(255,255,255,0.08); --card-border:rgba(234,179,8,0.3);
+  --text:#fefce8; --muted:#fde047; --brand:#eab308; --brand-contrast:#1a1a00;
+  color-scheme: dark;
+}
+
+/* Cosmic Rose (dark) */
+html[data-theme="cosmic-rose"] {
+  --bg-from:#1a0010; --bg-to:#330020;
+  --card-bg:rgba(255,255,255,0.07); --card-border:rgba(244,114,182,0.3);
+  --text:#fce7f3; --muted:#f9a8d4; --brand:#ec4899; --brand-contrast:#1a0010;
+  color-scheme: dark.
+}
+
+/* Zero Gravity (dark) */
+html[data-theme="zero-gravity"] {
+  --bg-from:#000; --bg-to:#0f172a;
+  --card-bg:rgba(255,255,255,0.05); --card-border:rgba(255,255,255,0.1);
+  --text:#f1f5f9; --muted:#94a3b8; --brand:#818cf8; --brand-contrast:#000;
+  color-scheme: dark;
+}
+
+/* Black Hole (dark) */
+html[data-theme="black-hole"] {
+  --bg-from:#000; --bg-to:#050505;
+  --card-bg:rgba(255,255,255,0.03); --card-border:rgba(255,255,255,0.05);
+  --text:#e5e7eb; --muted:#9ca3af; --brand:#6b21a8; --brand-contrast:#000;
+  color-scheme: dark;
+}
+
+/* Synthwave (dark) */
+html[data-theme="synthwave"] {
+  --bg-from:#1b003a; --bg-to:#4b006e;
+  --card-bg:rgba(255,255,255,0.08); --card-border:rgba(255,0,150,0.3);
+  --text:#fbcfe8; --muted:#f472b6; --brand:#ec4899; --brand-contrast:#1b003a;
+  color-scheme: dark;
+}
+
+/* =========================================
+   Navbar (Glass + underline fill behind active)
+========================================= */
+.nav-glass{
+  background: color-mix(in oklab, var(--card-bg) 85%, transparent);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(12px) saturate(1.1);
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  border-radius: 9999px;
+}
+
+.btn-nav{
+  @apply px-5 py-2 text-sm font-semibold rounded-full transition-all duration-200;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid transparent;
+  position: relative;
+  z-index: 1;
+}
+.btn-nav:hover{
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  color: var(--brand);
+  transform: translateY(-1px);
+}
+.btn-nav.active{ color: var(--brand-contrast); }
+
+/* الخلفية المتحركة خلف الزر النشط (تملا الزر كله) */
+.nav-underline{
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--brand) 25%, transparent);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--brand), transparent 70%));
+  z-index: 0;
+  transition: all .25s ease;
+}
+
+/* Focus ring حديث بدل الرمادي */
+button:focus-visible, a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--brand);
+  border-radius: 9999px;
+  transition: box-shadow .2s ease;
+}
+
+/* =========================================
+   Social buttons (one clean block)
+========================================= */
+:root {
+  --social-bg: color-mix(in oklab, var(--brand) 14%, transparent);
+  --social-fg: var(--text);
+  --social-border: color-mix(in oklab, var(--brand) 35%, var(--card-border));
+  --social-hover-bg: var(--brand);
+  --social-hover-fg: var(--brand-contrast);
+  --social-ring: color-mix(in oklab, var(--brand) 40%, transparent);
+}
+
+.icon-btn{
+  inline-size: 44px; block-size: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9999px;
+  background: var(--social-bg);
+  color: var(--social-fg);
+  border: 1px solid var(--social-border);
+  transition: transform .16s ease, box-shadow .2s ease, background .2s ease, color .16s ease, border-color .16s ease;
+  backdrop-filter: blur(6px);
+}
+@keyframes glowPulse {
+  0%,100% { box-shadow: 0 0 18px color-mix(in srgb, var(--brand) 55%, transparent); }
+  50%     { box-shadow: 0 0 28px color-mix(in srgb, var(--brand) 70%, transparent); }
+}
+.icon-btn:hover{
+  background: var(--social-hover-bg);
+  color: var(--social-hover-fg);
+  border-color: var(--social-hover-bg);
+  transform: translateY(-2px);
+  animation: glowPulse 1.8s infinite ease-in-out;
+}
+
+/* =========================================
+   3D hover utility
+========================================= */
+.btn-3d {
+  transform: translateZ(0);
+  will-change: transform, box-shadow;
+  transition: transform .18s ease, box-shadow .18s ease, color .18s ease, background .18s ease;
+  perspective: 800px;
+}
+.btn-3d:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    0 8px 18px color-mix(in srgb, var(--brand), transparent 80%),
+    0 2px 8px rgba(0,0,0,.15);
+}
+.btn-3d:active { transform: translateY(0) scale(0.99); }
+
+/* تقليل الحركة */
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="agogovich"] { animation: none; }
+  .btn-3d, .btn-3d:hover, .btn-3d:active { transition: none; transform: none; box-shadow: none; }
+}
+/* --- Buttons base (يعتمد على متغيرات الثيم) --- */
+.btn {
+  width: auto;
+  min-width: 160px;
+  block-size: 44px;
+  padding-inline: 18px;
+  border-radius: 9999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  transition: transform .16s ease, box-shadow .2s ease, background .2s ease, color .16s ease, border-color .16s ease;
+  border: 1px solid transparent;
+}
+
+/* أساسي (Brand) */
+.btn-primary {
+  background: linear-gradient(180deg, color-mix(in srgb,var(--brand) 92%,white 8%), var(--brand));
+  color: var(--brand-contrast);
+  border-color: color-mix(in srgb, var(--brand) 85%, black 10%);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--brand) 30%, transparent);
+}
+.btn-primary:hover { transform: translateY(-2px); }
+.btn-primary:active { transform: translateY(0); }
+
+/* ثانوي بحافة خفيفة (للاختيارات/الأكشن الخفيف) */
+.btn-soft {
+  background: var(--card-bg);
+  color: var(--text);
+  border-color: var(--card-border);
+}
+.btn-soft:hover {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent);
+}
+
+/* تركيز إتاحي */
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 45%, transparent);
+}
+
+/* --- زر Call مميز بطاقة كهربائية --- */
+.btn-call {
+  position: relative;
+  overflow: hidden;
+}
+.btn-call::before{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(120deg, transparent,
+    color-mix(in srgb, var(--brand) 45%, white 20%), transparent);
+  opacity:.35;
+  transform: translateX(-100%);
+  animation: callFlow 3s linear infinite;
+}
+@keyframes callFlow {
+  0%{transform: translateX(-100%);}
+  50%{transform: translateX(100%);}
+  100%{transform: translateX(-100%);}
+}
+
+/* --- منيو الأرقام: خلفية متوافقة مع الثيم وزي-اندكس أعلى --- */
+/* index.css */
+.call-menu{
+  background: color-mix(in oklab, var(--card-bg) 92%, transparent);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(10px) saturate(1.1);
+  border-radius: 12px;
+}
+
+
+
+/* --- Buttons base (يعتمد على متغيرات الثيم) --- */
+.btn {
+  inline-size: auto;
+  min-inline-size: 160px;
+  block-size: 44px;
+  padding-inline: 18px;
+  border-radius: 9999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  transition: transform .16s ease, box-shadow .2s ease, background .2s ease, color .16s ease, border-color .16s ease;
+  border: 1px solid transparent;
+}
+
+/* أساسي (Brand) */
+.btn-primary {
+  background: linear-gradient(180deg, color-mix(in srgb,var(--brand) 92%,white 8%), var(--brand));
+  color: var(--brand-contrast);
+  border-color: color-mix(in srgb, var(--brand) 85%, black 10%);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--brand) 30%, transparent);
+}
+.btn-primary:hover { transform: translateY(-2px); }
+.btn-primary:active { transform: translateY(0); }
+
+/* ثانوي بحافة خفيفة (للاختيارات/الأكشن الخفيف) */
+.btn-soft {
+  background: var(--card-bg);
+  color: var(--text);
+  border-color: var(--card-border);
+}
+.btn-soft:hover {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent);
+}
+
+/* تركيز إتاحي */
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 45%, transparent);
+}
+
+/* --- زر Call مميز بطاقة كهربائية --- */
+.btn-call {
+  position: relative;
+  overflow: hidden;
+}
+.btn-call::before{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(120deg, transparent,
+    color-mix(in srgb, var(--brand) 45%, white 20%), transparent);
+  opacity:.35;
+  transform: translateX(-100%);
+  animation: callFlow 3s linear infinite;
+}
+@keyframes callFlow {
+  0%{transform: translateX(-100%);}
+  50%{transform: translateX(100%);}
+  100%{transform: translateX(-100%);}
+}
+
+/* --- منيو الأرقام: خلفية متوافقة مع الثيم وزي-اندكس أعلى --- */
+.call-menu {
+  background: color-mix(in oklab, var(--card-bg) 92%, transparent);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--text);
+  z-index: 40;
+}
+.call-menu a:hover{
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+}
+.btn.w-full { width: 100% !important; }
