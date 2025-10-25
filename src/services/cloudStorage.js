@@ -33,78 +33,76 @@ async function uploadToStorage(bucket, path, blob, makePublic = true) {
   if (signErr) throw signErr
   return data.signedUrl
 }
+  
+
+
 
 /* ---------- Reads ---------- */
-export async function getProfile() {
-  // استخدم maybeSingle عشان ما يرميش error لو مفيش صف
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', OWNER_ID)
-    .maybeSingle()
-
-  if (error) throw error
-  return data || null
-}
-
-/* ---------- Upsert (مع رفع ملفات) ---------- */
 export async function upsertProfile(profile) {
-  // نحضّر نسخة قابلة للتخزين
-  const p = { ...profile }
+  const p = { ...profile };
 
-  // 1) لو الصورة جاية Base64: ارفعها وخلي image_url
+  // صورة Base64 → URL
   if (typeof p.image === 'string' && p.image.startsWith('data:')) {
-    const blob = dataURLtoBlob(p.image)
+    const blob = dataURLtoBlob(p.image);
     if (blob) {
-      const ext = blob.type.includes('png') ? 'png' : 'jpg'
-      const path = `avatars/${OWNER_ID}.${ext}?v=${Date.now()}`
-      p.image_url = await uploadToStorage(BUCKET_AVATAR, path, blob, true)
+      const ext = blob.type.includes('png') ? 'png' : 'jpg';
+      const path = `avatars/${OWNER_ID}.${ext}?v=${Date.now()}`;
+      p.image_url = await uploadToStorage(BUCKET_AVATAR, path, blob, true);
     }
-    delete p.image
+    delete p.image; // ما نبعتش image للجدول
   }
 
-  // 2) لو PDF جاية Base64: ارفعها وخلي cv_url (أو امسحها لو فاضية)
+  // PDF Base64 → URL (أو مسحه)
   if (typeof p.cv === 'string' && p.cv.startsWith('data:application/pdf')) {
-    const blob = dataURLtoBlob(p.cv)
+    const blob = dataURLtoBlob(p.cv);
     if (blob) {
-      const path = `cv/${OWNER_ID}.pdf?v=${Date.now()}`
-      p.cv_url = await uploadToStorage(BUCKET_DOCS, path, blob, true) // خليه true لو عايزه عام
+      const path = `cv/${OWNER_ID}.pdf?v=${Date.now()}`;
+      p.cv_url = await uploadToStorage(BUCKET_DOCS, path, blob, true);
     }
-    delete p.cv
+    delete p.cv;
   } else if (p.cv === '') {
-    p.cv_url = null
-    delete p.cv
+    p.cv_url = null;
+    delete p.cv;
   }
 
-  // 3) الحقول ثنائية اللغة: حافظ على *_en/*_ar لو جت قيم عامة
+  // املأ *_en/*_ar لو فيه قيم عامة
   const ensure = (k) => {
-    p[`${k}_en`] = p[`${k}_en`] ?? p[k] ?? ''
-    p[`${k}_ar`] = p[`${k}_ar`] ?? p[k] ?? ''
-    delete p[k]
-  }
-  ;['name','title','about','phoneLabel','phone2Label'].forEach(ensure)
+    p[`${k}_en`] = p[`${k}_en`] ?? p[k] ?? '';
+    p[`${k}_ar`] = p[`${k}_ar`] ?? p[k] ?? '';
+    delete p[k];
+  };
+  ['name','title','about','phoneLabel','phone2Label'].forEach(ensure);
 
-  // 4) socials JSONB
-  p.socials = p.socials ?? {}
+  // jsonb صريح
+  p.socials = (p.socials && typeof p.socials === 'object') ? p.socials : {};
 
-  // 5) مفاتيح أساسية
-  p.id = OWNER_ID
-  p.updated_at = new Date().toISOString()
+  // مفاتيح أساسية
+  p.id = OWNER_ID;
+  p.updated_at = new Date().toISOString();
 
-  // 6) upsert على id
+  // ✅ اسمح فقط بأعمدة الجدول
+  const allowed = [
+    'id','name_en','name_ar','title_en','title_ar','about_en','about_ar',
+    'phone','phone2','whatsapp','phoneLabel_en','phoneLabel_ar',
+    'phone2Label_en','phone2Label_ar','image_url','cv_url','socials','updated_at'
+  ];
+  const record = Object.fromEntries(
+    Object.entries(p).filter(([k, v]) => allowed.includes(k) && v !== undefined)
+  );
+
   const { data, error } = await supabase
     .from('profiles')
-    .upsert(p, { onConflict: 'id' })
+    .upsert(record, { onConflict: 'id' })
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
-  return data
-}
-
-/* ---------- اختياري: إنشاء صف أولي لو مش موجود ---------- */
-export async function ensureProfileDefaults(defaults = {}) {
-  const existing = await getProfile()
-  if (existing) return existing
-  return upsertProfile(defaults)
+  if (error) {
+    console.error('❌ upsert error', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint
+    });
+    throw error;
+  }
+  return data;
 }
