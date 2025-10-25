@@ -34,6 +34,24 @@ async function uploadToStorage(bucket, path, blob, makePublic = true) {
   return data.signedUrl
 }
   
+/* ---------- Reads ---------- */
+export async function getProfile() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', OWNER_ID)
+    .maybeSingle(); // ما يرميش Error لو مفيش صف
+
+  if (error) throw error;
+
+  // تطبيع بسيط عشان الـ UI يتعامل مع المفاتيح
+  if (data) {
+    data.image = data.image ?? data.image_url ?? '';
+    data.cv    = data.cv ?? data.cv_url ?? '';
+    if (typeof data.socials !== 'object' || data.socials === null) data.socials = {};
+  }
+  return data || null;
+}
 
 
 
