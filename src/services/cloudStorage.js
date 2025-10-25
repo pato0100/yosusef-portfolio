@@ -2,7 +2,7 @@
 import { supabase } from '../lib/supabase'
 
 // ثوابت
-export const OWNER_ID = '2879fbac-5aec-4ccf-8527-18459547c72a' // عدّل لو مختلف
+export const OWNER_ID = '5873b48f-ebfa-484d-b4a0-480ee97e67f2' // عدّل لو مختلف
 const BUCKET_AVATAR = 'public'
 const BUCKET_DOCS = 'docs'
 
