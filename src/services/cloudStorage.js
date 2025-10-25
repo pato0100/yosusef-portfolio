@@ -20,20 +20,23 @@ function dataURLtoBlob(dataURL) {
 
 async function uploadToStorage(bucket, path, blob, makePublic = true) {
   const { error } = await supabase.storage.from(bucket).upload(path, blob, {
-    upsert: true, contentType: blob.type
+    upsert: true,
+    contentType: blob.type,
+    cacheControl: '3600', // اختياري
   })
   if (error) throw error
 
   if (makePublic) {
     const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-    return data.publicUrl
+    // نكسر الكاش في العرض فقط
+    return `${data.publicUrl}?v=${Date.now()}`
   }
   const { data, error: signErr } = await supabase
     .storage.from(bucket).createSignedUrl(path, 3600)
   if (signErr) throw signErr
   return data.signedUrl
 }
-  
+
 /* ---------- Reads ---------- */
 export async function getProfile() {
   const { data, error } = await supabase
@@ -64,7 +67,7 @@ export async function upsertProfile(profile) {
     const blob = dataURLtoBlob(p.image);
     if (blob) {
       const ext = blob.type.includes('png') ? 'png' : 'jpg';
-      const path = `avatars/${OWNER_ID}.${ext}?v=${Date.now()}`;
+     const path = `avatars/${OWNER_ID}.${ext}`  
       p.image_url = await uploadToStorage(BUCKET_AVATAR, path, blob, true);
     }
     delete p.image; // ما نبعتش image للجدول
@@ -74,7 +77,7 @@ export async function upsertProfile(profile) {
   if (typeof p.cv === 'string' && p.cv.startsWith('data:application/pdf')) {
     const blob = dataURLtoBlob(p.cv);
     if (blob) {
-      const path = `cv/${OWNER_ID}.pdf?v=${Date.now()}`;
+      const path = `cv/${OWNER_ID}.pdf` 
       p.cv_url = await uploadToStorage(BUCKET_DOCS, path, blob, true);
     }
     delete p.cv;
