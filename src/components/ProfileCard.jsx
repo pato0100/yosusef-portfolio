@@ -124,15 +124,15 @@ export default function ProfileCard({ profile }) {
 const T = (p, key, lang) =>
   (lang === 'ar' ? p[`${key}_ar`] : p[`${key}_en`]) ?? p[key] ?? ''
 
-const displayName  = T(profile, 'name',  lang)
-const displayTitle = T(profile, 'title', lang)
-const displayAbout = T(profile, 'about', lang)
+ const displayName  = T(profile, 'name',  lang)
+ const displayTitle = T(profile, 'title', lang)
+ const displayAbout = T(profile, 'about', lang)
+const displayPhoneLabel  = T(profile, 'phoneLabel',  lang) || (lang === 'ar' ? 'الشخصي' : 'Personal')
+const displayPhone2Label = T(profile, 'phone2Label', lang) || (lang === 'ar' ? 'العمل'   : 'Work')
 
 
-  const {
-    name, title, about, image, socials, cv, email,
-    phone, phone2, phoneLabel, phone2Label, whatsapp
-  } = profile
+   const { name, title, about, image, socials, cv, email,
+   phone, phone2, whatsapp } = profile
 
   const tel1 = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : ''
   const tel2 = phone2 ? `tel:${phone2.replace(/[^\d+]/g, '')}` : ''
@@ -183,8 +183,8 @@ const displayAbout = T(profile, 'about', lang)
       email,
       phone,
       phone2,
-      phoneLabel,
-      phone2Label,
+      phoneLabel:  displayPhoneLabel,
+      phone2Label: displayPhone2Label,
       whatsapp,
       about,
       socials,
@@ -337,7 +337,7 @@ function downloadQR() {
                   className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-[var(--bg-to)]"
                   onClick={() => setCallOpen(false)}
                 >
-                  <span>{phoneLabel || (lang === 'ar' ? 'الشخصي' : 'Personal')}</span>
+                  <span>{displayPhoneLabel}</span>
                   <span className="opacity-70 ltr:ml-2 rtl:mr-2">{phone}</span>
                 </a>
               )}
@@ -348,7 +348,7 @@ function downloadQR() {
                   className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-[var(--bg-to)]"
                   onClick={() => setCallOpen(false)}
                 >
-                  <span>{phone2Label || (lang === 'ar' ? 'العمل' : 'Work')}</span>
+                  <span>{displayPhone2Label}</span>
                   <span className="opacity-70 ltr:ml-2 rtl:mr-2">{phone2}</span>
                 </a>
               )}
