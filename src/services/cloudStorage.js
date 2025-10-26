@@ -111,6 +111,7 @@ export async function upsertProfile(profile) {
   const record = {
     id: p.id,
 
+    email: p.email ?? null,
     name_en: p.name_en,       name_ar: p.name_ar,
     title_en: p.title_en,     title_ar: p.title_ar,
     about_en: p.about_en,     about_ar: p.about_ar,
