@@ -9,79 +9,83 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from '../i18n/i18n'
 import SocialBar from './SocialBar'
-import QRCode from 'qrcode';
-
-
+import QRCode from 'qrcode'
 
 // ===============================
 // vCard utils (kept in this file to avoid cross-file issues)
 // ===============================
 
-// ===== Helpers (put right under imports) =====
+// ===== Helpers =====
 const chooseTypeFromLabel = (label = "") => {
-  const l = (label || "").toLowerCase();
-  if (/(work|عمل)/.test(l)) return "WORK";
-  if (/(home|شخصي|بيت|منزل|personal)/.test(l)) return "HOME";
-  return "CELL";
-};
+  const l = (label || "").toLowerCase()
+  if (/(work|عمل)/.test(l)) return "WORK"
+  if (/(home|شخصي|بيت|منزل|personal)/.test(l)) return "HOME"
+  return "CELL"
+}
 
-const onlyDigitsPlus = (s = "") => s.replace(/[^+\d]/g, "");
+const onlyDigitsPlus = (s = "") => s.replace(/[^+\d]/g, "")
 
 const extractBase64 = (dataUrl = "") => {
-  if (!dataUrl) return "";
-  const comma = dataUrl.indexOf(",");
-  return comma > -1 ? dataUrl.slice(comma + 1) : dataUrl;
-};
+  if (!dataUrl) return ""
+  const comma = dataUrl.indexOf(",")
+  return comma > -1 ? dataUrl.slice(comma + 1) : dataUrl
+}
 
-const isDataUrl = (s = "") => /^data:image\/[a-z0-9+.-]+;base64,/i.test(s);
+const isDataUrl = (s = "") => /^data:image\/[a-z0-9+.-]+;base64,/i.test(s)
 
 const escapeText = (s = "") =>
-  (s || "").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  (s || "").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;")
 
-
-
-
+// ===== vCard generator (v3.0) =====
 export function generateVCard(p) {
-  const lines = [];
-  lines.push("BEGIN:VCARD");
-  lines.push("VERSION:3.0");
+  const lines = []
+  lines.push("BEGIN:VCARD")
+  lines.push("VERSION:3.0")
 
-  // Name
-  const safeName = (p.name || "").trim();
-  let given = "", family = "";
+  // ===== Name (N; FN) =====
+  const safeName = (p.name || "Youssef Mahmoud").trim()
+  let given = "", family = ""
   if (safeName.includes(" ")) {
-    const parts = safeName.split(/\s+/);
-    given = parts[0];
-    family = parts.slice(1).join(" ");
+    const parts = safeName.split(/\s+/)
+    given = parts[0]
+    family = parts.slice(1).join(" ")
   } else {
-    given = safeName;
+    given = safeName
   }
-  lines.push(`N:${escapeText(family)};${escapeText(given)};;;`);
-  lines.push(`FN:${escapeText(safeName)}`);
+  lines.push(`N:${escapeText(family)};${escapeText(given)};;;`)
+  lines.push(`FN:${escapeText(safeName)}`)
 
-  // Title/Email
-  if (p.title) lines.push(`TITLE:${escapeText(p.title)}`);
-  if (p.email) lines.push(`EMAIL;TYPE=INTERNET,PREF:${p.email}`);
+  // ===== Title/Email =====
+  if (p.title) lines.push(`TITLE:${escapeText(p.title)}`)
+  if (p.email) lines.push(`EMAIL;TYPE=INTERNET,PREF:${p.email}`)
 
-  // Phones (standards, no itemN.*)
-  const tel1Type = chooseTypeFromLabel(p.phoneLabel);
+  // ===== Phones (no Apple itemN.*; dedupe types) =====
+  const tel1Type = chooseTypeFromLabel(p.phoneLabel) // CELL | WORK | HOME
   if (p.phone) {
-    const n = onlyDigitsPlus(p.phone);
-    if (n) lines.push(`TEL;TYPE=${tel1Type},CELL,VOICE,PREF:${n}`);
+    const n = onlyDigitsPlus(p.phone)
+    if (n) {
+      const types = new Set([tel1Type, "CELL", "VOICE"])
+      const typeParams = [...types].map(t => `TYPE=${t}`).join(";")
+      lines.push(`TEL;${typeParams};TYPE=PREF:${n}`)
+    }
   }
-  const tel2Type = chooseTypeFromLabel(p.phone2Label);
+  const tel2Type = chooseTypeFromLabel(p.phone2Label)
   if (p.phone2) {
-    const n2 = onlyDigitsPlus(p.phone2);
-    if (n2) lines.push(`TEL;TYPE=${tel2Type},CELL,VOICE:${n2}`);
+    const n2 = onlyDigitsPlus(p.phone2)
+    if (n2) {
+      const types2 = new Set([tel2Type, "CELL", "VOICE"])
+      const typeParams2 = [...types2].map(t => `TYPE=${t}`).join(";")
+      lines.push(`TEL;${typeParams2}:${n2}`)
+    }
   }
 
-  // WhatsApp (no + after wa.me/)
+  // ===== WhatsApp (no + after wa.me/) =====
   if (p.whatsapp) {
-    const wa = (p.whatsapp || "").replace(/[^\d]/g, "");
-    if (wa) lines.push(`URL;TYPE=WhatsApp:https://wa.me/${wa}`);
+    const wa = (p.whatsapp || "").replace(/[^\d]/g, "")
+    if (wa) lines.push(`URL;TYPE=WhatsApp:https://wa.me/${wa}`)
   }
 
-  // Socials
+  // ===== Socials (TYPE=Label) =====
   const socialOrder = [
     ["linkedin", "LinkedIn"],
     ["github", "GitHub"],
@@ -90,70 +94,67 @@ export function generateVCard(p) {
     ["tiktok", "TikTok"],
     ["youtube", "YouTube"],
     ["facebook", "Facebook"],
-  ];
+  ]
   if (p.socials) {
     for (const [key, label] of socialOrder) {
-      const url = p.socials[key];
-      if (!url) continue;
-      lines.push(`URL;TYPE=${label}:${url}`);
+      const url = (p.socials[key] || "").replace(/[#\s]+$/g, "")
+      if (!url) continue
+      lines.push(`URL;TYPE=${label}:${url}`)
     }
   }
 
-  // Note/About
-  if (p.about) lines.push(`NOTE:${escapeText(p.about)}`);
+  // ===== Note/About =====
+  if (p.about) lines.push(`NOTE:${escapeText(p.about)}`)
 
-  // Photo (accept DataURL or URL)
-  const photoInput = p.photoBase64 || p.photo || "";
+  // ===== Photo (DataURL => Base64; else URI) =====
+  const photoInput = p.photoBase64 || p.photo || ""
   if (photoInput) {
     if (isDataUrl(photoInput)) {
-      const metaMatch = /data:image\/([a-z0-9+.-]+);base64/i.exec(photoInput);
-      const type = (metaMatch?.[1] || "JPEG").toUpperCase();
-      const b64 = extractBase64(photoInput);
-      if (b64) lines.push(`PHOTO;ENCODING=b;TYPE=${type}:${b64}`);
+      const metaMatch = /data:image\/([a-z0-9+.-]+);base64/i.exec(photoInput)
+      const type = (metaMatch?.[1] || "JPEG").toUpperCase()
+      const b64 = extractBase64(photoInput)
+      if (b64) lines.push(`PHOTO;ENCODING=b;TYPE=${type}:${b64}`)
     } else {
-      lines.push(`PHOTO;VALUE=URI:${photoInput}`);
+      lines.push(`PHOTO;VALUE=URI:${photoInput}`)
     }
   }
 
-  lines.push("END:VCARD");
+  lines.push("END:VCARD")
 
-  const content = lines.join("\r\n"); // CRLF
-  return new Blob([content], { type: "text/vcard;charset=utf-8" });
+  // CRLF for better compatibility
+  const content = lines.join("\r\n")
+  return new Blob([content], { type: "text/vcard;charset=utf-8" })
 }
 
-
 export function downloadVCard(p, filename = "Youssef_Mahmoud.vcf") {
-  const blob = generateVCard(p);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const blob = generateVCard(p)
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
 }
 
 // ===============================
 // ProfileCard component (uses the local utils above)
 // ===============================
-
 export default function ProfileCard({ profile }) {
   const { t, lang } = useI18n()
 
   // اختيار النص المناسب حسب لغة الموقع
-const T = (p, key, lang) =>
-  (lang === 'ar' ? p[`${key}_ar`] : p[`${key}_en`]) ?? p[key] ?? ''
+  const T = (p, key, lang) =>
+    (lang === 'ar' ? p[`${key}_ar`] : p[`${key}_en`]) ?? p[key] ?? ''
 
- const displayName  = T(profile, 'name',  lang)
- const displayTitle = T(profile, 'title', lang)
- const displayAbout = T(profile, 'about', lang)
-const displayPhoneLabel  = T(profile, 'phoneLabel',  lang) || (lang === 'ar' ? 'الشخصي' : 'Personal')
-const displayPhone2Label = T(profile, 'phone2Label', lang) || (lang === 'ar' ? 'العمل'   : 'Work')
+  const displayName  = T(profile, 'name',  lang)
+  const displayTitle = T(profile, 'title', lang)
+  const displayAbout = T(profile, 'about', lang)
+  const displayPhoneLabel  = T(profile, 'phoneLabel',  lang) || (lang === 'ar' ? 'الشخصي' : 'Personal')
+  const displayPhone2Label = T(profile, 'phone2Label', lang) || (lang === 'ar' ? 'العمل'   : 'Work')
 
-
-   const { name, title, about, image, socials, cv, email,
-   phone, phone2, whatsapp } = profile
+  const { name, title, about, image, socials, cv, email, phone, phone2, whatsapp } = profile
 
   const tel1 = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : ''
   const tel2 = phone2 ? `tel:${phone2.replace(/[^\d+]/g, '')}` : ''
@@ -198,19 +199,22 @@ const displayPhone2Label = T(profile, 'phone2Label', lang) || (lang === 'ar' ? '
   }
 
   function handleDownloadContact() {
+    // مرّر المعروض/المترجم حتى لو الخام فاضي + نظّف روابط السوشيال
     downloadVCard({
-      name,
-      title,
+      name:  displayName || name || "Youssef Mahmoud",
+      title: displayTitle || title || "",
       email,
       phone,
       phone2,
       phoneLabel:  displayPhoneLabel,
       phone2Label: displayPhone2Label,
       whatsapp,
-      about,
-      socials,
+      about: displayAbout || about || "",
+      socials: Object.fromEntries(
+        Object.entries(socials || {}).map(([k, v]) => [k, (v || "").replace(/[#\s]+$/g, "")])
+      ),
       photoBase64: image,
-    }, `${(name || 'contact').replace(/\s+/g, '_')}.vcf`)
+    }, `${(displayName || name || 'contact').replace(/\s+/g, '_')}.vcf`)
   }
 
   const [callOpen, setCallOpen] = useState(false)
@@ -239,32 +243,31 @@ const displayPhone2Label = T(profile, 'phone2Label', lang) || (lang === 'ar' ? '
     setCallOpen(v => !v)
   }
 
-// QR state
-const [qrDataUrl, setQrDataUrl] = useState('');
+  // QR state
+  const [qrDataUrl, setQrDataUrl] = useState('')
 
-// توليد الـQR مرة واحدة عند التحميل
-useEffect(() => {
-  const profileUrl = window.location.href; // أو مسار ثابت لو عايز
-  QRCode.toDataURL(profileUrl, {
-    width: 240,
-    margin: 1,
-    color: { dark: '#000000', light: '#FFFFFFFF' }
-  })
-    .then(setQrDataUrl)
-    .catch(console.error);
-}, []);
+  // توليد الـQR مرة واحدة عند التحميل
+  useEffect(() => {
+    const profileUrl = window.location.href // أو مسار ثابت لو عايز
+    QRCode.toDataURL(profileUrl, {
+      width: 240,
+      margin: 1,
+      color: { dark: '#000000', light: '#FFFFFFFF' }
+    })
+      .then(setQrDataUrl)
+      .catch(console.error)
+  }, [])
 
-// تحميل صورة الـQR
-function downloadQR() {
-  if (!qrDataUrl) return;
-  const a = document.createElement('a');
-  a.href = qrDataUrl;
-  a.download = `${(name || 'profile')}_QR.png`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
+  // تحميل صورة الـQR
+  function downloadQR() {
+    if (!qrDataUrl) return
+    const a = document.createElement('a')
+    a.href = qrDataUrl
+    a.download = `${(displayName || name || 'profile')}_QR.png`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  }
 
   return (
     <motion.section
@@ -276,7 +279,7 @@ function downloadQR() {
       <div className={`flex flex-col md:flex-row items-center md:items-start gap-8 ${lang === 'ar' ? 'rtl:text-right' : ''}`}>
         <motion.img
           src={image}
-          alt={name}
+          alt={displayName || name}
           className="w-36 h-36 rounded-full object-cover ring-4 ring-white/70 shadow"
           initial={{ scale: 0.9 }}
           animate={{ scale: 1 }}
@@ -291,135 +294,130 @@ function downloadQR() {
             transition={{ delay: 0.1 }}
           >
             {t.hello} <span className="text-[color:var(--brand)]">{displayName}</span>
-
           </motion.h1>
           <p className="mt-1 font-semibold text-[color:var(--brand)]">{displayTitle}</p>
           <p className="mt-3 text-gray-600 dark:text-gray-300 leading-relaxed">{displayAbout}</p>
 
-
           <SocialBar socials={socials} whatsapp={whatsapp} />
 
- {/* Actions + QR side-by-side */}
-<div className={`mt-6 grid gap-6 md:grid-cols-[1fr_auto] items-start ${lang === 'ar' ? 'rtl:text-right' : ''}`}>
-
-  {/* العمود الأول: الأزرار */}
-  <div className="grid grid-cols-1 gap-3 btn-row">
-    {cv ? (
-      <button
-        type="button"
-        onClick={handleDownloadCV}
-        className="btn btn-primary w-full min-w-0"
-      >
-        {t.download_cv}
-      </button>
-    ) : (
-      <a href="/edit" className="btn btn-soft w-full min-w-0">
-        {lang === 'ar' ? 'ارفع CV' : 'Upload CV'}
-      </a>
-    )}
-
-    <button
-      type="button"
-      onClick={handleDownloadContact}
-      className="btn btn-primary w-full min-w-0"
-    >
-      {t.download_contact}
-    </button>
-
-    {(tel1 || tel2) && (
-      <div className="relative w-full" ref={callRef}>
-        <button
-          type="button"
-          onClick={handleCallClick}
-          aria-haspopup="menu"
-          aria-expanded={callOpen}
-          className="btn btn-primary btn-call w-full min-w-0"
-        >
-          {lang === 'ar' ? 'اتصل بي' : 'Call me'}
-        </button>
-
-        <AnimatePresence initial={false}>
-          {callOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: 8 }}
-              transition={{ duration: 0.15 }}
-              role="menu"
-              className={`call-menu absolute z-[90] mt-2 rounded-xl shadow-lg px-2 py-2 w-full ${
-  lang === 'ar' ? 'right-0' : 'left-0'
-}`}
-
-            >
-              {tel1 && (
-                <a
-                  href={tel1}
-                  role="menuitem"
-                  className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-[var(--bg-to)]"
-                  onClick={() => setCallOpen(false)}
+          {/* Actions + QR side-by-side */}
+          <div className={`mt-6 grid gap-6 md:grid-cols-[1fr_auto] items-start ${lang === 'ar' ? 'rtl:text-right' : ''}`}>
+            {/* العمود الأول: الأزرار */}
+            <div className="grid grid-cols-1 gap-3 btn-row">
+              {cv ? (
+                <button
+                  type="button"
+                  onClick={handleDownloadCV}
+                  className="btn btn-primary w-full min-w-0"
                 >
-                  <span>{displayPhoneLabel}</span>
-                  <span className="opacity-70 ltr:ml-2 rtl:mr-2">{phone}</span>
+                  {t.download_cv}
+                </button>
+              ) : (
+                <a href="/edit" className="btn btn-soft w-full min-w-0">
+                  {lang === 'ar' ? 'ارفع CV' : 'Upload CV'}
                 </a>
               )}
-              {tel2 && (
+
+              <button
+                type="button"
+                onClick={handleDownloadContact}
+                className="btn btn-primary w-full min-w-0"
+              >
+                {t.download_contact}
+              </button>
+
+              {(tel1 || tel2) && (
+                <div className="relative w-full" ref={callRef}>
+                  <button
+                    type="button"
+                    onClick={handleCallClick}
+                    aria-haspopup="menu"
+                    aria-expanded={callOpen}
+                    className="btn btn-primary btn-call w-full min-w-0"
+                  >
+                    {lang === 'ar' ? 'اتصل بي' : 'Call me'}
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {callOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.98, y: 8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.98, y: 8 }}
+                        transition={{ duration: 0.15 }}
+                        role="menu"
+                        className={`call-menu absolute z-[90] mt-2 rounded-xl shadow-lg px-2 py-2 w-full ${lang === 'ar' ? 'right-0' : 'left-0'}`}
+                      >
+                        {tel1 && (
+                          <a
+                            href={tel1}
+                            role="menuitem"
+                            className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-[var(--bg-to)]"
+                            onClick={() => setCallOpen(false)}
+                          >
+                            <span>{displayPhoneLabel}</span>
+                            <span className="opacity-70 ltr:ml-2 rtl:mr-2">{phone}</span>
+                          </a>
+                        )}
+                        {tel2 && (
+                          <a
+                            href={tel2}
+                            role="menuitem"
+                            className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-[var(--bg-to)]"
+                            onClick={() => setCallOpen(false)}
+                          >
+                            <span>{displayPhone2Label}</span>
+                            <span className="opacity-70 ltr:ml-2 rtl:mr-2">{phone2}</span>
+                          </a>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
+              {email && (
                 <a
-                  href={tel2}
-                  role="menuitem"
-                  className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-[var(--bg-to)]"
-                  onClick={() => setCallOpen(false)}
+                  className="btn btn-primary w-full min-w-0"
+                  href={`mailto:${email}`}
+                  target="_blank"
+                  rel="noreferrer"
                 >
-                  <span>{displayPhone2Label}</span>
-                  <span className="opacity-70 ltr:ml-2 rtl:mr-2">{phone2}</span>
+                  {lang === 'ar' ? 'أرسل بريدًا' : 'Send Email'}
                 </a>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    )}
+            </div>
 
-    {email && (
-      <a
-        className="btn btn-primary w-full min-w-0"
-        href={`mailto:${email}`}
-        target="_blank"
-        rel="noreferrer"
-      >
-        {lang === 'ar' ? 'أرسل بريدًا' : 'Send Email'}
-      </a>
-    )}
-  </div>
+            {/* العمود الثاني: QR + زر التحميل */}
+            <div className="flex flex-col items-center md:items-end gap-2">
+              <div className="p-3 rounded-xl border border-[var(--card-border)] bg-white shadow-sm">
+                {/* خلفية بيضاء علشان الكود يقرا كويس على أي ثيم */}
+                {qrDataUrl ? (
+                  <img
+                    src={qrDataUrl}
+                    alt="Profile QR Code"
+                    className="w-40 h-40 object-contain"
+                    draggable="false"
+                  />
+                ) : (
+                  <div className="w-40 h-40 grid place-items-center text-sm text-[var(--muted)]">
+                    {lang === 'ar' ? 'جاري توليد QR…' : 'Generating QR…'}
+                  </div>
+                )}
+              </div>
 
-  {/* العمود الثاني: QR + زر التحميل */}
-  <div className="flex flex-col items-center md:items-end gap-2">
-    <div className="p-3 rounded-xl border border-[var(--card-border)] bg-white shadow-sm">
-      {/* خلفية بيضاء علشان الكود يقرا كويس على أي ثيم */}
-      {qrDataUrl ? (
-        <img
-          src={qrDataUrl}
-          alt="Profile QR Code"
-          className="w-40 h-40 object-contain"
-          draggable="false"
-        />
-      ) : (
-        <div className="w-40 h-40 grid place-items-center text-sm text-[var(--muted)]">
-          {lang === 'ar' ? 'جاري توليد QR…' : 'Generating QR…'}
-        </div>
-      )}
-    </div>
-
-    <button
-      type="button"
-      onClick={downloadQR}
-      className="btn btn-soft min-w-[160px]"
-    >
-      {lang === 'ar' ? 'تحميل QR' : 'Download QR'}
-    </button>
-  </div>
-</div>
+              <button
+                type="button"
+                onClick={downloadQR}
+                className="btn btn-soft min-w-[160px]"
+              >
+                {lang === 'ar' ? 'تحميل QR' : 'Download QR'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </motion.section>
   )
 }
+ببب
