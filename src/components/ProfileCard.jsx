@@ -12,17 +12,15 @@ import SocialBar from './SocialBar'
 import QRCode from 'qrcode';
 
 
-
 // ===============================
 // vCard utils (kept in this file to avoid cross-file issues)
 // ===============================
 
-// ===== Helpers (put right under imports) =====
 const chooseTypeFromLabel = (label = "") => {
   const l = (label || "").toLowerCase();
   if (/(work|عمل)/.test(l)) return "WORK";
   if (/(home|شخصي|بيت|منزل|personal)/.test(l)) return "HOME";
-  return "CELL";
+  return "CELL"; // safe default
 };
 
 const onlyDigitsPlus = (s = "") => s.replace(/[^+\d]/g, "");
@@ -32,12 +30,6 @@ const extractBase64 = (dataUrl = "") => {
   const comma = dataUrl.indexOf(",");
   return comma > -1 ? dataUrl.slice(comma + 1) : dataUrl;
 };
-
-const isDataUrl = (s = "") => /^data:image\/[a-z0-9+.-]+;base64,/i.test(s);
-
-const escapeText = (s = "") =>
-  (s || "").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
-
 
 
 
