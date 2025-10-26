@@ -196,6 +196,30 @@ export default function Edit() {
           </div>
         </div>
 
+{/* Email */}
+<div className="md:col-span-2">
+  <label htmlFor="email" className="block text-sm font-medium mb-1">
+    {lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+  </label>
+  <input
+    id="email"
+    name="email"
+    type="email"
+    className="input"
+    placeholder={lang === 'ar' ? 'name@example.com' : 'name@example.com'}
+    value={data.email || ''}
+    onChange={onChange}
+    inputMode="email"
+    autoComplete="email"
+  />
+  <p className="mt-1 text-xs opacity-70">
+    {lang === 'ar'
+      ? 'سنستخدمه لزر “إرسال بريد” في صفحة البروفايل.'
+      : 'Used for the “Send Email” button on your profile.'}
+  </p>
+</div>
+
+
         {/* حقول ثنائية اللغة */}
         <input className="input" {...bind('name')}  placeholder={editLang === 'ar' ? 'الاسم' : 'Name'} />
         <input className="input" {...bind('title')} placeholder={editLang === 'ar' ? 'المسمى الوظيفي' : 'Title'} />
