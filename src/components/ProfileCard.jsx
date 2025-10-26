@@ -12,15 +12,17 @@ import SocialBar from './SocialBar'
 import QRCode from 'qrcode';
 
 
+
 // ===============================
 // vCard utils (kept in this file to avoid cross-file issues)
 // ===============================
 
+// ===== Helpers (put right under imports) =====
 const chooseTypeFromLabel = (label = "") => {
   const l = (label || "").toLowerCase();
   if (/(work|عمل)/.test(l)) return "WORK";
   if (/(home|شخصي|بيت|منزل|personal)/.test(l)) return "HOME";
-  return "CELL"; // safe default
+  return "CELL";
 };
 
 const onlyDigitsPlus = (s = "") => s.replace(/[^+\d]/g, "");
@@ -31,37 +33,55 @@ const extractBase64 = (dataUrl = "") => {
   return comma > -1 ? dataUrl.slice(comma + 1) : dataUrl;
 };
 
+const isDataUrl = (s = "") => /^data:image\/[a-z0-9+.-]+;base64,/i.test(s);
+
+const escapeText = (s = "") =>
+  (s || "").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+
+
+
+
 export function generateVCard(p) {
   const lines = [];
   lines.push("BEGIN:VCARD");
   lines.push("VERSION:3.0");
-  const safeName = (p.name || "").trim();
-  lines.push(`N:${safeName};;;;`);
-  lines.push(`FN:${safeName}`);
-  if (p.title) lines.push(`TITLE:${p.title}`);
-  if (p.email) lines.push(`EMAIL;TYPE=INTERNET:${p.email}`);
 
+  // Name
+  const safeName = (p.name || "").trim();
+  let given = "", family = "";
+  if (safeName.includes(" ")) {
+    const parts = safeName.split(/\s+/);
+    given = parts[0];
+    family = parts.slice(1).join(" ");
+  } else {
+    given = safeName;
+  }
+  lines.push(`N:${escapeText(family)};${escapeText(given)};;;`);
+  lines.push(`FN:${escapeText(safeName)}`);
+
+  // Title/Email
+  if (p.title) lines.push(`TITLE:${escapeText(p.title)}`);
+  if (p.email) lines.push(`EMAIL;TYPE=INTERNET,PREF:${p.email}`);
+
+  // Phones (standards, no itemN.*)
   const tel1Type = chooseTypeFromLabel(p.phoneLabel);
   if (p.phone) {
     const n = onlyDigitsPlus(p.phone);
-    lines.push(`item1.TEL;type=${tel1Type};type=CELL;type=VOICE;type=pref:${n}`);
-    if (p.phoneLabel) lines.push(`item1.X-ABLabel:${p.phoneLabel}`);
+    if (n) lines.push(`TEL;TYPE=${tel1Type},CELL,VOICE,PREF:${n}`);
   }
   const tel2Type = chooseTypeFromLabel(p.phone2Label);
   if (p.phone2) {
     const n2 = onlyDigitsPlus(p.phone2);
-    lines.push(`item2.TEL;type=${tel2Type};type=CELL;type=VOICE:${n2}`);
-    if (p.phone2Label) lines.push(`item2.X-ABLabel:${p.phone2Label}`);
+    if (n2) lines.push(`TEL;TYPE=${tel2Type},CELL,VOICE:${n2}`);
   }
 
+  // WhatsApp (no + after wa.me/)
   if (p.whatsapp) {
-    const wa = onlyDigitsPlus(p.whatsapp);
-    if (wa) {
-      lines.push(`item3.URL:https://wa.me/${wa}`);
-      lines.push("item3.X-ABLabel:WhatsApp");
-    }
+    const wa = (p.whatsapp || "").replace(/[^\d]/g, "");
+    if (wa) lines.push(`URL;TYPE=WhatsApp:https://wa.me/${wa}`);
   }
 
+  // Socials
   const socialOrder = [
     ["linkedin", "LinkedIn"],
     ["github", "GitHub"],
@@ -71,35 +91,36 @@ export function generateVCard(p) {
     ["youtube", "YouTube"],
     ["facebook", "Facebook"],
   ];
-  let itemIdx = 4;
   if (p.socials) {
     for (const [key, label] of socialOrder) {
       const url = p.socials[key];
       if (!url) continue;
-      lines.push(`item${itemIdx}.URL:${url}`);
-      lines.push(`item${itemIdx}.X-ABLabel:${label}`);
-      itemIdx += 1;
+      lines.push(`URL;TYPE=${label}:${url}`);
     }
   }
 
-  if (p.about) {
-    const note = p.about.replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
-    lines.push(`NOTE:${note}`);
-  }
+  // Note/About
+  if (p.about) lines.push(`NOTE:${escapeText(p.about)}`);
 
-  if (p.photoBase64) {
-    const [meta, b64raw] = (p.photoBase64 || "").split(",");
-    const m = /data:image\/([a-zA-Z0-9+.-]+);base64/.exec(meta || "");
-    const type = (m?.[1] || "JPEG").toUpperCase();
-    const b64 = b64raw || extractBase64(p.photoBase64);
-    if (b64) lines.push(`PHOTO;ENCODING=b;TYPE=${type}:${b64}`);
+  // Photo (accept DataURL or URL)
+  const photoInput = p.photoBase64 || p.photo || "";
+  if (photoInput) {
+    if (isDataUrl(photoInput)) {
+      const metaMatch = /data:image\/([a-z0-9+.-]+);base64/i.exec(photoInput);
+      const type = (metaMatch?.[1] || "JPEG").toUpperCase();
+      const b64 = extractBase64(photoInput);
+      if (b64) lines.push(`PHOTO;ENCODING=b;TYPE=${type}:${b64}`);
+    } else {
+      lines.push(`PHOTO;VALUE=URI:${photoInput}`);
+    }
   }
 
   lines.push("END:VCARD");
 
-  const content = lines.join("\r\n");
+  const content = lines.join("\r\n"); // CRLF
   return new Blob([content], { type: "text/vcard;charset=utf-8" });
 }
+
 
 export function downloadVCard(p, filename = "Youssef_Mahmoud.vcf") {
   const blob = generateVCard(p);
