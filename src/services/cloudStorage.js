@@ -58,6 +58,7 @@ export async function getProfile() {
 }
 
 /* ---------- Writes ---------- */
+/* ---------- Writes ---------- */
 export async function upsertProfile(profile) {
   const p = { ...profile };
 
@@ -110,19 +111,25 @@ export async function upsertProfile(profile) {
     Object.entries(p).filter(([k, v]) => allowed.includes(k) && v !== undefined)
   );
 
+  // لوج قبل الحفظ للتشخيص
+  console.log('record to upsert', record);
+
+  // ✅ upsert واحد فقط
   const { data, error } = await supabase
     .from('profiles')
     .upsert(record, { onConflict: 'id' })
     .select()
-    .single();
+    .maybeSingle(); // أهدى من single() في بعض الحالات
 
   if (error) {
     console.error('❌ upsert error', {
+      code: error.code,
       message: error.message,
       details: error.details,
       hint: error.hint
     });
     throw error;
   }
+
   return data;
 }
