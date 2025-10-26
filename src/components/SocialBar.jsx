@@ -22,7 +22,8 @@ export default function SocialBar({ socials = {}, whatsapp }) {
   ];
 
   // واتساب من رقم الهاتف (يفتح شات مباشرة)
-  const wa = whatsapp ? `https://wa.me/${String(whatsapp).replace(/[^\\d]/g, "")}` : null;
+const wa = whatsapp ? `https://wa.me/${String(whatsapp).replace(/[^\d]/g, "")}` : null;
+
 
   return (
     <div className="mt-6 flex flex-wrap items-center gap-3">

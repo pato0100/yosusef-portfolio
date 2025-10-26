@@ -1,22 +1,33 @@
 ﻿{
-  "name": "Youssef Mahmoud",
-  "title": "Data Engineer | Digital Marketer",
-  "about": "I’m a passionate data engineer who loves solving problems, analyzing ideas, and building efficient systems.",
-  "email": "almasrygrop0100@gmail.com",
- "phone": "+201090860829",
-  "phoneLabel": "Vodafone",
+  "name_en": "Youssef Mahmoud",
+  "name_ar": "يوسف محمود",
+
+  "title_en": "Data Engineer | Digital Marketer",
+  "title_ar": "مهندس بيانات | مسوّق رقمي",
+
+  "about_en": "I’m a passionate data engineer who loves solving problems, analyzing ideas, and building efficient systems.",
+  "about_ar": "أنا مهندس بيانات شغوف بحل المشكلات وتحليل الأفكار وبناء أنظمة فعّالة.",
+
+  "phone": "+201090860829",
+  "phoneLabel_en": "Vodafone",
+  "phoneLabel_ar": "فودافون",
+
   "phone2": "",
-  "phone2Label": "Etisalat" ,
+  "phone2Label_en": "Etisalat",
+  "phone2Label_ar": "اتصالات",
+
   "whatsapp": "+201090860829",
+
   "image": "/assets/profile.jpg",
   "cv": "/assets/cv.pdf",
+  
   "socials": {
     "linkedin": "https://linkedin.com/in/your-link",
     "github": "https://github.com/your-link",
-    "x": "https://x.com/your-link",
-    "facebook": "",
-    "instagram": "",
-    "youtube": "",
-    "tiktok": ""
+    "x": "https://x.com/YoussefMA2001",
+    "facebook": "https://www.facebook.com/YMAhmed2001",
+    "instagram": "https://www.instagram.com/youssef_pato74/",
+    "youtube": "https://www.youtube.com/@Agogovich",
+    "tiktok": "https://www.tiktok.com/@youssef_m_ahmed1"
   }
 }

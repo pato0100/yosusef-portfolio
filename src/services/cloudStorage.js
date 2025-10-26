@@ -2,13 +2,13 @@
 import { supabase } from '../lib/supabase'
 
 // ثوابت
-export const OWNER_ID = '5873b48f-ebfa-484d-b4a0-480ee97e67f2' // عدّل لو مختلف
-const BUCKET_AVATAR = 'public_files'
-const BUCKET_DOCS = 'docs_files'
+export const OWNER_ID = '1842096a-4577-4281-b5ae-eb9c9468727b';
+const BUCKET = 'portfolio';
 
-
-
-
+const PATHS = {
+  avatar: (id, ext) => `images/${id}.${ext}`,
+  cv:     (id)      => `cv/${id}.pdf`,
+};
 
 /* ---------- Utilities ---------- */
 function dataURLtoBlob(dataURL) {
@@ -57,9 +57,7 @@ export async function getProfile() {
   return data || null;
 }
 
-
-
-/* ---------- Reads ---------- */
+/* ---------- Writes ---------- */
 export async function upsertProfile(profile) {
   const p = { ...profile };
 
@@ -67,9 +65,9 @@ export async function upsertProfile(profile) {
   if (typeof p.image === 'string' && p.image.startsWith('data:')) {
     const blob = dataURLtoBlob(p.image);
     if (blob) {
-      const ext = blob.type.includes('png') ? 'png' : 'jpg';
-     const path = `avatars/${OWNER_ID}.${ext}`  
-      p.image_url = await uploadToStorage(BUCKET_AVATAR, path, blob, true);
+      const ext  = blob.type.includes('png') ? 'png' : 'jpg';
+      const path = PATHS.avatar(OWNER_ID, ext);
+      p.image_url = await uploadToStorage(BUCKET, path, blob, true);
     }
     delete p.image; // ما نبعتش image للجدول
   }
@@ -78,8 +76,8 @@ export async function upsertProfile(profile) {
   if (typeof p.cv === 'string' && p.cv.startsWith('data:application/pdf')) {
     const blob = dataURLtoBlob(p.cv);
     if (blob) {
-      const path = `cv/${OWNER_ID}.pdf` 
-      p.cv_url = await uploadToStorage(BUCKET_DOCS, path, blob, true);
+      const path = PATHS.cv(OWNER_ID);
+      p.cv_url = await uploadToStorage(BUCKET, path, blob, true);
     }
     delete p.cv;
   } else if (p.cv === '') {
