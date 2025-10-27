@@ -37,25 +37,34 @@ export function generateVCard(p) {
   const lines = [];
   lines.push("BEGIN:VCARD");
   lines.push("VERSION:3.0");
-  const safeName = (p.name || "").trim();
-  lines.push(`N:${safeName};;;;`);
+
+  // الاسم الآمن
+  const safeName = (p.name || p.displayName || "Youssef Mahmoud").trim();
+  const [firstName, ...rest] = safeName.split(" ");
+  const lastName = rest.join(" ");
+  lines.push(`N:${lastName};${firstName};;;`);
   lines.push(`FN:${safeName}`);
+
+  // الوظيفة والبريد
   if (p.title) lines.push(`TITLE:${p.title}`);
   if (p.email) lines.push(`EMAIL;TYPE=INTERNET:${p.email}`);
 
+  // أرقام الهاتف
   const tel1Type = chooseTypeFromLabel(p.phoneLabel);
   if (p.phone) {
     const n = onlyDigitsPlus(p.phone);
     lines.push(`item1.TEL;type=${tel1Type};type=CELL;type=VOICE;type=pref:${n}`);
-    if (p.phoneLabel) lines.push(`item1.X-ABLabel:${p.phoneLabel}`);
+    lines.push(`item1.X-ABLabel:${p.phoneLabel || "Mobile"}`);
   }
+
   const tel2Type = chooseTypeFromLabel(p.phone2Label);
   if (p.phone2) {
     const n2 = onlyDigitsPlus(p.phone2);
     lines.push(`item2.TEL;type=${tel2Type};type=CELL;type=VOICE:${n2}`);
-    if (p.phone2Label) lines.push(`item2.X-ABLabel:${p.phone2Label}`);
+    lines.push(`item2.X-ABLabel:${p.phone2Label || "Work"}`);
   }
 
+  // واتساب
   if (p.whatsapp) {
     const wa = onlyDigitsPlus(p.whatsapp);
     if (wa) {
@@ -64,6 +73,7 @@ export function generateVCard(p) {
     }
   }
 
+  // روابط السوشيال
   const socialOrder = [
     ["linkedin", "LinkedIn"],
     ["github", "GitHub"],
@@ -80,15 +90,17 @@ export function generateVCard(p) {
       if (!url) continue;
       lines.push(`item${itemIdx}.URL:${url}`);
       lines.push(`item${itemIdx}.X-ABLabel:${label}`);
-      itemIdx += 1;
+      itemIdx++;
     }
   }
 
+  // النبذة (about)
   if (p.about) {
     const note = p.about.replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
     lines.push(`NOTE:${note}`);
   }
 
+  // الصورة (Base64 أو رابط)
   if (p.photoBase64) {
     const [meta, b64raw] = (p.photoBase64 || "").split(",");
     const m = /data:image\/([a-zA-Z0-9+.-]+);base64/.exec(meta || "");
@@ -103,17 +115,20 @@ export function generateVCard(p) {
   return new Blob([content], { type: "text/vcard;charset=utf-8" });
 }
 
-export function downloadVCard(p, filename = "Youssef_Mahmoud.vcf") {
+
+export function downloadVCard(p, filename) {
+  const file = filename || `${(p.name || "contact").replace(/\s+/g, "_")}.vcf`;
   const blob = generateVCard(p);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename;
+  a.download = file;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
 }
+
 
 // ===============================
 // ProfileCard component (uses the local utils above)
