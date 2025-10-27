@@ -95,30 +95,57 @@ export default function Edit() {
   }
 
   // رفع الصورة (ضغط تلقائي)
-  function onImageUpload(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.size > 8 * 1024 * 1024) { alert('الصورة كبيرة جدًا، أقل من 8MB'); return }
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const img = new Image()
-      img.onload = () => {
-        const maxDim = 640
-        let { width, height } = img
-        if (width > height && width > maxDim) { height = Math.round((height * maxDim) / width); width = maxDim }
-        else if (height > width && height > maxDim) { width = Math.round((width * maxDim) / height); height = maxDim }
-        else if (width > maxDim) { height = maxDim; width = maxDim }
-        const canvas = document.createElement('canvas')
-        canvas.width = width; canvas.height = height
-        const ctx = canvas.getContext('2d')
-        ctx.drawImage(img, 0, 0, width, height)
-        const compressed = canvas.toDataURL('image/jpeg', 0.82)
-        setData((prev) => ({ ...prev, image: compressed }))
-      }
-      img.src = ev.target.result
-    }
-    reader.readAsDataURL(file)
+function onImageUpload(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024) {
+    alert('الصورة كبيرة جدًا، أقل من 8MB');
+    return;
   }
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 640;
+      let { width, height } = img;
+
+      if (width > height && width > maxDim) {
+        height = Math.round((height * maxDim) / width);
+        width = maxDim;
+      } else if (height > width && height > maxDim) {
+        width = Math.round((width * maxDim) / height);
+        height = maxDim;
+      } else if (width > maxDim) {
+        height = maxDim;
+        width = maxDim;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // نحافظ على الامتداد الأصلي ونضغط الصورة
+      const compressed =
+        file.type === 'image/png'
+          ? canvas.toDataURL('image/png')
+          : canvas.toDataURL('image/jpeg', 0.82);
+
+      // ✅ هنا نضيف النسخة Base64 + نحافظ على URL لو موجود
+      setData((prev) => ({
+        ...prev,
+        image: compressed, // نسخة Base64 (تدخل جوّا vCard)
+        imageUrl: prev.imageUrl || '', // نسخة URL (من Supabase لاحقًا)
+      }));
+    };
+    img.src = ev.target.result;
+  };
+
+  reader.readAsDataURL(file);
+}
+
 
   // رفع/حذف PDF
   function onPdfUpload(e) {
