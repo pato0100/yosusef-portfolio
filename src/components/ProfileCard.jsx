@@ -105,14 +105,20 @@ export function generateVCard(p) {
     lines.push(`NOTE:${note}`);
   }
 
-  // الصورة (Base64 أو رابط)
-  if (p.photoBase64) {
-    const [meta, b64raw] = (p.photoBase64 || "").split(",");
-    const m = /data:image\/([a-zA-Z0-9+.-]+);base64/.exec(meta || "");
-    const type = (m?.[1] || "JPEG").toUpperCase();
-    const b64 = b64raw || extractBase64(p.photoBase64);
-    if (b64) lines.push(`PHOTO;ENCODING=b;TYPE=${type}:${b64}`);
+ // الصورة (Base64 أو رابط)
+if (p.photoBase64) {
+  if (p.photoBase64.startsWith("data:image")) {
+    // حالة Base64
+    const [meta, base64] = p.photoBase64.split(",");
+    const match = /data:image\/([a-zA-Z0-9+.-]+);base64/.exec(meta);
+    const type = (match?.[1] || "JPEG").toUpperCase();
+    lines.push(`PHOTO;ENCODING=b;TYPE=${type}:${base64}`);
+  } else {
+    // حالة رابط
+    lines.push(`PHOTO;VALUE=URI:${p.photoBase64}`);
   }
+}
+
 
   lines.push("END:VCARD");
 
