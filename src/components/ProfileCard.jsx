@@ -50,6 +50,7 @@ export function generateVCard(p) {
   lines.push(`FN:${safeName}`);
 
 
+
   // الوظيفة والبريد
   if (p.title) lines.push(`TITLE:${p.title}`);
   if (p.email) lines.push(`EMAIL;TYPE=INTERNET:${p.email}`);
