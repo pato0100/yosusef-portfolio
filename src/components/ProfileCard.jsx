@@ -38,12 +38,17 @@ export function generateVCard(p) {
   lines.push("BEGIN:VCARD");
   lines.push("VERSION:3.0");
 
-  // الاسم الآمن
-  const safeName = (p.name || p.displayName || "Youssef Mahmoud").trim();
-  const [firstName, ...rest] = safeName.split(" ");
-  const lastName = rest.join(" ");
-  lines.push(`N:${lastName};${firstName};;;`);
+  // ✅ اسم ديناميكي يشتغل لأي مستخدم وأي لغة
+  const safeName =
+    (p.name && p.name.trim()) ||
+    (p.displayName && p.displayName.trim()) ||
+    (p.name_en && p.name_en.trim()) ||
+    (p.name_ar && p.name_ar.trim()) ||
+    "User";
+
+  lines.push(`N:${safeName};;;;`);
   lines.push(`FN:${safeName}`);
+
 
   // الوظيفة والبريد
   if (p.title) lines.push(`TITLE:${p.title}`);
