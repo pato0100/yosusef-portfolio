@@ -108,17 +108,17 @@ export function generateVCard(p) {
 
  // الصورة (Base64 أو رابط)
 if (p.photoBase64) {
-  if (p.photoBase64.startsWith("data:image")) {
-    // حالة Base64
-    const [meta, base64] = p.photoBase64.split(",");
-    const match = /data:image\/([a-zA-Z0-9+.-]+);base64/.exec(meta);
-    const type = (match?.[1] || "JPEG").toUpperCase();
-    lines.push(`PHOTO;ENCODING=b;TYPE=${type}:${base64}`);
+  if (p.photoBase64.startsWith('data:image')) {
+    const [meta, b64] = p.photoBase64.split(',');
+    const m = /data:image\/([a-z0-9+.-]+);base64/i.exec(meta || '');
+    const type = (m?.[1] || 'JPEG').toUpperCase();
+    if (b64) lines.push(`PHOTO;ENCODING=b;TYPE=${type}:${b64}`);
   } else {
-    // حالة رابط
+    // fallback لو حد مرر لينك (مش متوقع بعد التعديل)
     lines.push(`PHOTO;VALUE=URI:${p.photoBase64}`);
   }
 }
+
 
 
   lines.push("END:VCARD");
