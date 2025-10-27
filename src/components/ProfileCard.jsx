@@ -197,28 +197,49 @@ const displayPhone2Label = T(profile, 'phone2Label', lang) || (lang === 'ar' ? '
       return
     }
 
-    const a = document.createElement('a')
-    a.href = cv
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
+// دالة لتحويل أي رابط صورة إلى Base64
+async function urlToDataURL(url) {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+}
+
+// دالة تحميل بطاقة vCard
+async function handleDownloadContact() {
+  let photoBase64 = image;
+
+  // لو الصورة جاية كرابط من Supabase نحولها Base64
+  if (photoBase64 && !photoBase64.startsWith("data:image")) {
+    try {
+      photoBase64 = await urlToDataURL(photoBase64);
+    } catch (err) {
+      console.error("Image conversion failed:", err);
+    }
   }
 
-  function handleDownloadContact() {
-    downloadVCard({
-      name,
+  downloadVCard(
+    {
+      name: displayName, // ✅ الاسم اللي بيظهر فعلاً على الموقع
       title,
       email,
       phone,
       phone2,
-      phoneLabel:  displayPhoneLabel,
+      phoneLabel: displayPhoneLabel,
       phone2Label: displayPhone2Label,
       whatsapp,
       about,
       socials,
-      photoBase64: image,
-    }, `${(name || 'contact').replace(/\s+/g, '_')}.vcf`)
+      photoBase64, // الصورة بعد التحويل
+    },
+    `${(displayName || "contact").replace(/\s+/g, "_")}.vcf`
+  );
+}
+
+
   }
 
   const [callOpen, setCallOpen] = useState(false)
