@@ -212,4 +212,3 @@ export default function ProfileCard({ profile }) {
     </motion.section>
   );
 }
-س
