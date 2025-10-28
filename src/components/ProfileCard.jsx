@@ -205,21 +205,42 @@ const displayPhone2Label = T(profile, 'phone2Label', lang) || (lang === 'ar' ? '
     a.remove()
   }
 
-  function handleDownloadContact() {
-    downloadVCard({
-      name,
-      title,
-      email,
-      phone,
-      phone2,
-      phoneLabel:  displayPhoneLabel,
-      phone2Label: displayPhone2Label,
-      whatsapp,
-      about,
-      socials,
-      photoBase64: image,
-    }, `${(name || 'contact').replace(/\s+/g, '_')}.vcf`)
+  async function handleDownloadContact() {
+  // جهّز الصورة: لو URL حوّلها Base64 قدر الإمكان
+  let photoBase64 = image;
+  if (photoBase64 && !photoBase64.startsWith('data:')) {
+    try {
+      const res = await fetch(photoBase64, { mode: 'cors' });
+      const blob = await res.blob();
+      photoBase64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result); // data:image/...
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      // لو التحويل فشل، هنسيبها URL كـ fallback
+    }
   }
+
+  // استخدم الاسم المعروض + مرّر النسخ المترجمة كاحتياط
+  downloadVCard({
+    name: displayName,            // ← أهم سطر لإصلاح المشكلة
+    displayName,                  // احتياطي
+    name_en: profile.name_en,     // احتياطي
+    name_ar: profile.name_ar,     // احتياطي
+    title,
+    email,
+    phone,
+    phone2,
+    phoneLabel:  displayPhoneLabel,
+    phone2Label: displayPhone2Label,
+    whatsapp,
+    about,
+    socials,
+    photoBase64,                  // دلوقتي يا إما Base64 يا URL كـ fallback
+  }, `${(displayName || 'contact').replace(/\s+/g, '_')}.vcf`);
+}
+
 
   const [callOpen, setCallOpen] = useState(false)
   const callRef = useRef(null)
