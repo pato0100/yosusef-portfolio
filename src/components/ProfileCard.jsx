@@ -71,35 +71,46 @@ export function generateVCard(p) {
   }
 
   // واتساب
-  if (p.whatsapp) {
-    const wa = onlyDigitsPlus(p.whatsapp);
-    if (wa) {
-      lines.push(`item3.URL:https://wa.me/${wa}`);
-      lines.push("item3.X-ABLabel:WhatsApp");
-    }
+ // ... واتساب
+if (p.whatsapp) {
+  const wa = onlyDigitsPlus(p.whatsapp);
+  if (wa) {
+    lines.push(`item3.URL:https://wa.me/${wa}`);
+    lines.push("item3.X-ABLabel:WhatsApp");
   }
-  
-  
-  // روابط السوشيال
-  const socialOrder = [
-    ["linkedin", "LinkedIn"],
-    ["github", "GitHub"],
-    ["x", "X"],
-    ["instagram", "Instagram"],
-    ["tiktok", "TikTok"],
-    ["youtube", "YouTube"],
-    ["facebook", "Facebook"],
-  ];
-  let itemIdx = 4;
-  if (p.socials) {
-    for (const [key, label] of socialOrder) {
-      const url = p.socials[key];
-      if (!url) continue;
-      lines.push(`item${itemIdx}.URL:${url}`);
-      lines.push(`item${itemIdx}.X-ABLabel:${label}`);
-      itemIdx++;
-    }
+}
+
+// عرّف itemIdx هنا قبل أي itemX
+let itemIdx = 4;
+
+// Website (اختياري)
+if (p.website) {
+  lines.push(`URL:${p.website}`);
+  lines.push(`item${itemIdx}.URL:${p.website}`);
+  lines.push(`item${itemIdx}.X-ABLabel:Website`);
+  itemIdx++;
+}
+
+// روابط السوشيال
+const socialOrder = [
+  ["linkedin", "LinkedIn"],
+  ["github", "GitHub"],
+  ["x", "X"],
+  ["instagram", "Instagram"],
+  ["tiktok", "TikTok"],
+  ["youtube", "YouTube"],
+  ["facebook", "Facebook"],
+];
+if (p.socials) {
+  for (const [key, label] of socialOrder) {
+    const url = p.socials[key];
+    if (!url) continue;
+    lines.push(`item${itemIdx}.URL:${url}`);
+    lines.push(`item${itemIdx}.X-ABLabel:${label}`);
+    itemIdx++;
   }
+}
+
 
   // النبذة (about)
   if (p.about) {
@@ -224,22 +235,23 @@ const displayPhone2Label = T(profile, 'phone2Label', lang) || (lang === 'ar' ? '
   }
 
   // استخدم الاسم المعروض + مرّر النسخ المترجمة كاحتياط
-  downloadVCard({
-    name: displayName,            // ← أهم سطر لإصلاح المشكلة
-    displayName,                  // احتياطي
-    name_en: profile.name_en,     // احتياطي
-    name_ar: profile.name_ar,     // احتياطي
-    title,
-    email,
-    phone,
-    phone2,
-    phoneLabel:  displayPhoneLabel,
-    phone2Label: displayPhone2Label,
-    whatsapp,
-    about,
-    socials,
-    photoBase64,                  // دلوقتي يا إما Base64 يا URL كـ fallback
-  }, `${(displayName || 'contact').replace(/\s+/g, '_')}.vcf`);
+downloadVCard({
+  name: displayName,
+  displayName,
+  name_en: profile.name_en,
+  name_ar: profile.name_ar,
+  title,
+  email,
+  phone,
+  phone2,
+  phoneLabel:  displayPhoneLabel,
+  phone2Label: displayPhone2Label,
+  whatsapp,
+  about,
+  socials,
+  photoBase64,                                // Base64 أو URL كـ fallback
+  website: window?.location?.origin || '',    // ← رابط موقعك
+}, `${(displayName || 'contact').replace(/\s+/g, '_')}.vcf`);
 }
 
 
