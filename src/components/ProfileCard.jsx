@@ -78,19 +78,8 @@ export function generateVCard(p) {
       lines.push("item3.X-ABLabel:WhatsApp");
     }
   }
-
-  // Website
-if (p.website) {
-  // متوافق مع أغلب العملاء (Android/Google Contacts)
-  lines.push(`URL:${p.website}`);
-
-  // متوافق جدًا مع iOS/Apple Contacts مع لابل واضح
-  lines.push(`item${itemIdx}.URL:${p.website}`);
-  lines.push(`item${itemIdx}.X-ABLabel:${p.websiteLabel || 'Website'}`);
-  itemIdx++;
-}
-
-
+  
+  
   // روابط السوشيال
   const socialOrder = [
     ["linkedin", "LinkedIn"],
@@ -250,7 +239,6 @@ const displayPhone2Label = T(profile, 'phone2Label', lang) || (lang === 'ar' ? '
     about,
     socials,
     photoBase64,                  // دلوقتي يا إما Base64 يا URL كـ fallback
-  website: window?.location?.origin || '', // ← رابط موقعك الحالي
   }, `${(displayName || 'contact').replace(/\s+/g, '_')}.vcf`);
 }
 
