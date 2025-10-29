@@ -2,7 +2,7 @@
 import defaults from '../data/defaultProfile.json'
 import { getProfile, upsertProfile } from '../services/cloudStorage'
 import { useI18n } from '../i18n/i18n'
-import { signInWithPassword, signOut, getSession, onAuthChange } from '../lib/supabase'
+import { supabase, signOut, getSession, onAuthChange } from '../lib/supabase'
 
 export default function Edit() {
   const { t, lang } = useI18n()
@@ -270,53 +270,50 @@ export default function Edit() {
 }
 
 function LoginCard() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [show, setShow] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setErr('')
-    if (!email || !password) { setErr('Please enter email & password.'); return }
-    setSubmitting(true)
+  async function signInWithGitHub() {
     try {
-      await signInWithPassword(email, password)
+      setErr('')
+      setLoading(true)
+      await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: { redirectTo: window.location.origin } // هيحوّلك ويرجعك لنفس الصفحة
+      })
+      // مفيش حاجة بعد await هنا لأن التحكم بيروح لصفحة GitHub ويرجع تاني
     } catch (e) {
-      setErr(e?.message || 'Login failed')
-    } finally {
-      setSubmitting(false)
+      setErr(e?.message || 'GitHub login failed')
+      setLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-lg">
-        <h2 className="text-xl font-bold mb-1">Admin Login</h2>
+        <h2 className="text-xl font-bold mb-2">Admin Login</h2>
         <p className="text-sm opacity-75 mb-6">Sign in to manage your portfolio.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm mb-1">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 outline-none focus:border-white/25" placeholder="you@example.com" autoComplete="username" />
+        {err && (
+          <div className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-lg p-2 mb-3">
+            {err}
           </div>
+        )}
 
-          <div>
-            <label className="block text-sm mb-1">Password</label>
-            <div className="relative">
-              <input type={show ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 pr-10 outline-none focus:border-white/25" placeholder="••••••••" autoComplete="current-password" />
-              <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-xs opacity-70 hover:opacity-100">{show ? 'Hide' : 'Show'}</button>
-            </div>
-          </div>
+        <button
+          type="button"
+          onClick={signInWithGitHub}
+          disabled={loading}
+          className="w-full rounded-xl px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 disabled:opacity-60"
+        >
+          {loading ? 'Redirecting…' : 'Sign in with GitHub'}
+        </button>
 
-          {err && (<div className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-lg p-2">{err}</div>)}
-
-          <button type="submit" disabled={submitting} className="w-full rounded-xl px-4 py-2 bg-blue-500/90 hover:bg-blue-500 text-white disabled:opacity-60">{submitting ? 'Signing in…' : 'Sign in'}</button>
-        </form>
-
-        <p className="mt-4 text-xs opacity-70">* بعد تسجيل الدخول بنجاح سيتم فتح لوحة التحكم. للخروج استخدم زر Logout.</p>
+        <p className="mt-4 text-xs opacity-70">
+          You’ll be redirected to GitHub, then back here.
+        </p>
       </div>
     </div>
   )
 }
+
