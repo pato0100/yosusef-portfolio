@@ -1,17 +1,15 @@
 ﻿import { useEffect, useState } from 'react'
 import defaults from '../data/defaultProfile.json'
-// ⛳️ استبدلنا التخزين المحلي بدوال السحابة
 import { getProfile, upsertProfile } from '../services/cloudStorage'
 import { useI18n } from '../i18n/i18n'
-
-// نفس باسورد صفحة التعديل مؤقتًا
-const PASSWORD = 'ZZxxZZxx55'
+import { signInWithPassword, signOut, getSession, onAuthChange } from '../lib/supabase'
 
 export default function Edit() {
   const { t, lang } = useI18n()
 
-  // ✅ حالة الدخول (لحد ما نفعّل Auth حقيقية)
-  const [auth, setAuthState] = useState(false)
+  // ✅ حالة الجلسة الفعلية من Supabase
+  const [session, setSession] = useState(null)
+  const [loadingSession, setLoadingSession] = useState(true)
 
   // ✅ بيانات الفورم
   const [data, setData] = useState(defaults)
@@ -26,39 +24,36 @@ export default function Edit() {
     document.documentElement.setAttribute('dir', dir)
   }, [dir])
 
-  // محاولة دخول بباسورد مبسطة (مؤقتًا)
-  function tryAuth(e) {
-    e.preventDefault()
-    const pass = new FormData(e.currentTarget).get('password')
-    if (pass === PASSWORD) {
-      setAuthState(true)
-    } else {
-      alert(t.wrong_password)
-    }
-  }
-
-  // لغة التحرير داخل صفحة Edit (مستقلة عن لغة واجهة الموقع)
-  const [editLang, setEditLang] = useState('en') // 'en' | 'ar'
+  // جلب حالة الجلسة ومتابعة تغيّرها
+  useEffect(() => {
+    let unsubscribe
+    (async () => {
+      const current = await getSession()
+      setSession(current)
+      setLoadingSession(false)
+      const { data: sub } = onAuthChange((sess) => setSession(sess))
+      unsubscribe = sub.subscription.unsubscribe
+    })()
+    return () => { if (unsubscribe) unsubscribe() }
+  }, [])
 
   // ⬇️ جلب البيانات من Supabase أول ما الصفحة تتفتح بعد ما المستخدم يتوثّق
   useEffect(() => {
-    if (!auth) return
+    if (!session) return
     (async () => {
       try {
         setLoading(true)
         const remote = await getProfile()
-        // لو مفيش داتا على السحابة، نبدأ بالـ defaults
         setData(remote || defaults)
       } catch (e) {
         console.error('load profile failed', e)
-        // لو حصل خطأ برضه خلي عندك defaults عشان تقدر تعدّل وتعمل حفظ
         setData(defaults)
       } finally {
         setLoading(false)
       }
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth])
+  }, [session])
 
   // مهاجرة بيانات قديمة → نملأ *_en/*_ar من القيمة القديمة مرة واحدة
   useEffect(() => {
@@ -76,6 +71,7 @@ export default function Edit() {
   }, [])
 
   // bind helper لحقول ثنائية اللغة
+  const [editLang, setEditLang] = useState('en') // 'en' | 'ar'
   const bind = (key) => ({
     dir: editLang === 'ar' ? 'rtl' : 'ltr',
     value: (editLang === 'ar' ? data[`${key}_ar`] : data[`${key}_en`]) ?? data[key] ?? '',
@@ -95,57 +91,46 @@ export default function Edit() {
   }
 
   // رفع الصورة (ضغط تلقائي)
-function onImageUpload(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  if (file.size > 8 * 1024 * 1024) {
-    alert('الصورة كبيرة جدًا، أقل من 8MB');
-    return;
-  }
+  function onImageUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 8 * 1024 * 1024) { alert('الصورة كبيرة جدًا، أقل من 8MB'); return }
 
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    const img = new Image();
-    img.onload = () => {
-      const maxDim = 640;
-      let { width, height } = img;
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const img = new Image()
+      img.onload = () => {
+        const maxDim = 640
+        let { width, height } = img
 
-      if (width > height && width > maxDim) {
-        height = Math.round((height * maxDim) / width);
-        width = maxDim;
-      } else if (height > width && height > maxDim) {
-        width = Math.round((width * maxDim) / height);
-        height = maxDim;
-      } else if (width > maxDim) {
-        height = maxDim;
-        width = maxDim;
-      }
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width); width = maxDim
+        } else if (height > width && height > maxDim) {
+          width = Math.round((width * maxDim) / height); height = maxDim
+        } else if (width > maxDim) {
+          height = maxDim; width = maxDim
+        }
 
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
 
-      // نحافظ على الامتداد الأصلي ونضغط الصورة
-      const compressed =
-        file.type === 'image/png'
+        const compressed = file.type === 'image/png'
           ? canvas.toDataURL('image/png')
-          : canvas.toDataURL('image/jpeg', 0.82);
+          : canvas.toDataURL('image/jpeg', 0.82)
 
-      // ✅ هنا نضيف النسخة Base64 + نحافظ على URL لو موجود
-      setData((prev) => ({
-        ...prev,
-        image: compressed, // نسخة Base64 (تدخل جوّا vCard)
-        imageUrl: prev.imageUrl || '', // نسخة URL (من Supabase لاحقًا)
-      }));
-    };
-    img.src = ev.target.result;
-  };
-
-  reader.readAsDataURL(file);
-}
-
+        setData((prev) => ({
+          ...prev,
+          image: compressed,
+          imageUrl: prev.imageUrl || '',
+        }))
+      }
+      img.src = ev.target.result
+    }
+    reader.readAsDataURL(file)
+  }
 
   // رفع/حذف PDF
   function onPdfUpload(e) {
@@ -164,7 +149,7 @@ function onImageUpload(e) {
     e.preventDefault()
     try {
       setSaving(true)
-      await upsertProfile(data) // ← هنا السحر كله
+      await upsertProfile(data)
       alert(t.saved)
     } catch (err) {
       console.error(err)
@@ -174,20 +159,21 @@ function onImageUpload(e) {
     }
   }
 
-  // شاشة كلمة السر المؤقتة
-  if (!auth) {
+  // حالة تحميل الجلسة
+  if (loadingSession) {
     return (
-      <section className="card max-w-md mx-auto p-6">
-        <h2 className="text-xl font-bold">{t.protected}</h2>
-        <p className="opacity-80 mt-1">{t.enter_password}</p>
-        <form onSubmit={tryAuth} className="mt-4 space-y-3">
-          <input name="password" type="password" placeholder={t.password} className="input" />
-          <button className="btn btn-primary w-full">{t.continue}</button>
-        </form>
-      </section>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-sm opacity-80">Loading…</div>
+      </div>
     )
   }
 
+  // غير موثّق → اعرض واجهة تسجيل الدخول
+  if (!session) {
+    return <LoginCard />
+  }
+
+  // موثّق → اعرض لوحة التعديل
   if (loading) {
     return (
       <section className="card p-6">
@@ -199,53 +185,32 @@ function onImageUpload(e) {
 
   return (
     <section className="card p-6">
-      <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">Edit Profile</h2>
+        <button
+          onClick={async () => { try { await signOut() } catch(e){ console.error(e) } }}
+          className="px-3 py-2 rounded-xl border border-white/15 hover:bg-white/5"
+        >
+          Logout
+        </button>
+      </div>
 
       <form onSubmit={onSave} className="grid md:grid-cols-2 gap-4">
         {/* سويتش لغة المحتوى داخل صفحة التعديل */}
         <div className="md:col-span-2 flex items-center gap-2 mb-1">
           <span className="text-sm opacity-70">Content language:</span>
           <div className="inline-flex rounded-full border border-[var(--card-border)] overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setEditLang('en')}
-              className={`px-3 py-1 text-sm ${editLang === 'en' ? 'bg-[var(--brand)] text-[var(--brand-contrast)]' : ''}`}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditLang('ar')}
-              className={`px-3 py-1 text-sm ${editLang === 'ar' ? 'bg-[var(--brand)] text-[var(--brand-contrast)]' : ''}`}
-            >
-              AR
-            </button>
+            <button type="button" onClick={() => setEditLang('en')} className={`px-3 py-1 text-sm ${editLang === 'en' ? 'bg-[var(--brand)] text-[var(--brand-contrast)]' : ''}`}>EN</button>
+            <button type="button" onClick={() => setEditLang('ar')} className={`px-3 py-1 text-sm ${editLang === 'ar' ? 'bg-[var(--brand)] text-[var(--brand-contrast)]' : ''}`}>AR</button>
           </div>
         </div>
 
-{/* Email */}
-<div className="md:col-span-2">
-  <label htmlFor="email" className="block text-sm font-medium mb-1">
-    {lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}
-  </label>
-  <input
-    id="email"
-    name="email"
-    type="email"
-    className="input"
-    placeholder={lang === 'ar' ? 'name@example.com' : 'name@example.com'}
-    value={data.email || ''}
-    onChange={onChange}
-    inputMode="email"
-    autoComplete="email"
-  />
-  <p className="mt-1 text-xs opacity-70">
-    {lang === 'ar'
-      ? 'سنستخدمه لزر “إرسال بريد” في صفحة البروفايل.'
-      : 'Used for the “Send Email” button on your profile.'}
-  </p>
-</div>
-
+        {/* Email */}
+        <div className="md:col-span-2">
+          <label htmlFor="email" className="block text-sm font-medium mb-1">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}</label>
+          <input id="email" name="email" type="email" className="input" placeholder={lang === 'ar' ? 'name@example.com' : 'name@example.com'} value={data.email || ''} onChange={onChange} inputMode="email" autoComplete="email" />
+          <p className="mt-1 text-xs opacity-70">{lang === 'ar' ? 'سنستخدمه لزر “إرسال بريد” في صفحة البروفايل.' : 'Used for the “Send Email” button on your profile.'}</p>
+        </div>
 
         {/* حقول ثنائية اللغة */}
         <input className="input" {...bind('name')}  placeholder={editLang === 'ar' ? 'الاسم' : 'Name'} />
@@ -254,12 +219,10 @@ function onImageUpload(e) {
 
         {/* أرقام + تسميات */}
         <input className="input" name="phone"  value={data.phone || ''}  onChange={onChange} placeholder="Phone (+20...)" />
-        <input className="input" {...bind('phoneLabel')}
-               placeholder={editLang === 'ar' ? 'اسم رقم الهاتف (مثلاً: الشخصي)' : 'Phone label (e.g. Personal)'} />
+        <input className="input" {...bind('phoneLabel')} placeholder={editLang === 'ar' ? 'اسم رقم الهاتف (مثلاً: الشخصي)' : 'Phone label (e.g. Personal)'} />
 
         <input className="input" name="phone2" value={data.phone2 || ''} onChange={onChange} placeholder="Second Phone (+20...)" />
-        <input className="input" {...bind('phone2Label')}
-               placeholder={editLang === 'ar' ? 'اسم الرقم الثاني (مثلاً: العمل)' : 'Second phone label (e.g. Work)'} />
+        <input className="input" {...bind('phone2Label')} placeholder={editLang === 'ar' ? 'اسم الرقم الثاني (مثلاً: العمل)' : 'Second phone label (e.g. Work)'} />
 
         <input className="input" name="whatsapp" value={data.whatsapp || ''} onChange={onChange} placeholder="WhatsApp (+20...)" />
 
@@ -287,29 +250,73 @@ function onImageUpload(e) {
           {data.cv ? (
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm opacity-80">{lang === 'ar' ? 'ملف PDF مرفوع' : 'PDF attached'}</span>
-              <a href={data.cv} target="_blank" rel="noreferrer" className="btn btn-outline">
-                {lang === 'ar' ? 'معاينة' : 'Preview'}
-              </a>
-              <button type="button" onClick={removePdf} className="btn btn-ghost">
-                {lang === 'ar' ? 'حذف' : 'Remove'}
-              </button>
+              <a href={data.cv} target="_blank" rel="noreferrer" className="btn btn-outline">{lang === 'ar' ? 'معاينة' : 'Preview'}</a>
+              <button type="button" onClick={removePdf} className="btn btn-ghost">{lang === 'ar' ? 'حذف' : 'Remove'}</button>
             </div>
           ) : (
             <>
               <input type="file" accept="application/pdf" onChange={onPdfUpload} className="input cursor-pointer" />
-              <p className="text-xs opacity-70">
-                {lang === 'ar' ? 'ارفع ملف PDF بحجم أقل من 5MB' : 'Upload a PDF under 5MB'}
-              </p>
+              <p className="text-xs opacity-70">{lang === 'ar' ? 'ارفع ملف PDF بحجم أقل من 5MB' : 'Upload a PDF under 5MB'}</p>
             </>
           )}
         </div>
 
         <div className="md:col-span-2 flex gap-3">
-          <button className="btn btn-primary" type="submit" disabled={saving}>
-            {saving ? 'Saving…' : t.save}
-          </button>
+          <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : t.save}</button>
         </div>
       </form>
     </section>
+  )
+}
+
+function LoginCard() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [show, setShow] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [err, setErr] = useState('')
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setErr('')
+    if (!email || !password) { setErr('Please enter email & password.'); return }
+    setSubmitting(true)
+    try {
+      await signInWithPassword(email, password)
+    } catch (e) {
+      setErr(e?.message || 'Login failed')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-lg">
+        <h2 className="text-xl font-bold mb-1">Admin Login</h2>
+        <p className="text-sm opacity-75 mb-6">Sign in to manage your portfolio.</p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm mb-1">Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 outline-none focus:border-white/25" placeholder="you@example.com" autoComplete="username" />
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1">Password</label>
+            <div className="relative">
+              <input type={show ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 pr-10 outline-none focus:border-white/25" placeholder="••••••••" autoComplete="current-password" />
+              <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-xs opacity-70 hover:opacity-100">{show ? 'Hide' : 'Show'}</button>
+            </div>
+          </div>
+
+          {err && (<div className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-lg p-2">{err}</div>)}
+
+          <button type="submit" disabled={submitting} className="w-full rounded-xl px-4 py-2 bg-blue-500/90 hover:bg-blue-500 text-white disabled:opacity-60">{submitting ? 'Signing in…' : 'Sign in'}</button>
+        </form>
+
+        <p className="mt-4 text-xs opacity-70">* بعد تسجيل الدخول بنجاح سيتم فتح لوحة التحكم. للخروج استخدم زر Logout.</p>
+      </div>
+    </div>
   )
 }
