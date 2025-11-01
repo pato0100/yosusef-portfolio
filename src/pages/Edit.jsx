@@ -280,8 +280,8 @@ function LoginCard() {
 
     const redirectTo =
       import.meta.env.DEV
-        ? 'http://localhost:5173/'        // وقت التطوير
-        : 'https://yousef-portfolio2001.vercel.app/';  // وقت النشر على Vercel
+        ? 'http://localhost:5173/edit'        // وقت التطوير
+        : 'https://youssef-portfolio2001.vercel.app/edit';  // وقت النشر على Vercel
 
     await supabase.auth.signInWithOAuth({
       provider: 'github',
