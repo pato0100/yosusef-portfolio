@@ -1,9 +1,8 @@
 // src/services/settings.js
 import { supabase } from '../lib/supabase'
 
-// شكل الحالة داخل الواجهة (camelCase)
+// الحالة الافتراضية (camelCase في الواجهة)
 export const DEFAULT_SETTINGS = {
-  id: 'global',
   defaultLang: 'ar',
   defaultTheme: 'agogovich',
   showContactPage: true,
@@ -15,23 +14,22 @@ export const DEFAULT_SETTINGS = {
   showDownloadVCard: true,
 }
 
-// من قاعدة البيانات (snake_case) → إلى الواجهة (camelCase)
+// helpers
 function fromDb(row = {}) {
   return {
-    id: row.id ?? 'global',
+    id: row.id ?? null,                    // uuid
     defaultLang: row.default_lang ?? DEFAULT_SETTINGS.defaultLang,
     defaultTheme: row.default_theme ?? DEFAULT_SETTINGS.defaultTheme,
-    showContactPage:   row.show_contact_page ?? DEFAULT_SETTINGS.showContactPage,
-    showProjectsPage:  row.show_projects_page ?? DEFAULT_SETTINGS.showProjectsPage,
-    showContactSection:row.show_contact_section ?? DEFAULT_SETTINGS.showContactSection,
-    showQR:            row.show_qr ?? DEFAULT_SETTINGS.showQR,
-    showSocials:       row.show_socials ?? DEFAULT_SETTINGS.showSocials,
-    showDownloadCV:    row.show_download_cv ?? DEFAULT_SETTINGS.showDownloadCV,
-    showDownloadVCard: row.show_download_vcard ?? DEFAULT_SETTINGS.showDownloadVCard,
+    showContactPage:    row.show_contact_page ?? DEFAULT_SETTINGS.showContactPage,
+    showProjectsPage:   row.show_projects_page ?? DEFAULT_SETTINGS.showProjectsPage,
+    showContactSection: row.show_contact_section ?? DEFAULT_SETTINGS.showContactSection,
+    showQR:             row.show_qr ?? DEFAULT_SETTINGS.showQR,
+    showSocials:        row.show_socials ?? DEFAULT_SETTINGS.showSocials,
+    showDownloadCV:     row.show_download_cv ?? DEFAULT_SETTINGS.showDownloadCV,
+    showDownloadVCard:  row.show_download_vcard ?? DEFAULT_SETTINGS.showDownloadVCard,
   }
 }
 
-// من الواجهة (camelCase) → إلى قاعدة البيانات (snake_case)
 function toDb(patch = {}) {
   return {
     default_lang: patch.defaultLang,
@@ -47,31 +45,71 @@ function toDb(patch = {}) {
   }
 }
 
+async function getUidOrThrow() {
+  const { data, error } = await supabase.auth.getUser()
+  if (error || !data?.user?.id) throw error || new Error('No authenticated user')
+  return data.user.id
+}
+
+/**
+ * اقرأ إعدادات المستخدم الحالي.
+ * - يحاول يجلب صف المستخدم (id = auth.uid()).
+ * - لو مش موجود: يعمل upsert بصف جديد بالافتراضيات ويرجّعه.
+ * - (توافق للخلف): لو كان عندك صف global قديم ولسه الـRLS سامح، ممكن ترجع منه كـ fallback.
+ */
 export async function getSettings() {
+  const uid = await getUidOrThrow()
+
+  // 1) جرّب صف المستخدم
   const { data, error } = await supabase
     .from('settings')
     .select('*')
-    .eq('id', 'global')
-    .single()
+    .eq('id', uid)
+    .maybeSingle()
 
   if (error) {
-    // لو مفيش صف — رجّع الافتراضيات
-    if (error.code === 'PGRST116') return { ...DEFAULT_SETTINGS }
     console.error('⚠️ getSettings error:', error)
     throw error
   }
 
-  return fromDb(data)
+  if (data) return fromDb(data)
+
+  // 2) (اختياري) fallback لو عندك صف global عام ومسموح قراءته
+  const { data: globalRow } = await supabase
+    .from('settings')
+    .select('*')
+    .eq('id', 'global')
+    .maybeSingle()
+
+  if (globalRow) return fromDb(globalRow)
+
+  // 3) لو مفيش حاجة خالص: أنشئ صف للمستخدم بالافتراضيات وأرجعه
+  const payload = { id: uid, ...toDb(DEFAULT_SETTINGS) }
+  const { data: created, error: upsertErr } = await supabase
+    .from('settings')
+    .upsert(payload, { onConflict: 'id' })
+    .select('*')
+    .single()
+
+  if (upsertErr) {
+    console.error('⚠️ getSettings upsert default error:', upsertErr)
+    // كمل على الافتراضيات على الأقل للواجهة
+    return { id: uid, ...DEFAULT_SETTINGS }
+  }
+
+  return fromDb(created)
 }
 
+/**
+ * حدّث إعدادات المستخدم الحالي (upsert آمن).
+ */
 export async function updateSettings(patch) {
-  const payload = toDb(patch)
-  // debug عند اللزوم: console.log('payload', payload)
+  const uid = await getUidOrThrow()
+  const payload = { id: uid, ...toDb(patch) }
 
   const { data, error } = await supabase
     .from('settings')
-    .update(payload)     // ← بنبعت snake_case بس
-    .eq('id', 'global')
+    .upsert(payload, { onConflict: 'id' }) // ينشئ لو مش موجود
     .select('*')
     .single()
 
