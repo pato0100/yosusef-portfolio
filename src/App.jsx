@@ -8,49 +8,58 @@ import Navbar from './components/Navbar.jsx'
 import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import LanguageToggle from './components/LanguageToggle.jsx'
 import { useI18n } from './i18n/i18n.jsx'
-
-
+import { DEFAULT_SETTINGS } from './services/settings' // ✅
 
 export default function App() {
-const { t } = useI18n()
-const loc = useLocation()
+  const { t } = useI18n()
+  const loc = useLocation()
 
-
+// داخل App() وقبل useEffect بتاعة title
 useEffect(() => {
-document.title = `Youssef | ${t.profile}`
-}, [loc, t])
+  // 1) حط الافتراضيات في localStorage لو فاضيين
+  const storedLang  = localStorage.getItem('lang')
+  const storedTheme = localStorage.getItem('theme')
+  if (!storedLang)  localStorage.setItem('lang', 'ar')
+  if (!storedTheme) localStorage.setItem('theme', 'agogovich')
 
-console.log(import.meta.env.VITE_SUPABASE_URL);
-
-
-return (
-<div className="min-h-screen">
-<header className="container-max flex items-center justify-between py-6">
-<Link to="/" className="text-lg font-bold"></Link>
-<div className="flex items-center gap-2">
-<LanguageToggle />
-<ThemeSwitcher />
-</div>
-</header>
-<Navbar />
+  // 2) طبّق الثيم بسرعة على الـ <html> لمنع فلاش ألوان
+  const theme = localStorage.getItem('theme') || 'agogovich'
+  const root = document.documentElement
+  root.setAttribute('data-theme', theme)
+  // ملاحظة: احنا بنستخدم class "dark" بس لما الثيم فعلاً "dark"
+  root.classList.toggle('dark', theme === 'dark')
+}, [])
 
 
-<main className="container-max py-8">
-<Routes>
-<Route path="/" element={<Profile />} />
-<Route path="/projects" element={<Projects />} />
-<Route path="/contact" element={<Contact />} />
-<Route path="/edit" element={<Edit />} />
-<Route path="*" element={<Navigate to="/" replace />} />
-</Routes>
-</main>
+  useEffect(() => {
+    document.title = `Youssef | ${t.profile}`
+  }, [loc, t])
 
+  return (
+    <div className="min-h-screen">
+      <header className="container-max flex items-center justify-between py-6">
+        <Link to="/" className="text-lg font-bold"></Link>
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <ThemeSwitcher defaultTheme={DEFAULT_SETTINGS.defaultTheme} /> {/* ✅ */}
+        </div>
+      </header>
 
+      <Navbar />
 
-<footer className="container-max py-10 text-center text-sm opacity-70">
-<p>© {new Date().getFullYear()} Youssef — {t.made_with}</p>
-</footer>
-</div>
-)
+      <main className="container-max py-8">
+        <Routes>
+          <Route path="/" element={<Profile />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/edit" element={<Edit />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+
+      <footer className="container-max py-10 text-center text-sm opacity-70">
+        <p>© {new Date().getFullYear()} Youssef — {t.made_with}</p>
+      </footer>
+    </div>
+  )
 }
-

@@ -3,9 +3,18 @@ import defaults from '../data/defaultProfile.json'
 import { getProfile, upsertProfile } from '../services/cloudStorage'
 import { useI18n } from '../i18n/i18n'
 import { supabase, signOut, getSession, onAuthChange } from '../lib/supabase'
+import { getSettings, updateSettings, DEFAULT_SETTINGS } from '../services/settings'
+import { THEME_OPTIONS } from '../data/themes'
+
 
 export default function Edit() {
   const { t, lang } = useI18n()
+
+    // 🧩 إعدادات الموقع (Settings)
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+  const [loadingSettings, setLoadingSettings] = useState(true)
+  const [savingSettings, setSavingSettings] = useState(false)
+
 
   // ✅ حالة الجلسة الفعلية من Supabase
   const [session, setSession] = useState(null)
@@ -55,6 +64,24 @@ export default function Edit() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session])
 
+  // ⬇️ جلب الإعدادات من Supabase بعد تسجيل الدخول
+useEffect(() => {
+  if (!session) return
+  (async () => {
+    try {
+      setLoadingSettings(true)
+      const s = await getSettings()
+      setSettings(s)
+    } catch (e) {
+      console.error('load settings failed', e)
+      setSettings(DEFAULT_SETTINGS)
+    } finally {
+      setLoadingSettings(false)
+    }
+  })()
+}, [session])
+
+
   // مهاجرة بيانات قديمة → نملأ *_en/*_ar من القيمة القديمة مرة واحدة
   useEffect(() => {
     setData((prev) => {
@@ -69,6 +96,27 @@ export default function Edit() {
       return changed ? next : prev
     })
   }, [])
+
+  // 🧩 تحديث إعداد منفرد
+function setSetting(key, value) {
+  setSettings(prev => ({ ...prev, [key]: value }))
+}
+
+// 🧩 حفظ كل الإعدادات في قاعدة البيانات
+async function saveSettings(e) {
+  e?.preventDefault?.()
+  try {
+    setSavingSettings(true)
+    await updateSettings(settings)
+    alert('Settings saved ✅')
+  } catch (e) {
+    console.error(e)
+    alert('Failed to save settings')
+  } finally {
+    setSavingSettings(false)
+  }
+}
+
 
   // bind helper لحقول ثنائية اللغة
   const [editLang, setEditLang] = useState('en') // 'en' | 'ar'
@@ -160,6 +208,7 @@ export default function Edit() {
   }
 
   // حالة تحميل الجلسة
+   // حالة تحميل الجلسة
   if (loadingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -183,91 +232,173 @@ export default function Edit() {
     )
   }
 
+  // =======================
+  //   RETURN (مصبوط)
+  // =======================
   return (
-    <section className="card p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold">Edit Profile</h2>
-        <button
-          onClick={async () => { try { await signOut() } catch(e){ console.error(e) } }}
-          className="px-3 py-2 rounded-xl border border-white/15 hover:bg-white/5"
-        >
-          Logout
-        </button>
-      </div>
-
-      <form onSubmit={onSave} className="grid md:grid-cols-2 gap-4">
-        {/* سويتش لغة المحتوى داخل صفحة التعديل */}
-        <div className="md:col-span-2 flex items-center gap-2 mb-1">
-          <span className="text-sm opacity-70">Content language:</span>
-          <div className="inline-flex rounded-full border border-[var(--card-border)] overflow-hidden">
-            <button type="button" onClick={() => setEditLang('en')} className={`px-3 py-1 text-sm ${editLang === 'en' ? 'bg-[var(--brand)] text-[var(--brand-contrast)]' : ''}`}>EN</button>
-            <button type="button" onClick={() => setEditLang('ar')} className={`px-3 py-1 text-sm ${editLang === 'ar' ? 'bg-[var(--brand)] text-[var(--brand-contrast)]' : ''}`}>AR</button>
-          </div>
+    <>
+      {/* ===== Edit Profile ===== */}
+      <section className="card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Edit Profile</h2>
+          <button
+            onClick={async () => { try { await signOut() } catch(e){ console.error(e) } }}
+            className="px-3 py-2 rounded-xl border border-white/15 hover:bg-white/5"
+          >
+            Logout
+          </button>
         </div>
 
-        {/* Email */}
-        <div className="md:col-span-2">
-          <label htmlFor="email" className="block text-sm font-medium mb-1">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}</label>
-          <input id="email" name="email" type="email" className="input" placeholder={lang === 'ar' ? 'name@example.com' : 'name@example.com'} value={data.email || ''} onChange={onChange} inputMode="email" autoComplete="email" />
-          <p className="mt-1 text-xs opacity-70">{lang === 'ar' ? 'سنستخدمه لزر “إرسال بريد” في صفحة البروفايل.' : 'Used for the “Send Email” button on your profile.'}</p>
-        </div>
-
-        {/* حقول ثنائية اللغة */}
-        <input className="input" {...bind('name')}  placeholder={editLang === 'ar' ? 'الاسم' : 'Name'} />
-        <input className="input" {...bind('title')} placeholder={editLang === 'ar' ? 'المسمى الوظيفي' : 'Title'} />
-        <textarea className="input md:col-span-2" {...bind('about')} placeholder={editLang === 'ar' ? 'نبذة' : 'About'} />
-
-        {/* أرقام + تسميات */}
-        <input className="input" name="phone"  value={data.phone || ''}  onChange={onChange} placeholder="Phone (+20...)" />
-        <input className="input" {...bind('phoneLabel')} placeholder={editLang === 'ar' ? 'اسم رقم الهاتف (مثلاً: الشخصي)' : 'Phone label (e.g. Personal)'} />
-
-        <input className="input" name="phone2" value={data.phone2 || ''} onChange={onChange} placeholder="Second Phone (+20...)" />
-        <input className="input" {...bind('phone2Label')} placeholder={editLang === 'ar' ? 'اسم الرقم الثاني (مثلاً: العمل)' : 'Second phone label (e.g. Work)'} />
-
-        <input className="input" name="whatsapp" value={data.whatsapp || ''} onChange={onChange} placeholder="WhatsApp (+20...)" />
-
-        {/* صورة البروفايل */}
-        <div className="md:col-span-2 flex flex-col gap-2">
-          <label className="font-medium">Profile Picture</label>
-          {data.image && <img src={data.image} alt="Profile preview" className="w-24 h-24 object-cover rounded-full border border-gray-300 shadow" />}
-          <input type="file" accept="image/*" onChange={onImageUpload} className="input cursor-pointer" />
-        </div>
-
-        {/* سوشيال */}
-        <div className="md:col-span-2 grid md:grid-cols-2 gap-3">
-          <input className="input" name="facebook"  value={data.socials?.facebook  || ''} onChange={onChangeSocial} placeholder="Facebook URL" />
-          <input className="input" name="instagram" value={data.socials?.instagram || ''} onChange={onChangeSocial} placeholder="Instagram URL" />
-          <input className="input" name="x"        value={data.socials?.x        || ''} onChange={onChangeSocial} placeholder="X (Twitter) URL" />
-          <input className="input" name="linkedin" value={data.socials?.linkedin || ''} onChange={onChangeSocial} placeholder="LinkedIn URL" />
-          <input className="input" name="youtube"  value={data.socials?.youtube  || ''} onChange={onChangeSocial} placeholder="YouTube URL" />
-          <input className="input" name="tiktok"   value={data.socials?.tiktok   || ''} onChange={onChangeSocial} placeholder="TikTok URL" />
-          <input className="input md:col-span-2" name="github" value={data.socials?.github || ''} onChange={onChangeSocial} placeholder="GitHub URL" />
-        </div>
-
-        {/* CV */}
-        <div className="md:col-span-2 flex flex-col gap-2">
-          <label className="font-medium">{lang === 'ar' ? 'السيرة الذاتية (PDF)' : 'CV (PDF)'}</label>
-          {data.cv ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm opacity-80">{lang === 'ar' ? 'ملف PDF مرفوع' : 'PDF attached'}</span>
-              <a href={data.cv} target="_blank" rel="noreferrer" className="btn btn-outline">{lang === 'ar' ? 'معاينة' : 'Preview'}</a>
-              <button type="button" onClick={removePdf} className="btn btn-ghost">{lang === 'ar' ? 'حذف' : 'Remove'}</button>
+        <form onSubmit={onSave} className="grid md:grid-cols-2 gap-4">
+          {/* سويتش لغة المحتوى داخل صفحة التعديل */}
+          <div className="md:col-span-2 flex items-center gap-2 mb-1">
+            <span className="text-sm opacity-70">Content language:</span>
+            <div className="inline-flex rounded-full border border-[var(--card-border)] overflow-hidden">
+              <button type="button" onClick={() => setEditLang('en')} className={`px-3 py-1 text-sm ${editLang === 'en' ? 'bg-[var(--brand)] text-[var(--brand-contrast)]' : ''}`}>EN</button>
+              <button type="button" onClick={() => setEditLang('ar')} className={`px-3 py-1 text-sm ${editLang === 'ar' ? 'bg-[var(--brand)] text-[var(--brand-contrast)]' : ''}`}>AR</button>
             </div>
-          ) : (
-            <>
-              <input type="file" accept="application/pdf" onChange={onPdfUpload} className="input cursor-pointer" />
-              <p className="text-xs opacity-70">{lang === 'ar' ? 'ارفع ملف PDF بحجم أقل من 5MB' : 'Upload a PDF under 5MB'}</p>
-            </>
-          )}
+          </div>
+
+          {/* Email */}
+          <div className="md:col-span-2">
+            <label htmlFor="email" className="block text-sm font-medium mb-1">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}</label>
+            <input id="email" name="email" type="email" className="input" placeholder={lang === 'ar' ? 'name@example.com' : 'name@example.com'} value={data.email || ''} onChange={onChange} inputMode="email" autoComplete="email" />
+            <p className="mt-1 text-xs opacity-70">{lang === 'ar' ? 'سنستخدمه لزر “إرسال بريد” في صفحة البروفايل.' : 'Used for the “Send Email” button on your profile.'}</p>
+          </div>
+
+          {/* حقول ثنائية اللغة */}
+          <input className="input" {...bind('name')}  placeholder={editLang === 'ar' ? 'الاسم' : 'Name'} />
+          <input className="input" {...bind('title')} placeholder={editLang === 'ar' ? 'المسمى الوظيفي' : 'Title'} />
+          <textarea className="input md:col-span-2" {...bind('about')} placeholder={editLang === 'ar' ? 'نبذة' : 'About'} />
+
+          {/* أرقام + تسميات */}
+          <input className="input" name="phone"  value={data.phone || ''}  onChange={onChange} placeholder="Phone (+20...)" />
+          <input className="input" {...bind('phoneLabel')} placeholder={editLang === 'ar' ? 'اسم رقم الهاتف (مثلاً: الشخصي)' : 'Phone label (e.g. Personal)'} />
+          <input className="input" name="phone2" value={data.phone2 || ''} onChange={onChange} placeholder="Second Phone (+20...)" />
+          <input className="input" {...bind('phone2Label')} placeholder={editLang === 'ar' ? 'اسم الرقم الثاني (مثلاً: العمل)' : 'Second phone label (e.g. Work)'} />
+          <input className="input" name="whatsapp" value={data.whatsapp || ''} onChange={onChange} placeholder="WhatsApp (+20...)" />
+
+          {/* صورة البروفايل */}
+          <div className="md:col-span-2 flex flex-col gap-2">
+            <label className="font-medium">Profile Picture</label>
+            {data.image && <img src={data.image} alt="Profile preview" className="w-24 h-24 object-cover rounded-full border border-gray-300 shadow" />}
+            <input type="file" accept="image/*" onChange={onImageUpload} className="input cursor-pointer" />
+          </div>
+
+          {/* سوشيال */}
+          <div className="md:col-span-2 grid md:grid-cols-2 gap-3">
+            <input className="input" name="facebook"  value={data.socials?.facebook  || ''} onChange={onChangeSocial} placeholder="Facebook URL" />
+            <input className="input" name="instagram" value={data.socials?.instagram || ''} onChange={onChangeSocial} placeholder="Instagram URL" />
+            <input className="input" name="x"        value={data.socials?.x        || ''} onChange={onChangeSocial} placeholder="X (Twitter) URL" />
+            <input className="input" name="linkedin" value={data.socials?.linkedin || ''} onChange={onChangeSocial} placeholder="LinkedIn URL" />
+            <input className="input" name="youtube"  value={data.socials?.youtube  || ''} onChange={onChangeSocial} placeholder="YouTube URL" />
+            <input className="input" name="tiktok"   value={data.socials?.tiktok   || ''} onChange={onChangeSocial} placeholder="TikTok URL" />
+            <input className="input md:col-span-2" name="github" value={data.socials?.github || ''} onChange={onChangeSocial} placeholder="GitHub URL" />
+          </div>
+
+          {/* CV */}
+          <div className="md:col-span-2 flex flex-col gap-2">
+            <label className="font-medium">{lang === 'ar' ? 'السيرة الذاتية (PDF)' : 'CV (PDF)'}</label>
+            {data.cv ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm opacity-80">{lang === 'ar' ? 'ملف PDF مرفوع' : 'PDF attached'}</span>
+                <a href={data.cv} target="_blank" rel="noreferrer" className="btn btn-outline">{lang === 'ar' ? 'معاينة' : 'Preview'}</a>
+                <button type="button" onClick={removePdf} className="btn btn-ghost">{lang === 'ar' ? 'حذف' : 'Remove'}</button>
+              </div>
+            ) : (
+              <>
+                <input type="file" accept="application/pdf" onChange={onPdfUpload} className="input cursor-pointer" />
+                <p className="text-xs opacity-70">{lang === 'ar' ? 'ارفع ملف PDF بحجم أقل من 5MB' : 'Upload a PDF under 5MB'}</p>
+              </>
+            )}
+          </div>
+
+          <div className="md:col-span-2 flex gap-3">
+            <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : t.save}</button>
+          </div>
+        </form>
+      </section>
+
+      {/* ===== Settings Panel (جديد) ===== */}
+      <section className="card p-6 mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold">Settings</h2>
+          <button
+            onClick={saveSettings}
+            disabled={savingSettings || loadingSettings}
+            className="btn btn-primary"
+          >
+            {savingSettings ? 'Saving…' : 'Save Settings'}
+          </button>
         </div>
 
-        <div className="md:col-span-2 flex gap-3">
-          <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : t.save}</button>
-        </div>
-      </form>
-    </section>
+        {loadingSettings ? (
+          <div className="opacity-70">Loading settings…</div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Default Language */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Default Language</label>
+              <select
+                className="input"
+                value={settings.defaultLang}
+                onChange={(e) => setSetting('defaultLang', e.target.value)}
+              >
+                <option value="ar">Arabic (AR)</option>
+                <option value="en">English (EN)</option>
+              </select>
+              <p className="text-xs opacity-70 mt-1">
+                اللغة الافتراضية عند أول زيارة (لو مفيش اختيار محفوظ محليًا).
+              </p>
+            </div>
+
+            {/* Default Theme */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Default Theme</label>
+              <select
+                className="input"
+                value={settings.defaultTheme}
+                onChange={(e) => setSetting('defaultTheme', e.target.value)}
+              >
+                {THEME_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <p className="text-xs opacity-70 mt-1">
+                الثيم الافتراضي عند أول زيارة (لو مفيش اختيار محفوظ محليًا).
+              </p>
+            </div>
+
+            {/* Toggles */}
+            <div className="md:col-span-2 grid md:grid-cols-3 gap-3">
+              {[
+                ['showContactPage', 'Show Contact Page'],
+                ['showProjectsPage', 'Show Projects Page'],
+                ['showContactSection', 'Show Contact Section (in Profile)'],
+                ['showQR', 'Show QR'],
+                ['showSocials', 'Show Socials'],
+                ['showDownloadCV', 'Show Download CV'],
+                ['showDownloadVCard', 'Show Download vCard'],
+              ].map(([key, label]) => (
+                <label key={key} className="flex items-center gap-2 border border-white/10 rounded-xl px-3 py-2">
+                  <input
+                    type="checkbox"
+                    checked={!!settings[key]}
+                    onChange={(e) => setSetting(key, e.target.checked)}
+                  />
+                  <span className="text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+    </>
   )
-}
+} // ← نهاية function Edit
+
+
+
 
 function LoginCard() {
   const [loading, setLoading] = useState(false)
