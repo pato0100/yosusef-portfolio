@@ -273,20 +273,27 @@ function LoginCard() {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
 
-  async function signInWithGitHub() {
-    try {
-      setErr('')
-      setLoading(true)
-      await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: { redirectTo: window.location.origin } // هيحوّلك ويرجعك لنفس الصفحة
-      })
-      // مفيش حاجة بعد await هنا لأن التحكم بيروح لصفحة GitHub ويرجع تاني
-    } catch (e) {
-      setErr(e?.message || 'GitHub login failed')
-      setLoading(false)
-    }
+ async function signInWithGitHub() {
+  try {
+    setErr('')
+    setLoading(true)
+
+    const redirectTo =
+      import.meta.env.DEV
+        ? 'http://localhost:5173/'        // وقت التطوير
+        : 'https://yousef-portfolio2001.vercel.app/';  // وقت النشر على Vercel
+
+    await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo }
+    })
+    // بعد الدخول GitHub هيحوّلك تلقائيًا للصفحة دي تاني
+  } catch (e) {
+    setErr(e?.message || 'GitHub login failed')
+    setLoading(false)
   }
+}
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
