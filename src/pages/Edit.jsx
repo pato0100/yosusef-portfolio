@@ -233,6 +233,21 @@ async function saveSettings(e) {
     )
   }
 
+// Debug: Show current UID in console
+useEffect(() => {
+  if (session) {
+    (async () => {
+      const { data, error } = await supabase.auth.getUser()
+      if (error) {
+        console.error('Failed to fetch UID:', error)
+      } else {
+        console.log('🆔 My UID:', data?.user?.id)
+      }
+    })()
+  }
+}, [session])
+
+
   // =======================
   //   RETURN (مصبوط)
   // =======================
