@@ -26,6 +26,20 @@ export default function Edit() {
   // ✅ حالة تحميل/حفظ لواجهة أحسن
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+// Debug: Show current UID in console
+useEffect(() => {
+  if (session) {
+    (async () => {
+      const { data, error } = await supabase.auth.getUser()
+      if (error) {
+        console.error('Failed to fetch UID:', error)
+      } else {
+        console.log('🆔 My UID:', data?.user?.id)
+      }
+    })()
+  }
+}, [session])
+
 
   // اتجاه الواجهة
   const dir = lang === 'ar' ? 'rtl' : 'ltr'
