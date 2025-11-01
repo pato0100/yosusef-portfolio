@@ -222,20 +222,6 @@ async function saveSettings(e) {
     return <LoginCard />
   }
 
-  // === Debug UID (مؤقت فقط) ===
-useEffect(() => {
-  if (session) {
-    (async () => {
-      const { data, error } = await supabase.auth.getUser()
-      if (error) {
-        console.error('Failed to fetch UID:', error)
-      } else {
-        console.log('🆔 My UID:', data?.user?.id)
-      }
-    })()
-  }
-}, [session])
-
 
   // موثّق → اعرض لوحة التعديل
   if (loading) {
