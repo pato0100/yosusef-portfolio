@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Profile from './pages/Profile.jsx'
 import Projects from './pages/Projects.jsx'
 import Contact from './pages/Contact.jsx'
@@ -11,29 +11,28 @@ import { useI18n } from './i18n/i18n.jsx'
 import { getSettings } from './services/settings'
 
 export default function App() {
-  const { t } = useI18n()
+  const { t, setLang } = useI18n()
   const loc = useLocation()
 
-  // 🔥 تحميل settings من Supabase
+  const [settings, setSettings] = useState(null)
+
+  // 🔥 تحميل Settings من Supabase مرة واحدة عند التشغيل
   useEffect(() => {
     async function loadSettings() {
       try {
-        const settings = await getSettings()
+        const data = await getSettings()
+        setSettings(data)
 
-        const theme = settings.defaultTheme
-        const lang  = settings.defaultLang
-
-        // تخزين
-        localStorage.setItem('theme', theme)
-        localStorage.setItem('lang', lang)
-
-        // تطبيق الثيم
+        // ✅ تطبيق الثيم
         const root = document.documentElement
-        root.setAttribute('data-theme', theme)
-        root.classList.toggle('dark', theme === 'dark')
+        root.setAttribute('data-theme', data.defaultTheme)
+        root.classList.toggle('dark', data.defaultTheme === 'dark')
+
+        // ✅ تطبيق اللغة فعليًا (مش localStorage بس)
+        setLang(data.defaultLang)
 
       } catch (err) {
-        console.error('Failed to load settings', err)
+        console.error('Failed to load settings:', err)
       }
     }
 
@@ -49,9 +48,11 @@ export default function App() {
     <div className="min-h-screen">
       <header className="container-max flex items-center justify-between py-6">
         <Link to="/" className="text-lg font-bold"></Link>
+
         <div className="flex items-center gap-2">
           <LanguageToggle />
-          <ThemeSwitcher />
+          {/* 👇 مهم جدًا: مرر الثيم الحقيقي */}
+          <ThemeSwitcher defaultTheme={settings?.defaultTheme} />
         </div>
       </header>
 
