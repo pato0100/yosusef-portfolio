@@ -68,19 +68,7 @@ export async function getProfile() {
   return data
 }
 
-/* ---------- Settings (Public Read) ---------- */
-export async function getSettings() {
-  const { data, error } = await supabase
-    .from('settings')
-    .select('*')
-    .limit(1)
-    .maybeSingle()
 
-  if (error) throw error
-  if (!data) return null
-
-  return data
-}
 
 /* ---------- Writes ---------- */
 export async function upsertProfile(profile) {
