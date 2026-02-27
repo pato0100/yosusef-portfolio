@@ -45,14 +45,12 @@ async function getUidOrThrow() {
   return data.user.id
 }
 
-/* ---------- Reads ---------- */
+/* ---------- Reads (Public) ---------- */
 export async function getProfile() {
-  const uid = await getUidOrThrow()
-
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', uid)
+    .limit(1)
     .maybeSingle()
 
   if (error) throw error
