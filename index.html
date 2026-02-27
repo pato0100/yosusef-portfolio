@@ -18,16 +18,23 @@
 
     <!-- ✅ Dark Theme only -->
     <script>
-      (function () {
-        const KEY = 'theme1';
-        const saved = localStorage.getItem(KEY);
-        // لو الثيم المحفوظ قديم أو light، نبدله فوراً بـ dark
-        const theme = (!saved || saved === 'light') ? 'dark' : saved;
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.classList.add('dark');
-        localStorage.setItem(KEY, theme);
-      })();
-    </script>
+  (function () {
+    try {
+      const savedTheme = localStorage.getItem('theme');
+      const savedLang  = localStorage.getItem('lang');
+
+      if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+      }
+
+      if (savedLang) {
+        document.documentElement.setAttribute('lang', savedLang);
+        document.documentElement.setAttribute('dir', savedLang === 'ar' ? 'rtl' : 'ltr');
+      }
+    } catch (e) {}
+  })();
+</script>
   </head>
 
   <body>
