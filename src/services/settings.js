@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 
 // الحالة الافتراضية (camelCase في الواجهة)
 export const DEFAULT_SETTINGS = {
-  defaultLang: 'ar',
+  defaultLang: 'en',
   defaultTheme: 'agogovich',
   showContactPage: true,
   showProjectsPage: true,
