@@ -8,29 +8,39 @@ import Navbar from './components/Navbar.jsx'
 import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import LanguageToggle from './components/LanguageToggle.jsx'
 import { useI18n } from './i18n/i18n.jsx'
-import { DEFAULT_SETTINGS } from './services/settings' // ✅
+import { getSettings } from './services/settings'
 
 export default function App() {
   const { t } = useI18n()
   const loc = useLocation()
 
-// داخل App() وقبل useEffect بتاعة title
-useEffect(() => {
-  // 1) حط الافتراضيات في localStorage لو فاضيين
-  const storedLang  = localStorage.getItem('lang')
-  const storedTheme = localStorage.getItem('theme')
-  if (!storedLang)  localStorage.setItem('lang', 'ar')
-  if (!storedTheme) localStorage.setItem('theme', 'agogovich')
+  // 🔥 تحميل settings من Supabase
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const settings = await getSettings()
 
-  // 2) طبّق الثيم بسرعة على الـ <html> لمنع فلاش ألوان
-  const theme = localStorage.getItem('theme') || 'agogovich'
-  const root = document.documentElement
-  root.setAttribute('data-theme', theme)
-  // ملاحظة: احنا بنستخدم class "dark" بس لما الثيم فعلاً "dark"
-  root.classList.toggle('dark', theme === 'dark')
-}, [])
+        const theme = settings.defaultTheme
+        const lang  = settings.defaultLang
 
+        // تخزين
+        localStorage.setItem('theme', theme)
+        localStorage.setItem('lang', lang)
 
+        // تطبيق الثيم
+        const root = document.documentElement
+        root.setAttribute('data-theme', theme)
+        root.classList.toggle('dark', theme === 'dark')
+
+      } catch (err) {
+        console.error('Failed to load settings', err)
+      }
+    }
+
+    loadSettings()
+  }, [])
+
+  // عنوان الصفحة
   useEffect(() => {
     document.title = `Youssef | ${t.profile}`
   }, [loc, t])
@@ -41,7 +51,7 @@ useEffect(() => {
         <Link to="/" className="text-lg font-bold"></Link>
         <div className="flex items-center gap-2">
           <LanguageToggle />
-          <ThemeSwitcher defaultTheme={DEFAULT_SETTINGS.defaultTheme} /> {/* ✅ */}
+          <ThemeSwitcher />
         </div>
       </header>
 
