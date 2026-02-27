@@ -45,15 +45,27 @@ export default function App() {
   }, [loc, t])
 
   // 🔥🔥🔥 Premium Loader
-  if (!settings) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-lg font-semibold opacity-70">
-          Loading your experience...
-        </div>
+if (!settings) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-black overflow-hidden">
+      
+      <div className="relative flex items-center justify-center">
+        
+        {/* 🔵 Glow Layer */}
+        <div className="absolute w-72 h-72 bg-cyan-500 rounded-full blur-3xl opacity-20 animate-pulse"></div>
+
+        {/* 🧠 Logo */}
+        <img
+          src="/assets/themes/agogovich-bg.png"
+          alt="Agogovich Technology"
+          className="relative w-64 md:w-80 drop-shadow-[0_0_35px_rgba(0,255,255,0.6)] transition-all duration-700"
+        />
+
       </div>
-    )
-  }
+
+    </div>
+  )
+}
 
   return (
     <div className="min-h-screen">
