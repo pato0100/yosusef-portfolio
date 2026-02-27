@@ -50,25 +50,22 @@ export async function getProfile() {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
-    .limit(1)
     .maybeSingle()
 
   if (error) throw error
 
-  if (data) {
-    // تطبيع مفاتيح الملفات
-    data.image = data.image ?? data.image_url ?? ''
-    data.cv    = data.cv ?? data.cv_url ?? ''
-    if (typeof data.socials !== 'object' || data.socials === null) data.socials = {}
+  if (!data) return null
 
-    // snake_case -> camelCase
-    data.phoneLabel_en  = data.phone_label_en  ?? data.phoneLabel_en
-    data.phoneLabel_ar  = data.phone_label_ar  ?? data.phoneLabel_ar
-    data.phone2Label_en = data.phone2_label_en ?? data.phone2Label_en
-    data.phone2Label_ar = data.phone2_label_ar ?? data.phone2Label_ar
-  }
+  data.image = data.image ?? data.image_url ?? ''
+  data.cv    = data.cv ?? data.cv_url ?? ''
+  if (typeof data.socials !== 'object' || data.socials === null) data.socials = {}
 
-  return data || null
+  data.phoneLabel_en  = data.phone_label_en  ?? data.phoneLabel_en
+  data.phoneLabel_ar  = data.phone_label_ar  ?? data.phoneLabel_ar
+  data.phone2Label_en = data.phone2_label_en ?? data.phone2Label_en
+  data.phone2Label_ar = data.phone2_label_ar ?? data.phone2Label_ar
+
+  return data
 }
 
 /* ---------- Writes ---------- */
