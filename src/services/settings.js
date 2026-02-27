@@ -1,7 +1,6 @@
 // src/services/settings.js
 import { supabase } from '../lib/supabase'
 
-// الحالة الافتراضية (camelCase في الواجهة)
 export const DEFAULT_SETTINGS = {
   defaultLang: 'en',
   defaultTheme: 'agogovich',
@@ -49,68 +48,59 @@ function toDb(patch = {}) {
 }
 
 // =====================
-// 🔥 GET SETTINGS (Public + Private)
+// GET SETTINGS
 // =====================
 
 export async function getSettings() {
-  // نحاول نجيب المستخدم — بدون ما نكسر لو مش موجود
   const { data: authData } = await supabase.auth.getUser()
   const uid = authData?.user?.id || null
 
-  // 👤 لو فيه مستخدم → نحاول نجيب صفه
+  // 👤 لو فيه مستخدم → نجيب صفه
   if (uid) {
     const { data, error } = await supabase
       .from('settings')
       .select('*')
-      .eq('id', uid)
+      .eq('owner_id', uid)
       .maybeSingle()
 
     if (!error && data) {
       return fromDb(data)
     }
-
-    if (error) {
-      console.error('⚠️ Private settings error:', error)
-    }
   }
 
-  // 🌍 لو مفيش مستخدم أو مفيش صف خاص → نجيب public
-  const { data: publicRow, error: publicError } = await supabase
+  // 🌍 Public settings (owner_id is null)
+  const { data: publicRow } = await supabase
     .from('settings')
     .select('*')
-    .eq('id', 'public')
+    .is('owner_id', null)
     .maybeSingle()
 
-  if (!publicError && publicRow) {
+  if (publicRow) {
     return fromDb(publicRow)
   }
 
-  if (publicError) {
-    console.error('⚠️ Public settings error:', publicError)
-  }
-
-  // 🟡 fallback نهائي
-  return { id: 'public', ...DEFAULT_SETTINGS }
+  // fallback
+  return { ...DEFAULT_SETTINGS }
 }
 
 // =====================
-// 👤 UPDATE SETTINGS (خاص بالمستخدم فقط)
+// UPDATE SETTINGS
 // =====================
-
-async function getUidOrThrow() {
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user?.id)
-    throw error || new Error('No authenticated user')
-  return data.user.id
-}
 
 export async function updateSettings(patch) {
-  const uid = await getUidOrThrow()
-  const payload = { id: uid, ...toDb(patch) }
+  const { data: authData } = await supabase.auth.getUser()
+  const uid = authData?.user?.id
+
+  if (!uid) throw new Error('Not authenticated')
+
+  const payload = {
+    owner_id: uid,
+    ...toDb(patch),
+  }
 
   const { data, error } = await supabase
     .from('settings')
-    .upsert(payload, { onConflict: 'id' })
+    .upsert(payload, { onConflict: 'owner_id' }) // 🔥 المهم هنا
     .select('*')
     .single()
 
