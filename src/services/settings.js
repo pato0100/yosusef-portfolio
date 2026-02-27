@@ -52,34 +52,19 @@ function toDb(patch = {}) {
 // =====================
 
 export async function getSettings() {
-  const { data: authData } = await supabase.auth.getUser()
-  const uid = authData?.user?.id || null
-
-  // 👤 لو فيه مستخدم → نجيب صفه
-  if (uid) {
-    const { data, error } = await supabase
-      .from('settings')
-      .select('*')
-      .eq('owner_id', uid)
-      .maybeSingle()
-
-    if (!error && data) {
-      return fromDb(data)
-    }
-  }
-
-  // 🌍 Public settings (owner_id is null)
-  const { data: publicRow } = await supabase
+  const { data, error } = await supabase
     .from('settings')
     .select('*')
-    .is('owner_id', null)
+    .limit(1)
     .maybeSingle()
 
-  if (publicRow) {
-    return fromDb(publicRow)
+  if (error) {
+    console.error('⚠️ getSettings error:', error)
+    return { ...DEFAULT_SETTINGS }
   }
 
-  // fallback
+  if (data) return fromDb(data)
+
   return { ...DEFAULT_SETTINGS }
 }
 
