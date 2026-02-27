@@ -2,48 +2,52 @@
 import { useEffect, useState } from 'react'
 import defaultData from '../data/defaultProfile.json'
 import ProfileCard from '../components/ProfileCard'
-import { getProfile } from '../services/cloudStorage' // ⬅️ المهم
+import { getProfile } from '../services/cloudStorage'
 
-// دمج الديفولت مع الداتا الراجعة (بحيث أي حقل ناقص يتكمل)
+// دمج الديفولت مع الداتا الراجعة (أي حقل ناقص يتكمل)
 function mergeDefaults(defaults, remote) {
   if (!remote) return defaults
-  return { ...defaults, ...remote, socials: { ...(defaults.socials||{}), ...(remote.socials||{}) } }
+
+  return {
+    ...defaults,
+    ...remote,
+    socials: {
+      ...(defaults.socials || {}),
+      ...(remote.socials || {})
+    }
+  }
 }
 
 export default function Profile() {
-  const [profile, setProfile] = useState(defaultData)
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    (async () => {
+    const loadProfile = async () => {
       try {
-        // اختياري: اعرض كاش سريعاً
-        const cache = localStorage.getItem('profile_cache')
-        if (cache) setProfile(mergeDefaults(defaultData, JSON.parse(cache)))
-
-        // بيانات حقيقية من Supabase
         const remote = await getProfile()
         const merged = mergeDefaults(defaultData, remote)
         setProfile(merged)
-
-        // خزّن كاش للاستخدام لاحقًا
-        localStorage.setItem('profile_cache', JSON.stringify(merged))
-      } catch (e) {
-        console.error('Failed to load profile:', e)
-        // لو فشل، نظل على الديفولت/الكاش
+      } catch (error) {
+        console.error('Failed to load profile:', error)
+        setProfile(defaultData) // fallback آمن
       } finally {
         setLoading(false)
       }
-    })()
+    }
+
+    loadProfile()
   }, [])
 
   if (loading) {
     return (
       <div className="space-y-8">
-        <div className="card p-6">Loading…</div>
+        <div className="card p-6">Loading...</div>
       </div>
     )
   }
+
+  if (!profile) return null
 
   return (
     <div className="space-y-8">
