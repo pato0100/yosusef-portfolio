@@ -14,10 +14,13 @@ export const DEFAULT_SETTINGS = {
   showDownloadVCard: true,
 }
 
-// helpers
+// =====================
+// Helpers
+// =====================
+
 function fromDb(row = {}) {
   return {
-    id: row.id ?? null,                    // uuid
+    id: row.id ?? null,
     defaultLang: row.default_lang ?? DEFAULT_SETTINGS.defaultLang,
     defaultTheme: row.default_theme ?? DEFAULT_SETTINGS.defaultTheme,
     showContactPage:    row.show_contact_page ?? DEFAULT_SETTINGS.showContactPage,
@@ -45,71 +48,69 @@ function toDb(patch = {}) {
   }
 }
 
+// =====================
+// 🔥 GET SETTINGS (Public + Private)
+// =====================
+
+export async function getSettings() {
+  // نحاول نجيب المستخدم — بدون ما نكسر لو مش موجود
+  const { data: authData } = await supabase.auth.getUser()
+  const uid = authData?.user?.id || null
+
+  // 👤 لو فيه مستخدم → نحاول نجيب صفه
+  if (uid) {
+    const { data, error } = await supabase
+      .from('settings')
+      .select('*')
+      .eq('id', uid)
+      .maybeSingle()
+
+    if (!error && data) {
+      return fromDb(data)
+    }
+
+    if (error) {
+      console.error('⚠️ Private settings error:', error)
+    }
+  }
+
+  // 🌍 لو مفيش مستخدم أو مفيش صف خاص → نجيب public
+  const { data: publicRow, error: publicError } = await supabase
+    .from('settings')
+    .select('*')
+    .eq('id', 'public')
+    .maybeSingle()
+
+  if (!publicError && publicRow) {
+    return fromDb(publicRow)
+  }
+
+  if (publicError) {
+    console.error('⚠️ Public settings error:', publicError)
+  }
+
+  // 🟡 fallback نهائي
+  return { id: 'public', ...DEFAULT_SETTINGS }
+}
+
+// =====================
+// 👤 UPDATE SETTINGS (خاص بالمستخدم فقط)
+// =====================
+
 async function getUidOrThrow() {
   const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user?.id) throw error || new Error('No authenticated user')
+  if (error || !data?.user?.id)
+    throw error || new Error('No authenticated user')
   return data.user.id
 }
 
-/**
- * اقرأ إعدادات المستخدم الحالي.
- * - يحاول يجلب صف المستخدم (id = auth.uid()).
- * - لو مش موجود: يعمل upsert بصف جديد بالافتراضيات ويرجّعه.
- * - (توافق للخلف): لو كان عندك صف global قديم ولسه الـRLS سامح، ممكن ترجع منه كـ fallback.
- */
-export async function getSettings() {
-  const uid = await getUidOrThrow()
-
-  // 1) جرّب صف المستخدم
-  const { data, error } = await supabase
-    .from('settings')
-    .select('*')
-    .eq('id', uid)
-    .maybeSingle()
-
-  if (error) {
-    console.error('⚠️ getSettings error:', error)
-    throw error
-  }
-
-  if (data) return fromDb(data)
-
-  // 2) (اختياري) fallback لو عندك صف global عام ومسموح قراءته
-  const { data: globalRow } = await supabase
-    .from('settings')
-    .select('*')
-    .eq('id', 'global')
-    .maybeSingle()
-
-  if (globalRow) return fromDb(globalRow)
-
-  // 3) لو مفيش حاجة خالص: أنشئ صف للمستخدم بالافتراضيات وأرجعه
-  const payload = { id: uid, ...toDb(DEFAULT_SETTINGS) }
-  const { data: created, error: upsertErr } = await supabase
-    .from('settings')
-    .upsert(payload, { onConflict: 'id' })
-    .select('*')
-    .single()
-
-  if (upsertErr) {
-    console.error('⚠️ getSettings upsert default error:', upsertErr)
-    // كمل على الافتراضيات على الأقل للواجهة
-    return { id: uid, ...DEFAULT_SETTINGS }
-  }
-
-  return fromDb(created)
-}
-
-/**
- * حدّث إعدادات المستخدم الحالي (upsert آمن).
- */
 export async function updateSettings(patch) {
   const uid = await getUidOrThrow()
   const payload = { id: uid, ...toDb(patch) }
 
   const { data, error } = await supabase
     .from('settings')
-    .upsert(payload, { onConflict: 'id' }) // ينشئ لو مش موجود
+    .upsert(payload, { onConflict: 'id' })
     .select('*')
     .single()
 
