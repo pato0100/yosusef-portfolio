@@ -28,7 +28,7 @@ export default function App() {
         root.setAttribute('data-theme', data.defaultTheme)
         root.classList.toggle('dark', data.defaultTheme === 'dark')
 
-        // ✅ تطبيق اللغة فعليًا (مش localStorage بس)
+        // ✅ تطبيق اللغة فعليًا
         setLang(data.defaultLang)
 
       } catch (err) {
@@ -44,6 +44,17 @@ export default function App() {
     document.title = `Youssef | ${t.profile}`
   }, [loc, t])
 
+  // 🔥🔥🔥 Premium Loader
+  if (!settings) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-lg font-semibold opacity-70">
+          Loading your experience...
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen">
       <header className="container-max flex items-center justify-between py-6">
@@ -51,8 +62,7 @@ export default function App() {
 
         <div className="flex items-center gap-2">
           <LanguageToggle />
-          {/* 👇 مهم جدًا: مرر الثيم الحقيقي */}
-          <ThemeSwitcher defaultTheme={settings?.defaultTheme} />
+          <ThemeSwitcher defaultTheme={settings.defaultTheme} />
         </div>
       </header>
 
