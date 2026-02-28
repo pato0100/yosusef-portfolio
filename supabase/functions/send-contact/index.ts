@@ -1,7 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+}
+
 serve(async (req) => {
+
+  // ✅ Handle preflight (OPTIONS)
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders })
+  }
+
   try {
     const body = await req.json()
     const { owner_id, name, email, subject, message } = body
@@ -9,7 +20,7 @@ serve(async (req) => {
     if (!owner_id || !name || !email || !message) {
       return new Response(JSON.stringify({ error: "Missing fields" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }
 
@@ -18,7 +29,7 @@ serve(async (req) => {
       Deno.env.get("SERVICE_ROLE_KEY")!
     )
 
-    // 🟢 1) خزّن الرسالة
+    // 🟢 1) Save message
     const { error: insertError } = await supabase
       .from("contact_messages")
       .insert({
@@ -32,29 +43,27 @@ serve(async (req) => {
     if (insertError) {
       return new Response(JSON.stringify({ error: insertError.message }), {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }
 
-    // 🟢 2) جيب بيانات اليوزر (الإيميل)
+    // 🟢 2) Get owner email
     const { data: userData, error: userError } =
       await supabase.auth.admin.getUserById(owner_id)
 
     if (userError || !userData?.user?.email) {
       return new Response(JSON.stringify({ error: "User not found" }), {
         status: 404,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }
 
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")
-
-    // 🟢 3) ابعت إيميل
+    // 🟢 3) Send email
     await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
       },
       body: JSON.stringify({
         from: "Portfolio <onboarding@resend.dev>",
@@ -70,12 +79,13 @@ serve(async (req) => {
     })
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
+
   } catch (err) {
     return new Response(JSON.stringify({ error: "Server error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   }
 })
