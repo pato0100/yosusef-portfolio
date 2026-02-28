@@ -1,11 +1,10 @@
 ﻿import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { useTranslation } from "react-i18next"
+import { useI18n } from "../i18n/i18n"
 
 export default function Contact() {
-  const { t, i18n } = useTranslation()
-
-  const isRTL = i18n.language === "ar"
+  const { t, lang } = useI18n()
+  const isRTL = lang === "ar"
 
   const [form, setForm] = useState({
     name: "",
@@ -24,10 +23,10 @@ export default function Contact() {
 
   const validate = () => {
     if (!form.name || !form.email || !form.message) {
-      return t("contact_required")
+      return t.contact_required
     }
     if (!/\S+@\S+\.\S+/.test(form.email)) {
-      return t("contact_invalid_email")
+      return t.contact_invalid_email
     }
     return null
   }
@@ -44,12 +43,10 @@ export default function Contact() {
 
     setLoading(true)
 
-    // 🔥 مؤقتًا - هنستبدلها بـ Supabase بعدين
     setTimeout(() => {
       setLoading(false)
       setSuccess(true)
       setForm({ name: "", email: "", subject: "", message: "" })
-
       setTimeout(() => setSuccess(false), 3000)
     }, 1200)
   }
@@ -57,12 +54,8 @@ export default function Contact() {
   return (
     <section className="container-max py-16">
       <div className="card p-8 max-w-2xl mx-auto">
-        <h2
-          className={`text-2xl font-bold mb-6 ${
-            isRTL ? "text-right" : "text-left"
-          }`}
-        >
-          {t("contact_title")}
+        <h2 className={`text-2xl font-bold mb-6 ${isRTL ? "text-right" : ""}`}>
+          {t.contact_title}
         </h2>
 
         <AnimatePresence mode="wait">
@@ -82,7 +75,7 @@ export default function Contact() {
               </div>
 
               <p className="text-lg font-semibold">
-                {t("contact_success")}
+                {t.contact_success}
               </p>
             </motion.div>
           ) : (
@@ -97,7 +90,7 @@ export default function Contact() {
             >
               <input
                 className="input"
-                placeholder={`${t("contact_name")} *`}
+                placeholder={`${t.contact_name} *`}
                 name="name"
                 value={form.name}
                 onChange={handleChange}
@@ -105,7 +98,7 @@ export default function Contact() {
 
               <input
                 className="input"
-                placeholder={`${t("contact_email")} *`}
+                placeholder={`${t.contact_email} *`}
                 name="email"
                 value={form.email}
                 onChange={handleChange}
@@ -113,7 +106,7 @@ export default function Contact() {
 
               <input
                 className="input"
-                placeholder={t("contact_subject")}
+                placeholder={t.contact_subject}
                 name="subject"
                 value={form.subject}
                 onChange={handleChange}
@@ -121,7 +114,7 @@ export default function Contact() {
 
               <textarea
                 className="input min-h-[140px]"
-                placeholder={`${t("contact_message")} *`}
+                placeholder={`${t.contact_message} *`}
                 name="message"
                 value={form.message}
                 onChange={handleChange}
@@ -129,9 +122,7 @@ export default function Contact() {
 
               {error && (
                 <p
-                  className={`text-sm ${
-                    isRTL ? "text-right" : "text-left"
-                  }`}
+                  className={`text-sm ${isRTL ? "text-right" : ""}`}
                   style={{ color: "var(--brand)" }}
                 >
                   {error}
@@ -143,9 +134,7 @@ export default function Contact() {
                 disabled={loading}
                 className="btn btn-primary w-full"
               >
-                {loading
-                  ? t("contact_sending")
-                  : t("contact_send")}
+                {loading ? t.contact_sending : t.contact_send}
               </button>
             </motion.form>
           )}
