@@ -24,5 +24,15 @@
 "more_themes": "More Themes",
 "language": "Language",
 "english": "English",
-"arabic": "Arabic"
+"arabic": "Arabic",
+"contact_title": "Contact Me",
+"contact_name": "Your Name",
+"contact_email": "Your Email",
+"contact_subject": "Subject",
+"contact_message": "Your Message",
+"contact_send": "Send Message",
+"contact_sending": "Sending...",
+"contact_success": "Message sent successfully!",
+"contact_required": "Please fill all required fields.",
+"contact_invalid_email": "Invalid email address."
 }

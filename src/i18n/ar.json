@@ -24,5 +24,16 @@
 "more_themes": "سمات إضافية",
 "language": "اللغة",
 "english": "الإنجليزية",
-"arabic": "العربية"
+"arabic": "العربية",
+"contact_title": "تواصل معي",
+"contact_name": "اسمك",
+"contact_email": "بريدك الإلكتروني",
+"contact_subject": "الموضوع",
+"contact_message": "رسالتك",
+"contact_send": "إرسال الرسالة",
+"contact_sending": "جاري الإرسال...",
+"contact_success": "تم إرسال الرسالة بنجاح!",
+"contact_required": "من فضلك املأ جميع الحقول المطلوبة.",
+"contact_invalid_email": "البريد الإلكتروني غير صالح."
+
 }

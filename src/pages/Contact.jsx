@@ -1,7 +1,12 @@
 ﻿import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useTranslation } from "react-i18next"
 
 export default function Contact() {
+  const { t, i18n } = useTranslation()
+
+  const isRTL = i18n.language === "ar"
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -19,10 +24,10 @@ export default function Contact() {
 
   const validate = () => {
     if (!form.name || !form.email || !form.message) {
-      return "Please fill all required fields."
+      return t("contact_required")
     }
     if (!/\S+@\S+\.\S+/.test(form.email)) {
-      return "Invalid email address."
+      return t("contact_invalid_email")
     }
     return null
   }
@@ -30,6 +35,7 @@ export default function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
+
     const validationError = validate()
     if (validationError) {
       setError(validationError)
@@ -38,11 +44,12 @@ export default function Contact() {
 
     setLoading(true)
 
-    // 🔥 هنا هنربط Supabase بعدين
+    // 🔥 مؤقتًا - هنستبدلها بـ Supabase بعدين
     setTimeout(() => {
       setLoading(false)
       setSuccess(true)
       setForm({ name: "", email: "", subject: "", message: "" })
+
       setTimeout(() => setSuccess(false), 3000)
     }, 1200)
   }
@@ -50,7 +57,13 @@ export default function Contact() {
   return (
     <section className="container-max py-16">
       <div className="card p-8 max-w-2xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6">Contact Me</h2>
+        <h2
+          className={`text-2xl font-bold mb-6 ${
+            isRTL ? "text-right" : "text-left"
+          }`}
+        >
+          {t("contact_title")}
+        </h2>
 
         <AnimatePresence mode="wait">
           {success ? (
@@ -67,8 +80,9 @@ export default function Contact() {
               >
                 ✓
               </div>
+
               <p className="text-lg font-semibold">
-                Message sent successfully!
+                {t("contact_success")}
               </p>
             </motion.div>
           ) : (
@@ -79,10 +93,11 @@ export default function Contact() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="space-y-5"
+              dir={isRTL ? "rtl" : "ltr"}
             >
               <input
                 className="input"
-                placeholder="Your Name *"
+                placeholder={`${t("contact_name")} *`}
                 name="name"
                 value={form.name}
                 onChange={handleChange}
@@ -90,7 +105,7 @@ export default function Contact() {
 
               <input
                 className="input"
-                placeholder="Your Email *"
+                placeholder={`${t("contact_email")} *`}
                 name="email"
                 value={form.email}
                 onChange={handleChange}
@@ -98,7 +113,7 @@ export default function Contact() {
 
               <input
                 className="input"
-                placeholder="Subject"
+                placeholder={t("contact_subject")}
                 name="subject"
                 value={form.subject}
                 onChange={handleChange}
@@ -106,7 +121,7 @@ export default function Contact() {
 
               <textarea
                 className="input min-h-[140px]"
-                placeholder="Your Message *"
+                placeholder={`${t("contact_message")} *`}
                 name="message"
                 value={form.message}
                 onChange={handleChange}
@@ -114,7 +129,9 @@ export default function Contact() {
 
               {error && (
                 <p
-                  className="text-sm"
+                  className={`text-sm ${
+                    isRTL ? "text-right" : "text-left"
+                  }`}
                   style={{ color: "var(--brand)" }}
                 >
                   {error}
@@ -126,7 +143,9 @@ export default function Contact() {
                 disabled={loading}
                 className="btn btn-primary w-full"
               >
-                {loading ? "Sending..." : "Send Message"}
+                {loading
+                  ? t("contact_sending")
+                  : t("contact_send")}
               </button>
             </motion.form>
           )}
