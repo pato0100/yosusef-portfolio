@@ -2,7 +2,10 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { useI18n } from "../i18n/i18n"
 
-const OWNER_ID = "77992332-19a8-40a6-86bd-df445ab4ad26" // ← UID بتاعك
+const OWNER_ID = "77992332-19a8-40a6-86bd-df445ab4ad26"
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+const FUNCTION_URL =
+  "https://vmehwkqdptatlmygavgb.functions.supabase.co/send-contact"
 
 export default function Contact() {
   const { t, lang } = useI18n()
@@ -13,7 +16,7 @@ export default function Contact() {
     email: "",
     subject: "",
     message: "",
-    company: "", // honeypot anti-spam
+    company: "",
   })
 
   const [loading, setLoading] = useState(false)
@@ -21,7 +24,7 @@ export default function Contact() {
   const [error, setError] = useState("")
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   const validate = () => {
@@ -38,10 +41,8 @@ export default function Contact() {
     e.preventDefault()
     setError("")
 
-    // 🛡 Honeypot
     if (form.company) return
 
-    // 🛡 Rate limit (30 ثانية)
     const lastSent = localStorage.getItem("lastContactTime")
     if (lastSent && Date.now() - lastSent < 30000) {
       setError("Please wait before sending again.")
@@ -57,26 +58,26 @@ export default function Contact() {
     setLoading(true)
 
     try {
-      const res = await fetch(
-        "https://vmehwkqdptatlmygavgb.functions.supabase.co/send-contact",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            owner_id: OWNER_ID,
-            name: form.name,
-            email: form.email,
-            subject: form.subject,
-            message: form.message,
-          }),
-        }
-      )
+      const res = await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          owner_id: OWNER_ID,
+          name: form.name,
+          email: form.email,
+          subject: form.subject,
+          message: form.message,
+        }),
+      })
 
       const data = await res.json()
 
       if (!res.ok) {
+        console.error("Function error:", data)
         throw new Error(data.error || "Failed")
       }
 
@@ -93,6 +94,7 @@ export default function Contact() {
 
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
+      console.error(err)
       setError("Something went wrong. Please try again.")
     }
 
@@ -115,15 +117,10 @@ export default function Contact() {
               exit={{ opacity: 0 }}
               className="text-center py-10"
             >
-              <div
-                className="text-5xl mb-4"
-                style={{ color: "var(--brand)" }}
-              >
+              <div className="text-5xl mb-4" style={{ color: "var(--brand)" }}>
                 ✓
               </div>
-              <p className="text-lg font-semibold">
-                {t.contact_success}
-              </p>
+              <p className="text-lg font-semibold">{t.contact_success}</p>
             </motion.div>
           ) : (
             <motion.form
@@ -135,7 +132,6 @@ export default function Contact() {
               className="space-y-5"
               dir={isRTL ? "rtl" : "ltr"}
             >
-              {/* Honeypot hidden field */}
               <input
                 type="text"
                 name="company"
