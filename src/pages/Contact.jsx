@@ -2,6 +2,8 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { useI18n } from "../i18n/i18n"
 
+const OWNER_ID = "77992332-19a8-40a6-86bd-df445ab4ad26" // ← UID بتاعك
+
 export default function Contact() {
   const { t, lang } = useI18n()
   const isRTL = lang === "ar"
@@ -11,6 +13,7 @@ export default function Contact() {
     email: "",
     subject: "",
     message: "",
+    company: "", // honeypot anti-spam
   })
 
   const [loading, setLoading] = useState(false)
@@ -35,6 +38,16 @@ export default function Contact() {
     e.preventDefault()
     setError("")
 
+    // 🛡 Honeypot
+    if (form.company) return
+
+    // 🛡 Rate limit (30 ثانية)
+    const lastSent = localStorage.getItem("lastContactTime")
+    if (lastSent && Date.now() - lastSent < 30000) {
+      setError("Please wait before sending again.")
+      return
+    }
+
     const validationError = validate()
     if (validationError) {
       setError(validationError)
@@ -43,12 +56,47 @@ export default function Contact() {
 
     setLoading(true)
 
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const res = await fetch(
+        "https://vmehwkqdptatlmygavgb.functions.supabase.co/send-contact",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            owner_id: OWNER_ID,
+            name: form.name,
+            email: form.email,
+            subject: form.subject,
+            message: form.message,
+          }),
+        }
+      )
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed")
+      }
+
+      localStorage.setItem("lastContactTime", Date.now())
+
       setSuccess(true)
-      setForm({ name: "", email: "", subject: "", message: "" })
+      setForm({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+        company: "",
+      })
+
       setTimeout(() => setSuccess(false), 3000)
-    }, 1200)
+    } catch (err) {
+      setError("Something went wrong. Please try again.")
+    }
+
+    setLoading(false)
   }
 
   return (
@@ -73,7 +121,6 @@ export default function Contact() {
               >
                 ✓
               </div>
-
               <p className="text-lg font-semibold">
                 {t.contact_success}
               </p>
@@ -88,6 +135,15 @@ export default function Contact() {
               className="space-y-5"
               dir={isRTL ? "rtl" : "ltr"}
             >
+              {/* Honeypot hidden field */}
+              <input
+                type="text"
+                name="company"
+                value={form.company}
+                onChange={handleChange}
+                style={{ display: "none" }}
+              />
+
               <input
                 className="input"
                 placeholder={`${t.contact_name} *`}
