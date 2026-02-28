@@ -1,9 +1,13 @@
-﻿import { useState } from "react"
+﻿import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useI18n } from "../i18n/i18n"
+import { createClient } from "@supabase/supabase-js"
 
-const OWNER_ID = "77992332-19a8-40a6-86bd-df445ab4ad26"
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+)
+
 const FUNCTION_URL =
   "https://vmehwkqdptatlmygavgb.functions.supabase.co/send-contact"
 
@@ -11,17 +15,37 @@ export default function Contact() {
   const { t, lang } = useI18n()
   const isRTL = lang === "ar"
 
+  const [ownerId, setOwnerId] = useState(null)
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     subject: "",
     message: "",
-    company: "",
+    company: "", // honeypot
   })
 
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
+
+  // ✅ Get logged-in user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data, error } = await supabase.auth.getUser()
+
+      if (error) {
+        console.error(error)
+        return
+      }
+
+      if (data?.user) {
+        setOwnerId(data.user.id)
+      }
+    }
+
+    getUser()
+  }, [])
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -41,8 +65,16 @@ export default function Contact() {
     e.preventDefault()
     setError("")
 
+    // 🛡 Honeypot anti-spam
     if (form.company) return
 
+    // 🛡 Must be logged in
+    if (!ownerId) {
+      setError("You must be logged in.")
+      return
+    }
+
+    // 🛡 Rate limit (30 sec)
     const lastSent = localStorage.getItem("lastContactTime")
     if (lastSent && Date.now() - lastSent < 30000) {
       setError("Please wait before sending again.")
@@ -62,11 +94,9 @@ export default function Contact() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
-          owner_id: OWNER_ID,
+          owner_id: ownerId,
           name: form.name,
           email: form.email,
           subject: form.subject,
@@ -120,7 +150,9 @@ export default function Contact() {
               <div className="text-5xl mb-4" style={{ color: "var(--brand)" }}>
                 ✓
               </div>
-              <p className="text-lg font-semibold">{t.contact_success}</p>
+              <p className="text-lg font-semibold">
+                {t.contact_success}
+              </p>
             </motion.div>
           ) : (
             <motion.form
@@ -132,6 +164,7 @@ export default function Contact() {
               className="space-y-5"
               dir={isRTL ? "rtl" : "ltr"}
             >
+              {/* Honeypot hidden */}
               <input
                 type="text"
                 name="company"
