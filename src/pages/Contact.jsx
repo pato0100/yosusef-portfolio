@@ -1,21 +1,137 @@
-﻿import defaultData from '../data/defaultProfile.json'
-import { loadProfile } from '../utils/storage'
+﻿import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 
+export default function Contact() {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  })
 
-export default function Contact(){
-const { email, phone, whatsapp } = loadProfile(defaultData)
-const tel = phone ? `tel:${phone}` : '#'
-const wa = whatsapp ? `https://wa.me/${whatsapp.replace(/[^\d]/g,'')}` : '#'
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState("")
 
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
 
-return (
-<section className="card p-6">
-<h2 className="text-xl font-bold">Contact</h2>
-<ul className="mt-4 space-y-2">
-<li><a className="underline" href={`mailto:${email}`}>{email}</a></li>
-<li><a className="underline" href={tel}>{phone}</a></li>
-<li><a className="underline" href={wa} target="_blank" rel="noreferrer">WhatsApp</a></li>
-</ul>
-</section>
-)
+  const validate = () => {
+    if (!form.name || !form.email || !form.message) {
+      return "Please fill all required fields."
+    }
+    if (!/\S+@\S+\.\S+/.test(form.email)) {
+      return "Invalid email address."
+    }
+    return null
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError("")
+    const validationError = validate()
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
+    setLoading(true)
+
+    // 🔥 هنا هنربط Supabase بعدين
+    setTimeout(() => {
+      setLoading(false)
+      setSuccess(true)
+      setForm({ name: "", email: "", subject: "", message: "" })
+      setTimeout(() => setSuccess(false), 3000)
+    }, 1200)
+  }
+
+  return (
+    <section className="container-max py-16">
+      <div className="card p-8 max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6">Contact Me</h2>
+
+        <AnimatePresence mode="wait">
+          {success ? (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-10"
+            >
+              <div
+                className="text-5xl mb-4"
+                style={{ color: "var(--brand)" }}
+              >
+                ✓
+              </div>
+              <p className="text-lg font-semibold">
+                Message sent successfully!
+              </p>
+            </motion.div>
+          ) : (
+            <motion.form
+              key="form"
+              onSubmit={handleSubmit}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-5"
+            >
+              <input
+                className="input"
+                placeholder="Your Name *"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+              />
+
+              <input
+                className="input"
+                placeholder="Your Email *"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+              />
+
+              <input
+                className="input"
+                placeholder="Subject"
+                name="subject"
+                value={form.subject}
+                onChange={handleChange}
+              />
+
+              <textarea
+                className="input min-h-[140px]"
+                placeholder="Your Message *"
+                name="message"
+                value={form.message}
+                onChange={handleChange}
+              />
+
+              {error && (
+                <p
+                  className="text-sm"
+                  style={{ color: "var(--brand)" }}
+                >
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary w-full"
+              >
+                {loading ? "Sending..." : "Send Message"}
+              </button>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </div>
+    </section>
+  )
 }
