@@ -26,29 +26,34 @@ export default function Profile() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      setLoading(true)
+ useEffect(() => {
+  const loadProfile = async () => {
+    setLoading(true)
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('slug', slug)
-        .single()
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('slug', slug)
+      .single()
 
-      if (error || !data) {
-        setNotFound(true)
-        setLoading(false)
-        return
-      }
-
-      const merged = mergeDefaults(defaultData, data)
-      setProfile(merged)
+    if (error || !data) {
+      setNotFound(true)
       setLoading(false)
+      return
     }
 
-    loadProfile()
-  }, [slug])
+    // 🔥 أهم سطر
+    data.image = data.image ?? data.image_url ?? ''
+    data.cv    = data.cv ?? data.cv_url ?? ''
+
+    const merged = mergeDefaults(defaultData, data)
+
+    setProfile(merged)
+    setLoading(false)
+  }
+
+  loadProfile()
+}, [slug])
 
   // Loading
   if (loading) {
