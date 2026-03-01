@@ -5,11 +5,11 @@ import { motion } from 'framer-motion'
 export default function Navbar() {
   const { t, lang } = useI18n()
   const { pathname } = useLocation()
-
+   
   const tabs = [
-    { to: '/', label: t.profile },
-    { to: '/projects', label: t.projects },
-    { to: '/contact', label: t.contact },
+    { to: `/${slug}`, label: t.profile },
+    { to: `/${slug}/projects`, label: t.projects },
+    { to: `/${slug}/contact`, label: t.contact },
   ]
 
   return (
