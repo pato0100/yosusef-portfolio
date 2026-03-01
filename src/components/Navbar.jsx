@@ -16,7 +16,7 @@ export default function Navbar() {
   const base = `/${currentSlug}`
 
   const tabs = [
-    { key: 'profile', to: `${base}` },
+    { key: 'profile', to: `${base}/profile` },
     { key: 'projects', to: `${base}/projects` },
     { key: 'contact', to: `${base}/contact` },
   ]
