@@ -75,4 +75,4 @@ export default function Profile() {
       <ProfileCard profile={profile} />
     </div>
   )
-}ٍ
+}
