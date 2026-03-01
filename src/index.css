@@ -381,26 +381,31 @@ html[data-theme="synthwave"] {
 /* =========================================
    Navbar (Glass + underline fill behind active)
 ========================================= */
-/* =========================================
-   Premium SaaS Sliding Pill Navbar
-========================================= */
+.nav-glass{
+  background: color-mix(in oklab, var(--card-bg) 85%, transparent);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(12px) saturate(1.1);
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  border-radius: 9999px;
+}
 
-.btn-nav {
+.btn-nav{
   @apply px-5 py-2 text-sm font-semibold rounded-full transition-all duration-200;
   background: transparent;
   color: var(--text);
+  border: 1px solid transparent;
   position: relative;
-  z-index: 2;
+  z-index: 2; /* مهم */
   transition: transform .18s ease, color .2s ease;
 }
 
-.btn-nav:hover {
+.btn-nav:hover{
   color: var(--brand);
   transform: translateY(-1px) scale(1.03);
 }
 
-/* 🔥 Sliding Active Pill */
-.active-pill {
+/* 🔥 Premium Sliding Pill */
+.active-pill{
   position: absolute;
   inset: 0;
   border-radius: 9999px;
