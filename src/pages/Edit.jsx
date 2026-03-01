@@ -5,7 +5,8 @@ import { useI18n } from '../i18n/i18n'
 import { supabase, signOut, getSession, onAuthChange } from '../lib/supabase'
 import { getSettings, updateSettings, DEFAULT_SETTINGS } from '../services/settings'
 import { THEME_OPTIONS } from '../data/themes'
-
+import { useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export default function Edit() {
   const { t, lang } = useI18n()
@@ -22,6 +23,60 @@ export default function Edit() {
 
   // ✅ بيانات الفورم
   const [data, setData] = useState(defaults)
+
+  // ================= Username / Slug =================
+const navigate = useNavigate()
+
+const [username, setUsername] = useState('')
+const [usernameStatus, setUsernameStatus] = useState(null)
+// null | checking | available | taken | same
+
+const debounceRef = useRef(null)
+
+function cleanUsername(value) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+}
+
+async function checkUsernameAvailability(value) {
+  if (!value || value.length < 3) {
+    setUsernameStatus(null)
+    return
+  }
+
+  if (value === data.slug) {
+    setUsernameStatus('same')
+    return
+  }
+
+  setUsernameStatus('checking')
+
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('slug', value)
+    .maybeSingle()
+
+  if (!existing) setUsernameStatus('available')
+  else setUsernameStatus('taken')
+}
+
+function handleUsernameChange(e) {
+  const cleaned = cleanUsername(e.target.value)
+  setUsername(cleaned)
+
+  if (debounceRef.current) {
+    clearTimeout(debounceRef.current)
+  }
+
+  debounceRef.current = setTimeout(() => {
+    checkUsernameAvailability(cleaned)
+  }, 500)
+}
+
 
   // ✅ حالة تحميل/حفظ لواجهة أحسن
   const [loading, setLoading] = useState(true)
@@ -67,7 +122,9 @@ useEffect(() => {
       try {
         setLoading(true)
         const remote = await getProfile()
-        setData(remote || defaults)
+        const profile = remote || defaults
+setData(profile)
+setUsername(profile?.slug || '')
       } catch (e) {
         console.error('load profile failed', e)
         setData(defaults)
@@ -95,6 +152,13 @@ useEffect(() => {
   })()
 }, [session])
 
+useEffect(() => {
+  return () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+  }
+}, [])
 
   // مهاجرة بيانات قديمة → نملأ *_en/*_ar من القيمة القديمة مرة واحدة
   useEffect(() => {
@@ -207,19 +271,49 @@ async function saveSettings(e) {
   function removePdf() { setData((prev) => ({ ...prev, cv: '' })) }
 
   // ✅ حفظ على Supabase بدل LocalStorage
-  async function onSave(e) {
-    e.preventDefault()
-    try {
-      setSaving(true)
-      await upsertProfile(data)
-      alert(t.saved)
-    } catch (err) {
-      console.error(err)
-      alert('فشل الحفظ — حاول تاني')
-    } finally {
-      setSaving(false)
-    }
+async function onSave(e) {
+  e.preventDefault()
+
+  if (!data.slug && !username) {
+    alert('Choose a username first')
+    return
   }
+
+  if (usernameStatus === 'taken') {
+    alert('Username already taken')
+    return
+  }
+
+  try {
+    setSaving(true)
+
+    const isFirstTime = !data.slug && username
+
+    await upsertProfile({
+      ...data,
+      slug: username
+    })
+
+    alert(t.saved)
+
+    if (isFirstTime) {
+      navigate(`/${username}`)
+    }
+
+  } catch (err) {
+    if (err.message?.includes('duplicate')) {
+      setUsernameStatus('taken')
+      alert('Username already taken')
+      return
+    }
+
+    console.error(err)
+    alert('فشل الحفظ — حاول تاني')
+  } finally {
+    setSaving(false)
+  }
+}
+
 
   // حالة تحميل الجلسة
    // حالة تحميل الجلسة
@@ -282,6 +376,40 @@ async function saveSettings(e) {
             <input id="email" name="email" type="email" className="input" placeholder={lang === 'ar' ? 'name@example.com' : 'name@example.com'} value={data.email || ''} onChange={onChange} inputMode="email" autoComplete="email" />
             <p className="mt-1 text-xs opacity-70">{lang === 'ar' ? 'سنستخدمه لزر “إرسال بريد” في صفحة البروفايل.' : 'Used for the “Send Email” button on your profile.'}</p>
           </div>
+
+         {/* Username / Slug */}
+<div className="md:col-span-2">
+  <label className="block text-sm font-medium mb-1">
+    Username (Profile URL)
+  </label>
+
+  <input
+    type="text"
+    value={username}
+    onChange={handleUsernameChange}
+    disabled={!!data.slug}
+    className="input"
+    placeholder="your-username"
+  />
+
+  {usernameStatus === 'checking' && (
+    <p className="text-xs opacity-60 mt-1">Checking...</p>
+  )}
+
+  {usernameStatus === 'available' && (
+    <p className="text-xs text-green-500 mt-1">Available ✅</p>
+  )}
+
+  {usernameStatus === 'taken' && (
+    <p className="text-xs text-red-500 mt-1">Already taken ❌</p>
+  )}
+
+  {data.slug && (
+    <p className="text-xs opacity-60 mt-1">
+      Username locked after first save.
+    </p>
+  )}
+</div>
 
           {/* حقول ثنائية اللغة */}
           <input className="input" {...bind('name')}  placeholder={editLang === 'ar' ? 'الاسم' : 'Name'} />
