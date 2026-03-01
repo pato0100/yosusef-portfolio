@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 export default function Navbar() {
   const { t, lang } = useI18n()
   const { pathname } = useLocation()
+  const { slug } = useParams()
    
   const tabs = [
     { to: `/${slug}`, label: t.profile },
