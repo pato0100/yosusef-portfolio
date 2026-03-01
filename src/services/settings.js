@@ -51,11 +51,24 @@ function toDb(patch = {}) {
 // GET SETTINGS
 // =====================
 
-export async function getSettings() {
+export async function getSettings(slug) {
+  // 1️⃣ هات profile.id من slug
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('slug', slug)
+    .single()
+
+  if (profileError || !profile) {
+    console.error('⚠️ Profile not found for slug:', slug)
+    return { ...DEFAULT_SETTINGS }
+  }
+
+  // 2️⃣ هات settings الخاصة بيه
   const { data, error } = await supabase
     .from('settings')
     .select('*')
-    .limit(1)
+    .eq('owner_id', profile.id)
     .maybeSingle()
 
   if (error) {

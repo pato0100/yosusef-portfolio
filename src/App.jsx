@@ -20,11 +20,16 @@ export default function App() {
 
   const [settings, setSettings] = useState(null)
 
-  // 🔥 تحميل Settings مرة واحدة
+  // 🔥 استخراج slug من الـ URL
+  const pathParts = loc.pathname.split('/').filter(Boolean)
+  const defaultUser = import.meta.env.VITE_DEFAULT_USERNAME
+  const currentSlug = pathParts[0] || defaultUser
+
+  // 🔥 تحميل Settings حسب slug
   useEffect(() => {
     async function loadSettings() {
       try {
-        const data = await getSettings()
+        const data = await getSettings(currentSlug)
         setSettings(data)
 
         // تطبيق الثيم
@@ -41,14 +46,14 @@ export default function App() {
     }
 
     loadSettings()
-  }, [])
+  }, [currentSlug])
 
   // عنوان الصفحة
   useEffect(() => {
-    document.title = `Youssef | ${t.profile}`
-  }, [loc, t])
+    document.title = `${currentSlug} | ${t.profile}`
+  }, [loc, t, currentSlug])
 
-  // 🔥 Premium Loader
+  // 🔥 Loader
   if (!settings) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black overflow-hidden">
@@ -69,7 +74,6 @@ export default function App() {
     <div className="min-h-screen">
 
       <header className="container-max flex items-center justify-between py-6">
-        {/* اللوجو يرجع للروت → يتحول تلقائي لسلوج الافتراضي */}
         <Link to="/" className="text-lg font-bold"></Link>
 
         <div className="flex items-center gap-2">
@@ -83,25 +87,20 @@ export default function App() {
       <main className="container-max py-8">
         <Routes>
 
-          {/* Static Route لازم قبل slug */}
           <Route path="/edit" element={<Edit />} />
-
-          {/* Root → يتحول لسلوج الافتراضي */}
           <Route path="/" element={<RootRedirect />} />
 
-          {/* Slug Based Routes */}
           <Route path="/:slug" element={<Profile />} />
           <Route path="/:slug/projects" element={<Projects />} />
           <Route path="/:slug/contact" element={<Contact />} />
 
-          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
       </main>
 
       <footer className="container-max py-10 text-center text-sm opacity-70">
-        <p>© {new Date().getFullYear()} Youssef — {t.made_with}</p>
+        <p>© {new Date().getFullYear()} {currentSlug} — {t.made_with}</p>
       </footer>
 
     </div>
