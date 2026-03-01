@@ -8,7 +8,7 @@ export default function Navbar() {
   const { slug } = useParams()
 
   const tabs = [
-    { to: `/${slug}`, label: t.profile },
+    { to: `/${slug}/profile`, label: t.profile },
     { to: `/${slug}/projects`, label: t.projects },
     { to: `/${slug}/contact`, label: t.contact },
   ]
