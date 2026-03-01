@@ -12,9 +12,9 @@ export default function Navbar() {
   const base = `/${currentSlug}`
 
   const tabs = [
-    { to: `${base}/profile`, label: t.profile },
-    { to: `${base}/projects`, label: t.projects },
-    { to: `${base}/contact`, label: t.contact },
+    { key: 'profile', to: `${base}` },
+    { key: 'projects', to: `${base}/projects` },
+    { key: 'contact', to: `${base}/contact` },
   ]
 
   return (
@@ -31,15 +31,27 @@ export default function Navbar() {
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
         {tabs.map(tab => {
-          const active = pathname === tab.to
+          let active = false
+
+          if (tab.key === 'profile') {
+            active = pathname === base
+          }
+
+          if (tab.key === 'projects') {
+            active = pathname.startsWith(`${base}/projects`)
+          }
+
+          if (tab.key === 'contact') {
+            active = pathname.startsWith(`${base}/contact`)
+          }
 
           return (
-            <li key={tab.to} className="relative">
+            <li key={tab.key} className="relative">
               <NavLink
                 to={tab.to}
                 className={`btn-nav btn-3d ${active ? 'active' : ''}`}
               >
-                {tab.label}
+                {t[tab.key]}
               </NavLink>
 
               {active && (
