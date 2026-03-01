@@ -1,13 +1,13 @@
 ﻿import { useEffect, useState } from 'react'
 import defaults from '../data/defaultProfile.json'
-import { getProfile, upsertProfile } from '../services/cloudStorage'
+import { getProfile, upsertProfile, getMyProfile } from '../services/cloudStorage'
 import { useI18n } from '../i18n/i18n'
 import { supabase, signOut, getSession, onAuthChange } from '../lib/supabase'
 import { getSettings, updateSettings, DEFAULT_SETTINGS } from '../services/settings'
 import { THEME_OPTIONS } from '../data/themes'
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProfile, upsertProfile, getMyProfile } from '../services/cloudStorage'
+
 
 
 
