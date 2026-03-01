@@ -7,10 +7,15 @@ export default function Navbar() {
   const { pathname } = useLocation()
   const { slug } = useParams()
 
+  // لو مفيش slug (مثلاً قبل redirect) ما نعرضش navbar
+  if (!slug) return null
+
+  const base = `/${slug}`
+
   const tabs = [
-    { to: `/${slug}/profile`, label: t.profile },
-    { to: `/${slug}/projects`, label: t.projects },
-    { to: `/${slug}/contact`, label: t.contact },
+    { to: `${base}`, label: t.profile },
+    { to: `${base}/projects`, label: t.projects },
+    { to: `${base}/contact`, label: t.contact },
   ]
 
   return (
@@ -28,6 +33,7 @@ export default function Navbar() {
       >
         {tabs.map(tab => {
           const active = pathname === tab.to
+
           return (
             <li key={tab.to} className="relative">
               <NavLink
