@@ -1,4 +1,4 @@
-﻿import { NavLink, useLocation } from 'react-router-dom'
+﻿import { NavLink, useLocation, useParams } from 'react-router-dom'
 import { useI18n } from '../i18n/i18n'
 import { motion } from 'framer-motion'
 
@@ -6,7 +6,7 @@ export default function Navbar() {
   const { t, lang } = useI18n()
   const { pathname } = useLocation()
   const { slug } = useParams()
-   
+
   const tabs = [
     { to: `/${slug}`, label: t.profile },
     { to: `/${slug}/projects`, label: t.projects },
@@ -30,7 +30,10 @@ export default function Navbar() {
           const active = pathname === tab.to
           return (
             <li key={tab.to} className="relative">
-              <NavLink to={tab.to} className={`btn-nav btn-3d ${active ? 'active' : ''}`}>
+              <NavLink
+                to={tab.to}
+                className={`btn-nav btn-3d ${active ? 'active' : ''}`}
+              >
                 {tab.label}
               </NavLink>
 
