@@ -290,9 +290,15 @@ async function onSave(e) {
     const isFirstTime = !data.slug && username
 
     await upsertProfile({
-      ...data,
-      slug: username
-    })
+  ...data,
+  slug: username
+})
+
+// 🔥 مهم جدًا
+setData(prev => ({
+  ...prev,
+  slug: username
+}))
 
     alert(t.saved)
 
