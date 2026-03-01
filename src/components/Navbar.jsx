@@ -7,13 +7,12 @@ export default function Navbar() {
   const { pathname } = useLocation()
   const { slug } = useParams()
 
-  // لو مفيش slug (مثلاً قبل redirect) ما نعرضش navbar
-  if (!slug) return null
-
-  const base = `/${slug}`
+  const defaultUser = import.meta.env.VITE_DEFAULT_USERNAME
+  const currentSlug = slug || defaultUser
+  const base = `/${currentSlug}`
 
   const tabs = [
-    { to: `${base}`, label: t.profile },
+    { to: `${base}/profile`, label: t.profile },
     { to: `${base}/projects`, label: t.projects },
     { to: `${base}/contact`, label: t.contact },
   ]
