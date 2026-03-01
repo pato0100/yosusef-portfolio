@@ -7,6 +7,9 @@ import { getSettings, updateSettings, DEFAULT_SETTINGS } from '../services/setti
 import { THEME_OPTIONS } from '../data/themes'
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getProfile, upsertProfile, getMyProfile } from '../services/cloudStorage'
+
+
 
 export default function Edit() {
   const { t, lang } = useI18n()
@@ -116,24 +119,28 @@ useEffect(() => {
   }, [])
 
   // ⬇️ جلب البيانات من Supabase أول ما الصفحة تتفتح بعد ما المستخدم يتوثّق
-  useEffect(() => {
-    if (!session) return
-    (async () => {
-      try {
-        setLoading(true)
-        const remote = await getProfile()
-        const profile = remote || defaults
-setData(profile)
-setUsername(profile?.slug || '')
-      } catch (e) {
-        console.error('load profile failed', e)
-        setData(defaults)
-      } finally {
-        setLoading(false)
-      }
-    })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session])
+useEffect(() => {
+  if (!session) return
+
+  (async () => {
+    try {
+      setLoading(true)
+
+      const remote = await getMyProfile()
+      const profile = remote || defaults
+
+      setData(profile)
+      setUsername(profile?.slug || '')
+
+    } catch (e) {
+      console.error('load profile failed', e)
+      setData(defaults)
+    } finally {
+      setLoading(false)
+    }
+  })()
+
+}, [session])
 
   // ⬇️ جلب الإعدادات من Supabase بعد تسجيل الدخول
 useEffect(() => {

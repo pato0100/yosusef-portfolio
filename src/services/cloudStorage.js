@@ -164,3 +164,30 @@ export async function upsertProfile(profile) {
 
   return data
 }
+
+/* ---------- Reads (Private / Admin) ---------- */
+export async function getMyProfile() {
+  const uid = await getUidOrThrow()
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', uid)
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) return null
+
+  data.image = data.image ?? data.image_url ?? ''
+  data.cv    = data.cv ?? data.cv_url ?? ''
+
+  if (typeof data.socials !== 'object' || data.socials === null)
+    data.socials = {}
+
+  data.phoneLabel_en  = data.phone_label_en  ?? data.phoneLabel_en
+  data.phoneLabel_ar  = data.phone_label_ar  ?? data.phoneLabel_ar
+  data.phone2Label_en = data.phone2_label_en ?? data.phone2Label_en
+  data.phone2Label_ar = data.phone2_label_ar ?? data.phone2Label_ar
+
+  return data
+}
