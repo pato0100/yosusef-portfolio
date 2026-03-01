@@ -6,63 +6,55 @@ export default function Navbar() {
   const { t, lang } = useI18n()
   const { pathname } = useLocation()
 
-  // استخراج slug من الـ URL بأمان
+  // استخراج slug من URL
   const pathParts = pathname.split('/').filter(Boolean)
   const currentSlug = pathParts[0]
-
-  // لو مفيش slug (مثلاً في / قبل redirect)
   if (!currentSlug) return null
 
   const base = `/${currentSlug}`
 
   const tabs = [
-    { key: 'profile', to: `${base}` },
-    { key: 'projects', to: `${base}/projects` },
-    { key: 'contact', to: `${base}/contact` },
+    { key: 'profile', label: t.profile, path: `${base}` },
+    { key: 'projects', label: t.projects, path: `${base}/projects` },
+    { key: 'contact', label: t.contact, path: `${base}/contact` },
   ]
 
   return (
     <motion.nav
       className="container-max sticky top-4 z-50"
-      initial={{ opacity: 0, y: -12 }}
+      initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: 'easeOut' }}
+      transition={{ duration: 0.35 }}
     >
       <ul
-        className={`nav-glass mx-auto flex w-fit items-center gap-2 px-2 py-2 rounded-full ${
+        className={`nav-glass relative mx-auto flex w-fit items-center gap-2 px-2 py-2 rounded-full ${
           lang === 'ar' ? 'rtl:text-right' : ''
         }`}
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
         {tabs.map(tab => {
-          let active = false
-
-          if (tab.key === 'profile') {
-            active = pathname === base
-          }
-
-          if (tab.key === 'projects') {
-            active = pathname.startsWith(`${base}/projects`)
-          }
-
-          if (tab.key === 'contact') {
-            active = pathname.startsWith(`${base}/contact`)
-          }
+          const active =
+            pathname === tab.path ||
+            pathname.startsWith(tab.path + '/')
 
           return (
             <li key={tab.key} className="relative">
               <NavLink
-                to={tab.to}
-                className={`btn-nav btn-3d ${active ? 'active' : ''}`}
+                to={tab.path}
+                className="btn-nav relative z-10"
               >
-                {t[tab.key]}
+                {tab.label}
               </NavLink>
 
               {active && (
                 <motion.div
-                  layoutId="nav-underline"
-                  className="nav-underline"
-                  transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                  layoutId="active-pill"
+                  className="active-pill"
+                  transition={{
+                    type: 'spring',
+                    stiffness: 420,
+                    damping: 38,
+                  }}
                 />
               )}
             </li>

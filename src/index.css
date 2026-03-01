@@ -381,40 +381,44 @@ html[data-theme="synthwave"] {
 /* =========================================
    Navbar (Glass + underline fill behind active)
 ========================================= */
-.nav-glass{
-  background: color-mix(in oklab, var(--card-bg) 85%, transparent);
-  border: 1px solid var(--card-border);
-  backdrop-filter: blur(12px) saturate(1.1);
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
-  border-radius: 9999px;
-}
+/* =========================================
+   Premium SaaS Sliding Pill Navbar
+========================================= */
 
-.btn-nav{
+.btn-nav {
   @apply px-5 py-2 text-sm font-semibold rounded-full transition-all duration-200;
   background: transparent;
   color: var(--text);
-  border: 1px solid transparent;
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  transition: transform .18s ease, color .2s ease;
 }
-.btn-nav:hover{
-  background: var(--card-bg);
-  border-color: var(--card-border);
-  color: var(--brand);
-  transform: translateY(-1px);
-}
-.btn-nav.active{ color: var(--brand-contrast); }
 
-/* الخلفية المتحركة خلف الزر النشط (تملا الزر كله) */
-.nav-underline{
+.btn-nav:hover {
+  color: var(--brand);
+  transform: translateY(-1px) scale(1.03);
+}
+
+/* 🔥 Sliding Active Pill */
+.active-pill {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  background: color-mix(in srgb, var(--brand) 25%, transparent);
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--brand), transparent 70%));
-  z-index: 0;
-  transition: all .25s ease;
+
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand) 85%, white 8%),
+    var(--brand)
+  );
+
+  box-shadow:
+    0 6px 18px color-mix(in srgb, var(--brand) 35%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+
+  z-index: 1;
 }
+
+
 
 /* Focus ring حديث بدل الرمادي */
 button:focus-visible, a:focus-visible {
