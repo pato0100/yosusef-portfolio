@@ -120,27 +120,29 @@ export async function upsertProfile(profile) {
 
   // record snake_case
   const record = {
-    id: p.id,
+  id: p.id,
 
-    email: p.email ?? null,
-    name_en: p.name_en,       name_ar: p.name_ar,
-    title_en: p.title_en,     title_ar: p.title_ar,
-    about_en: p.about_en,     about_ar: p.about_ar,
+  slug: p.slug ?? null,   // 🔥 أضف السطر ده
 
-    phone: p.phone ?? null,
-    phone2: p.phone2 ?? null,
-    whatsapp: p.whatsapp ?? null,
+  email: p.email ?? null,
+  name_en: p.name_en,       name_ar: p.name_ar,
+  title_en: p.title_en,     title_ar: p.title_ar,
+  about_en: p.about_en,     about_ar: p.about_ar,
 
-    phone_label_en:  p.phoneLabel_en  ?? p.phone_label_en  ?? null,
-    phone_label_ar:  p.phoneLabel_ar  ?? p.phone_label_ar  ?? null,
-    phone2_label_en: p.phone2Label_en ?? p.phone2_label_en ?? null,
-    phone2_label_ar: p.phone2Label_ar ?? p.phone2_label_ar ?? null,
+  phone: p.phone ?? null,
+  phone2: p.phone2 ?? null,
+  whatsapp: p.whatsapp ?? null,
 
-    image_url: p.image_url ?? null,
-    cv_url:    p.cv_url ?? null,
-    socials:   p.socials,
-    updated_at: p.updated_at,
-  }
+  phone_label_en:  p.phoneLabel_en  ?? p.phone_label_en  ?? null,
+  phone_label_ar:  p.phoneLabel_ar  ?? p.phone_label_ar  ?? null,
+  phone2_label_en: p.phone2Label_en ?? p.phone2_label_en ?? null,
+  phone2_label_ar: p.phone2Label_ar ?? p.phone2_label_ar ?? null,
+
+  image_url: p.image_url ?? null,
+  cv_url:    p.cv_url ?? null,
+  socials:   p.socials,
+  updated_at: p.updated_at,
+}
 
   Object.keys(record).forEach(k => record[k] === undefined && delete record[k])
 
