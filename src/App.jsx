@@ -87,7 +87,7 @@ export default function App() {
       <main className="container-max py-8">
         <Routes>
 
-          <Route path="/edit" element={<Edit />} />
+          <Route path="/:slug/edit" element={<Edit />} />
           <Route path="/" element={<RootRedirect />} />
 
           <Route path="/:slug" element={<Profile />} />

@@ -6,7 +6,7 @@ import { supabase, signOut, getSession, onAuthChange } from '../lib/supabase'
 import { getSettings, updateSettings, DEFAULT_SETTINGS } from '../services/settings'
 import { THEME_OPTIONS } from '../data/themes'
 import { useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 
 
@@ -29,6 +29,7 @@ export default function Edit() {
 
   // ================= Username / Slug =================
 const navigate = useNavigate()
+const { slug: slugFromUrl } = useParams()
 
 const [username, setUsername] = useState('')
 const [usernameStatus, setUsernameStatus] = useState(null)
@@ -145,19 +146,45 @@ useEffect(() => {
   // ⬇️ جلب الإعدادات من Supabase بعد تسجيل الدخول
 useEffect(() => {
   if (!session) return
+
   (async () => {
     try {
-      setLoadingSettings(true)
-      const s = await getSettings()
-      setSettings(s)
+      setLoading(true)
+
+      const remote = await getMyProfile()
+      const profile = remote || null
+
+      // ❌ مش مسجل دخول
+      if (!profile) {
+        navigate('/login', { replace: true })
+        return
+      }
+
+      // ❌ معندوش slug
+      if (!profile.slug) {
+        navigate('/onboarding', { replace: true })
+        return
+      }
+
+      // ❌ slug في الرابط مش مطابق
+      if (slugFromUrl !== profile.slug) {
+        navigate(`/${profile.slug}/edit`, { replace: true })
+        return
+      }
+
+      // ✅ كل حاجة تمام
+      setData(profile)
+      setUsername(profile.slug)
+
     } catch (e) {
-      console.error('load settings failed', e)
-      setSettings(DEFAULT_SETTINGS)
+      console.error('load profile failed', e)
+      navigate('/login', { replace: true })
     } finally {
-      setLoadingSettings(false)
+      setLoading(false)
     }
   })()
-}, [session])
+
+}, [session, slugFromUrl])
 
 useEffect(() => {
   return () => {
