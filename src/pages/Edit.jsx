@@ -279,10 +279,10 @@ async function onSave(e) {
     return
   }
 
-  if (usernameStatus === 'taken') {
-    alert('Username already taken')
-    return
-  }
+  if (!data.slug && usernameStatus !== 'available') {
+  alert('Please choose an available username')
+  return
+}
 
   try {
     setSaving(true)
