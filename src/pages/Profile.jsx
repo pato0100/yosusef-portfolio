@@ -1,10 +1,11 @@
 ﻿// src/pages/Profile.jsx
+
 import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import defaultData from '../data/defaultProfile.json'
 import ProfileCard from '../components/ProfileCard'
-import { getProfile } from '../services/cloudStorage'
+import { supabase } from '../lib/supabase' // تأكد المسار صح
 
-// دمج الديفولت مع الداتا الراجعة (أي حقل ناقص يتكمل)
 function mergeDefaults(defaults, remote) {
   if (!remote) return defaults
 
@@ -19,30 +20,50 @@ function mergeDefaults(defaults, remote) {
 }
 
 export default function Profile() {
+  const { slug } = useParams()
+
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     const loadProfile = async () => {
-      try {
-        const remote = await getProfile()
-        const merged = mergeDefaults(defaultData, remote)
-        setProfile(merged)
-      } catch (error) {
-        console.error('Failed to load profile:', error)
-        setProfile(defaultData) // fallback آمن
-      } finally {
+      setLoading(true)
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('slug', slug)
+        .single()
+
+      if (error || !data) {
+        setNotFound(true)
         setLoading(false)
+        return
       }
+
+      const merged = mergeDefaults(defaultData, data)
+      setProfile(merged)
+      setLoading(false)
     }
 
     loadProfile()
-  }, [])
+  }, [slug])
 
+  // Loading
   if (loading) {
     return (
       <div className="space-y-8">
         <div className="card p-6">Loading...</div>
+      </div>
+    )
+  }
+
+  // 404
+  if (notFound) {
+    return (
+      <div className="text-center mt-20 text-2xl font-semibold">
+        404 - User not found
       </div>
     )
   }
@@ -54,4 +75,4 @@ export default function Profile() {
       <ProfileCard profile={profile} />
     </div>
   )
-}
+}ٍ
