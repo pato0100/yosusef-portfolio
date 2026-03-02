@@ -2,6 +2,9 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { useI18n } from "../i18n/i18n"
 import { createClient } from "@supabase/supabase-js"
+import { useParams } from "react-router-dom"
+
+const { slug } = useParams()
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -31,21 +34,23 @@ export default function Contact() {
 
   // ✅ Get logged-in user
   useEffect(() => {
-    const getUser = async () => {
-      const { data, error } = await supabase.auth.getUser()
+  const getOwner = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("slug", slug)
+      .single()
 
-      if (error) {
-        console.error(error)
-        return
-      }
-
-      if (data?.user) {
-        setOwnerId(data.user.id)
-      }
+    if (error || !data) {
+      console.error("Profile not found for slug:", slug)
+      return
     }
 
-    getUser()
-  }, [])
+    setOwnerId(data.id)
+  }
+
+  if (slug) getOwner()
+}, [slug])
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -69,10 +74,10 @@ export default function Contact() {
     if (form.company) return
 
     // 🛡 Must be logged in
-    if (!ownerId) {
-      setError("You must be logged in.")
-      return
-    }
+   if (!ownerId) {
+  setError("Profile not found.")
+  return
+}
 
     // 🛡 Rate limit (30 sec)
     const lastSent = localStorage.getItem("lastContactTime")
@@ -93,9 +98,10 @@ export default function Contact() {
       const res = await fetch(FUNCTION_URL, {
   method: "POST",
   headers: {
-    "Content-Type": "application/json",
-    "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
-  },
+  "Content-Type": "application/json",
+  "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+},
+
   body: JSON.stringify({
     owner_id: ownerId,
     name: form.name,
