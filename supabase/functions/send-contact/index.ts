@@ -8,16 +8,15 @@ const corsHeaders = {
 
 serve(async (req) => {
 
-  // ✅ Handle preflight (OPTIONS)
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
   }
 
   try {
     const body = await req.json()
-    const { owner_id, name, email, subject, message } = body
+    const { slug, name, email, subject, message } = body
 
-    if (!owner_id || !name || !email || !message) {
+    if (!slug || !name || !email || !message) {
       return new Response(JSON.stringify({ error: "Missing fields" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -29,11 +28,32 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     )
 
-    // 🟢 1) Save message
+    // 1️⃣ Get profile by slug
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, email")
+      .eq("slug", slug)
+      .single()
+
+    if (profileError || !profile) {
+      return new Response(JSON.stringify({ error: "Profile not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
+
+    if (!profile.email) {
+      return new Response(JSON.stringify({ error: "Profile email missing" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
+
+    // 2️⃣ Save message
     const { error: insertError } = await supabase
       .from("contact_messages")
       .insert({
-        owner_id,
+        owner_id: profile.id,
         name,
         email,
         subject,
@@ -47,22 +67,8 @@ serve(async (req) => {
       })
     }
 
-    // 🟢 2) Get owner email
-    const { data: profile, error: profileError } = await supabase
-  .from("profiles")
-  .select("email")
-  .eq("id", owner_id)
-  .single()
-
-if (profileError || !profile?.email) {
-  return new Response(JSON.stringify({ error: "Profile email not found" }), {
-    status: 404,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  })
-}
-
-    // 🟢 3) Send email
-    await fetch("https://api.resend.com/emails", {
+    // 3️⃣ Send email
+    const emailRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -80,6 +86,15 @@ if (profileError || !profile?.email) {
         `,
       }),
     })
+
+    const emailData = await emailRes.json()
+
+    if (!emailRes.ok) {
+      return new Response(JSON.stringify({ error: emailData }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
