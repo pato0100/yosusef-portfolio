@@ -1,13 +1,7 @@
-﻿import { useState, useEffect } from "react"
+﻿import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useI18n } from "../i18n/i18n"
-import { createClient } from "@supabase/supabase-js"
 import { useParams } from "react-router-dom"
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-)
 
 const FUNCTION_URL =
   "https://vmehwkqdptatlmygavgb.supabase.co/functions/v1/send-contact"
@@ -17,8 +11,6 @@ export default function Contact() {
   const { slug } = useParams()
 
   const isRTL = lang === "ar"
-
-  
 
   const [form, setForm] = useState({
     name: "",
@@ -32,40 +24,22 @@ export default function Contact() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
 
-  // ✅ Get owner_id from slug (PUBLIC SAFE)
-  useEffect(() => {
-    const getOwner = async () => {
-      if (!slug) return
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("slug", slug)
-        .single()
-
-      if (error || !data) {
-        console.error("Profile not found for slug:", slug)
-        setError("Profile not found.")
-        return
-      }
-
-      setOwnerId(data.id)
-    }
-
-    getOwner()
-  }, [slug])
-
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }))
   }
 
   const validate = () => {
     if (!form.name || !form.email || !form.message) {
       return t.contact_required
     }
+
     if (!/\S+@\S+\.\S+/.test(form.email)) {
       return t.contact_invalid_email
     }
+
     return null
   }
 
@@ -73,11 +47,11 @@ export default function Contact() {
     e.preventDefault()
     setError("")
 
-    // 🛡 Honeypot anti-spam
+    // 🛡 Honeypot
     if (form.company) return
 
-    if (!ownerId) {
-      setError("Profile not found.")
+    if (!slug) {
+      setError("Invalid profile.")
       return
     }
 
@@ -97,20 +71,26 @@ export default function Contact() {
     setLoading(true)
 
     try {
-     const { data, error } = await supabase.functions.invoke("send-contact", {
-  body: {
-    slug: slug,   // 👈 ده المهم
-    name: form.name,
-    email: form.email,
-    subject: form.subject,
-    message: form.message,
-  },
-})
+      const res = await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          slug: slug,
+          name: form.name,
+          email: form.email,
+          subject: form.subject,
+          message: form.message,
+        }),
+      })
 
-if (error) {
-  console.error("Function error:", error)
-  throw error
-}
+      const data = await res.json()
+
+      if (!res.ok) {
+        console.error("Function error:", data)
+        throw new Error(data.error || "Failed")
+      }
 
       localStorage.setItem("lastContactTime", Date.now())
 
@@ -124,6 +104,7 @@ if (error) {
       })
 
       setTimeout(() => setSuccess(false), 3000)
+
     } catch (err) {
       console.error(err)
       setError("Something went wrong. Please try again.")
@@ -148,7 +129,10 @@ if (error) {
               exit={{ opacity: 0 }}
               className="text-center py-10"
             >
-              <div className="text-5xl mb-4" style={{ color: "var(--brand)" }}>
+              <div
+                className="text-5xl mb-4"
+                style={{ color: "var(--brand)" }}
+              >
                 ✓
               </div>
               <p className="text-lg font-semibold">
@@ -165,6 +149,7 @@ if (error) {
               className="space-y-5"
               dir={isRTL ? "rtl" : "ltr"}
             >
+              {/* Honeypot */}
               <input
                 type="text"
                 name="company"
