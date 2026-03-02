@@ -33,12 +33,15 @@ const [activeProjectId, setActiveProjectId] = useState(null)
 const [projects, setProjects] = useState([])
 const [loadingProjects, setLoadingProjects] = useState(false)
 
-const [previewImages, setPreviewImages] = useState([])
-const [selectedFiles, setSelectedFiles] = useState([])
+// 🔥 Gallery preview لكل مشروع
+const [previewImages, setPreviewImages] = useState({})   // { [projectId]: [urls] }
+const [selectedFiles, setSelectedFiles] = useState({})   // { [projectId]: [File] }
 
-const [coverPreview, setCoverPreview] = useState(null)
-const [selectedCover, setSelectedCover] = useState(null)
+// 🔥 Cover preview لكل مشروع
+const [coverPreview, setCoverPreview] = useState({})     // { [projectId]: url }
+const [selectedCover, setSelectedCover] = useState({})   // { [projectId]: File }
 
+// ➕ New project
 const [newProject, setNewProject] = useState({
   title: '',
   slug: '',
@@ -407,7 +410,14 @@ async function uploadCover(file, project) {
     if (dbError) throw dbError
 
     alert("Cover uploaded ✅")
-    await getMyProjects()
+    
+    setProjects(prev =>
+  prev.map(p =>
+    p.id === project.id
+      ? { ...p, cover_image: data.publicUrl }
+      : p
+  )
+)
 
   } catch (err) {
     console.error("Upload cover failed:", err)
@@ -446,10 +456,16 @@ async function uploadGallery(files, project) {
       uploadedUrls.push(data.publicUrl)
     }
 
-    const updatedGallery = [
-      ...(project.gallery || []),
-      ...uploadedUrls
-    ]
+    const { data: currentProject } = await supabase
+  .from('projects')
+  .select('gallery')
+  .eq('id', project.id)
+  .single()
+
+const updatedGallery = [
+  ...(currentProject?.gallery || []),
+  ...uploadedUrls
+]
 
     const { error: dbError } = await supabase
       .from('projects')
@@ -998,7 +1014,7 @@ setData(prev => ({
       </label>
     </div>
 
-{/* Cover Upload */}
+        {/* Cover Upload */}
 <div>
   <label className="text-sm opacity-70">Upload Cover</label>
 
@@ -1009,25 +1025,40 @@ setData(prev => ({
       const file = e.target.files[0]
       if (!file) return
 
-      setSelectedCover(file)
-      setCoverPreview(URL.createObjectURL(file))
+      setSelectedCover(prev => ({
+        ...prev,
+        [project.id]: file
+      }))
+
+      setCoverPreview(prev => ({
+        ...prev,
+        [project.id]: URL.createObjectURL(file)
+      }))
     }}
   />
 
-  {/* Preview قبل الرفع */}
-  {coverPreview && (
+  {/* 🔵 Preview قبل الرفع */}
+  {coverPreview[project.id] && (
     <div className="mt-3 space-y-3">
       <img
-        src={coverPreview}
+        src={coverPreview[project.id]}
         className="rounded-xl h-40 object-cover border border-white/10"
       />
 
       <div className="flex gap-3">
         <button
           onClick={() => {
-            uploadCover(selectedCover, project)
-            setSelectedCover(null)
-            setCoverPreview(null)
+            uploadCover(selectedCover[project.id], project)
+
+            setSelectedCover(prev => ({
+              ...prev,
+              [project.id]: null
+            }))
+
+            setCoverPreview(prev => ({
+              ...prev,
+              [project.id]: null
+            }))
           }}
           className="btn btn-primary"
         >
@@ -1036,14 +1067,39 @@ setData(prev => ({
 
         <button
           onClick={() => {
-            setSelectedCover(null)
-            setCoverPreview(null)
+            setSelectedCover(prev => ({
+              ...prev,
+              [project.id]: null
+            }))
+            setCoverPreview(prev => ({
+              ...prev,
+              [project.id]: null
+            }))
           }}
           className="btn btn-ghost"
         >
           Cancel
         </button>
       </div>
+    </div>
+  )}
+
+  {/* 🟢 عرض الكافر الحالي لو مفيش Preview */}
+  {project.cover_image && !coverPreview[project.id] && (
+    <div className="mt-3 space-y-2">
+      <img
+        src={project.cover_image}
+        className="rounded-xl h-40 object-cover border border-white/10"
+      />
+
+      <button
+        onClick={() =>
+          updateProject(project.id, { cover_image: null })
+        }
+        className="btn btn-ghost"
+      >
+        Remove Cover
+      </button>
     </div>
   )}
 </div>
