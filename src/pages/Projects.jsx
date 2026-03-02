@@ -1,4 +1,9 @@
-﻿export default function Projects() {
+﻿import { useEffect, useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import { motion } from 'framer-motion'
+
+export default function Projects() {
   const { slug } = useParams()
 
   const [projects, setProjects] = useState([])
