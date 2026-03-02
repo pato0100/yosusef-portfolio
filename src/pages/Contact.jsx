@@ -10,7 +10,7 @@ const supabase = createClient(
 )
 
 const FUNCTION_URL =
-  "https://vmehwkqdptatlmygavgb.functions.supabase.co/send-contact"
+  "https://vmehwkqdptatlmygavgb.supabase.co/functions/v1/send-contact"
 
 export default function Contact() {
   const { t, lang } = useI18n()
