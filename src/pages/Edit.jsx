@@ -27,7 +27,9 @@ export default function Edit() {
   // ✅ بيانات الفورم
   const [data, setData] = useState(defaults)
 
+  
   // ===== Projects State =====
+  const [activeProjectId, setActiveProjectId] = useState(null)
 const [projects, setProjects] = useState([])
 const [loadingProjects, setLoadingProjects] = useState(false)
 const [newProject, setNewProject] = useState({
@@ -364,6 +366,140 @@ async function createProject() {
     }
   }
 }
+
+async function uploadCover(file, project) {
+  try {
+    const { data: userData } = await supabase.auth.getUser()
+    const uid = userData?.user?.id
+    if (!uid) throw new Error("User not authenticated")
+
+    const fileExt = file.name.split('.').pop()
+    const filePath = `${uid}/${project.slug}/cover.${fileExt}`
+
+    // Upload with upsert (replace old cover)
+    const { error: uploadError } = await supabase.storage
+      .from('projects')
+      .upload(filePath, file, {
+        upsert: true,
+        contentType: file.type
+      })
+
+    if (uploadError) throw uploadError
+
+    // Get public URL
+    const { data } = supabase.storage
+      .from('projects')
+      .getPublicUrl(filePath)
+
+    // Save URL in DB
+    const { error: dbError } = await supabase
+      .from('projects')
+      .update({ cover_image: data.publicUrl })
+      .eq('id', project.id)
+
+    if (dbError) throw dbError
+
+    alert("Cover uploaded ✅")
+
+  } catch (err) {
+    console.error("Upload cover failed:", err)
+    alert("Failed to upload cover")
+  }
+}
+
+async function uploadGallery(files, project) {
+  try {
+    const { data: userData } = await supabase.auth.getUser()
+    const uid = userData?.user?.id
+    if (!uid) throw new Error("User not authenticated")
+
+    const uploadedUrls = []
+
+    for (const file of files) {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `gallery-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}.${fileExt}`
+
+      const filePath = `${uid}/${project.slug}/${fileName}`
+
+      const { error } = await supabase.storage
+        .from('projects')
+        .upload(filePath, file, {
+          contentType: file.type
+        })
+
+      if (error) throw error
+
+      const { data } = supabase.storage
+        .from('projects')
+        .getPublicUrl(filePath)
+
+      uploadedUrls.push(data.publicUrl)
+    }
+
+    const updatedGallery = [
+      ...(project.gallery || []),
+      ...uploadedUrls
+    ]
+
+    const { error: dbError } = await supabase
+      .from('projects')
+      .update({ gallery: updatedGallery })
+      .eq('id', project.id)
+
+    if (dbError) throw dbError
+
+    alert("Gallery updated ✅")
+
+  } catch (err) {
+    console.error("Gallery upload failed:", err)
+    alert("Failed to upload gallery")
+  }
+}
+
+async function deleteGalleryImage(project, imageUrl) {
+  try {
+    const { data: userData } = await supabase.auth.getUser()
+    const uid = userData?.user?.id
+
+    const filePath = imageUrl.split('/projects/')[1]
+
+    await supabase.storage
+      .from('projects')
+      .remove([filePath])
+
+    const updatedGallery = project.gallery.filter(
+      url => url !== imageUrl
+    )
+
+    await supabase
+      .from('projects')
+      .update({ gallery: updatedGallery })
+      .eq('id', project.id)
+
+    alert("Image deleted ✅")
+
+  } catch (err) {
+    console.error("Delete failed:", err)
+  }
+}
+
+async function updateProject(projectId, values) {
+  try {
+    const { error } = await supabase
+      .from('projects')
+      .update(values)
+      .eq('id', projectId)
+
+    if (error) throw error
+
+    alert("Project updated ✅")
+  } catch (err) {
+    console.error("Update failed:", err)
+  }
+}
+
 
   // bind helper لحقول ثنائية اللغة
   const [editLang, setEditLang] = useState('en') // 'en' | 'ar'
@@ -773,19 +909,81 @@ setData(prev => ({
     <p>Loading projects...</p>
   ) : (
     <div className="space-y-3">
-      {projects.map(project => (
-        <div
-          key={project.id}
-          className="border border-white/10 rounded-xl p-3"
-        >
-          <div className="font-semibold">{project.title}</div>
-          <div className="text-sm opacity-70">{project.slug}</div>
+     {projects.map(project => (
+  <div
+    key={project.id}
+    className="border border-white/10 rounded-xl p-4"
+  >
+
+    <div
+      className="flex justify-between items-center cursor-pointer"
+      onClick={() =>
+        setActiveProjectId(
+          activeProjectId === project.id ? null : project.id
+        )
+      }
+    >
+      <div>
+        <div className="font-semibold">{project.title}</div>
+        <div className="text-sm opacity-70">{project.slug}</div>
+      </div>
+      <div className="text-xs opacity-60">
+        {activeProjectId === project.id ? "Close" : "Manage"}
+      </div>
+    </div>
+
+    {activeProjectId === project.id && (
+      <div className="mt-4 space-y-4">
+
+        {/* Cover Upload */}
+        <div>
+          <label className="text-sm opacity-70">Upload Cover</label>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(e) => {
+              const file = e.target.files[0]
+              if (file) uploadCover(file, project)
+            }}
+          />
         </div>
-      ))}
+
+        {/* Gallery Upload */}
+        <div>
+          <label className="text-sm opacity-70">Upload Gallery</label>
+          <input
+            type="file"
+            multiple
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(e) => {
+              const files = Array.from(e.target.files)
+              if (files.length) uploadGallery(files, project)
+            }}
+          />
+        </div>
+
+        {/* Existing Gallery */}
+        {project.gallery?.length > 0 && (
+          <div className="grid grid-cols-3 gap-2">
+            {project.gallery.map(img => (
+              <img
+                key={img}
+                src={img}
+                className="rounded-lg border border-white/10"
+              />
+            ))}
+          </div>
+        )}
+
+      </div>
+    )}
+  </div>
+))}
+
     </div>
   )}
 </section>
-      
+
     </>
   )
 } // ← نهاية function Edit
