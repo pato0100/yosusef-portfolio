@@ -16,7 +16,7 @@ export default function Edit() {
 
     // 🧩 إعدادات الموقع (Settings)
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
-  const [loadingSettings, setLoadingSettings] = useState(true)
+  const [loadingSettings, setLoadingSettings] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
 
 
@@ -185,6 +185,30 @@ useEffect(() => {
   })()
 
 }, [session, slugFromUrl])
+
+useEffect(() => {
+  if (!session) {
+    setLoadingSettings(false)
+    return
+  }
+
+  (async () => {
+    try {
+      setLoadingSettings(true)
+
+      const remote = await getSettings()
+      setSettings(remote || DEFAULT_SETTINGS)
+
+    } catch (err) {
+      console.error('settings load failed', err)
+      setSettings(DEFAULT_SETTINGS)
+    } finally {
+      setLoadingSettings(false)
+    }
+  })()
+
+}, [session])
+
 
 useEffect(() => {
   return () => {
