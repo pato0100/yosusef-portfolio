@@ -7,7 +7,7 @@ import { getSettings, updateSettings, DEFAULT_SETTINGS } from '../services/setti
 import { THEME_OPTIONS } from '../data/themes'
 import { useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-
+import CoverCropper from '../components/CoverCropper'
 
 
 
