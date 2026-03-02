@@ -32,7 +32,10 @@ export default function Edit() {
   const [activeProjectId, setActiveProjectId] = useState(null)
 const [projects, setProjects] = useState([])
 const [loadingProjects, setLoadingProjects] = useState(false)
+const [coverPreview, setCoverPreview] = useState(null)
+const [selectedCover, setSelectedCover] = useState(null)
 const [previewImages, setPreviewImages] = useState([])
+const [selectedFiles, setSelectedFiles] = useState([])
 const [newProject, setNewProject] = useState({
   title: '',
   slug: '',
@@ -992,66 +995,113 @@ setData(prev => ({
       </label>
     </div>
 
-    {/* Cover Upload */}
-        <div>
-          <label className="text-sm opacity-70">Upload Cover</label>
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={(e) => {
-              const file = e.target.files[0]
-              if (file) uploadCover(file, project)
-            }}
-          />
-        </div>
+{/* Cover Upload */}
+<div>
+  <label className="text-sm opacity-70">Upload Cover</label>
+
+  <input
+    type="file"
+    accept="image/png,image/jpeg,image/webp"
+    onChange={(e) => {
+      const file = e.target.files[0]
+      if (!file) return
+
+      setSelectedCover(file)
+      setCoverPreview(URL.createObjectURL(file))
+    }}
+  />
+
+  {/* Preview قبل الرفع */}
+  {coverPreview && (
+    <div className="mt-3 space-y-3">
+      <img
+        src={coverPreview}
+        className="rounded-xl h-40 object-cover border border-white/10"
+      />
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => {
+            uploadCover(selectedCover, project)
+            setSelectedCover(null)
+            setCoverPreview(null)
+          }}
+          className="btn btn-primary"
+        >
+          Confirm Upload
+        </button>
+
+        <button
+          onClick={() => {
+            setSelectedCover(null)
+            setCoverPreview(null)
+          }}
+          className="btn btn-ghost"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )}
+</div>
 
         {/* Gallery Upload */}
-        <div>
-          <label className="text-sm opacity-70">Upload Gallery</label>
-          <input
-  type="file"
-  multiple
-  accept="image/png,image/jpeg,image/webp"
-  onChange={(e) => {
-    const files = Array.from(e.target.files)
+<div>
+  <label className="text-sm opacity-70">Upload Gallery</label>
 
-    // 1️⃣ اعمل preview
-    setPreviewImages(
-      files.map(file => URL.createObjectURL(file))
-    )
-
-    // 2️⃣ ارفعهم
-    if (files.length) uploadGallery(files, project)
-  }}
-/>
-{previewImages.length > 0 && (
-  <div className="grid grid-cols-3 gap-3 mt-3">
-    {previewImages.map(src => (
-      <img
-        key={src}
-        src={src}
-        className="rounded-lg opacity-60 h-24 object-cover"
-      />
-    ))}
-  </div>
-)}
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-3">
   <input
-    className="input"
-    defaultValue={project.title}
-    onBlur={(e) =>
-      updateProject(project.id, { title: e.target.value })
-    }
+    type="file"
+    multiple
+    accept="image/png,image/jpeg,image/webp"
+    onChange={(e) => {
+      const files = Array.from(e.target.files)
+
+      // خزّن الملفات
+      setSelectedFiles(files)
+
+      // اعمل preview
+      setPreviewImages(
+        files.map(file => URL.createObjectURL(file))
+      )
+    }}
   />
-  <input
-    className="input"
-    defaultValue={project.short_description}
-    onBlur={(e) =>
-      updateProject(project.id, { short_description: e.target.value })
-    }
-  />
+
+  {previewImages.length > 0 && (
+    <>
+      <div className="grid grid-cols-3 gap-3 mt-3">
+        {previewImages.map(src => (
+          <img
+            key={src}
+            src={src}
+            className="rounded-lg opacity-60 h-24 object-cover"
+          />
+        ))}
+      </div>
+
+      <div className="flex gap-3 mt-3">
+        <button
+          onClick={() => {
+            uploadGallery(selectedFiles, project)
+            setSelectedFiles([])
+            setPreviewImages([])
+          }}
+          className="btn btn-primary"
+        >
+          Confirm Upload
+        </button>
+
+        <button
+          onClick={() => {
+            setSelectedFiles([])
+            setPreviewImages([])
+          }}
+          className="btn btn-ghost"
+        >
+          Cancel
+        </button>
+      </div>
+    </>
+  )}
 </div>
 
         {/* Existing Gallery */}
