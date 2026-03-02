@@ -8,6 +8,7 @@ import { THEME_OPTIONS } from '../data/themes'
 import { useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import CoverCropper from '../components/CoverCropper'
+import ProfileCropper from "../components/ProfileCropper"
 
 
 
@@ -27,6 +28,7 @@ export default function Edit() {
   // ✅ بيانات الفورم
   const [data, setData] = useState(defaults)
 
+const [profileCropping, setProfileCropping] = useState(null)
   
 // ===== Projects State =====
 const [activeProjectId, setActiveProjectId] = useState(null)
@@ -820,7 +822,26 @@ setData(prev => ({
           <div className="md:col-span-2 flex flex-col gap-2">
             <label className="font-medium">Profile Picture</label>
             {data.image && <img src={data.image} alt="Profile preview" className="w-24 h-24 object-cover rounded-full border border-gray-300 shadow" />}
-            <input type="file" accept="image/*" onChange={onImageUpload} className="input cursor-pointer" />
+           <input
+  type="file"
+  accept="image/*"
+  onChange={(e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 8 * 1024 * 1024) {
+      alert('الصورة كبيرة جدًا، أقل من 8MB')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setProfileCropping(ev.target.result)
+    }
+    reader.readAsDataURL(file)
+  }}
+  className="input cursor-pointer"
+/>
           </div>
 
           {/* سوشيال */}
@@ -856,6 +877,54 @@ setData(prev => ({
           </div>
         </form>
       </section>
+
+      {profileCropping && (
+  <ProfileCropper
+    image={profileCropping}
+    onCancel={() => setProfileCropping(null)}
+    onConfirm={(croppedBase64) => {
+
+      // 👇 هنا هنستخدم نفس منطق الضغط القديم
+      const img = new Image()
+
+      img.onload = () => {
+        const maxDim = 640
+        let { width, height } = img
+
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width)
+          width = maxDim
+        } else if (height > width && height > maxDim) {
+          width = Math.round((width * maxDim) / height)
+          height = maxDim
+        } else if (width > maxDim) {
+          height = maxDim
+          width = maxDim
+        }
+
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+
+        const ctx = canvas.getContext('2d')
+        ctx.imageSmoothingQuality = 'high'
+        ctx.drawImage(img, 0, 0, width, height)
+
+        const compressed = canvas.toDataURL('image/jpeg', 0.82)
+
+        setData(prev => ({
+          ...prev,
+          image: compressed,
+          imageUrl: prev.imageUrl || ''
+        }))
+
+        setProfileCropping(null)
+      }
+
+      img.src = croppedBase64
+    }}
+  />
+)}
 
       {/* ===== Settings Panel (جديد) ===== */}
       <section className="card p-6 mt-6">
