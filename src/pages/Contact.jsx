@@ -97,27 +97,20 @@ export default function Contact() {
     setLoading(true)
 
     try {
-      const res = await fetch(FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({
-          owner_id: ownerId,
-          name: form.name,
-          email: form.email,
-          subject: form.subject,
-          message: form.message,
-        }),
-      })
+      const { data, error } = await supabase.functions.invoke("send-contact", {
+  body: {
+    owner_id: ownerId,
+    name: form.name,
+    email: form.email,
+    subject: form.subject,
+    message: form.message,
+  },
+})
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        console.error("Function error:", data)
-        throw new Error(data.error || "Failed")
-      }
+if (error) {
+  console.error("Function error:", error)
+  throw error
+}
 
       localStorage.setItem("lastContactTime", Date.now())
 
