@@ -4,8 +4,6 @@ import { useI18n } from "../i18n/i18n"
 import { createClient } from "@supabase/supabase-js"
 import { useParams } from "react-router-dom"
 
-const { slug } = useParams()
-
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -16,6 +14,8 @@ const FUNCTION_URL =
 
 export default function Contact() {
   const { t, lang } = useI18n()
+  const { slug } = useParams()
+
   const isRTL = lang === "ar"
 
   const [ownerId, setOwnerId] = useState(null)
@@ -32,25 +32,28 @@ export default function Contact() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
 
-  // ✅ Get logged-in user
+  // ✅ Get owner_id from slug (PUBLIC SAFE)
   useEffect(() => {
-  const getOwner = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("slug", slug)
-      .single()
+    const getOwner = async () => {
+      if (!slug) return
 
-    if (error || !data) {
-      console.error("Profile not found for slug:", slug)
-      return
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("slug", slug)
+        .single()
+
+      if (error || !data) {
+        console.error("Profile not found for slug:", slug)
+        setError("Profile not found.")
+        return
+      }
+
+      setOwnerId(data.id)
     }
 
-    setOwnerId(data.id)
-  }
-
-  if (slug) getOwner()
-}, [slug])
+    getOwner()
+  }, [slug])
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -73,11 +76,10 @@ export default function Contact() {
     // 🛡 Honeypot anti-spam
     if (form.company) return
 
-    // 🛡 Must be logged in
-   if (!ownerId) {
-  setError("Profile not found.")
-  return
-}
+    if (!ownerId) {
+      setError("Profile not found.")
+      return
+    }
 
     // 🛡 Rate limit (30 sec)
     const lastSent = localStorage.getItem("lastContactTime")
@@ -96,20 +98,19 @@ export default function Contact() {
 
     try {
       const res = await fetch(FUNCTION_URL, {
-  method: "POST",
-  headers: {
-  "Content-Type": "application/json",
-  "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
-},
-
-  body: JSON.stringify({
-    owner_id: ownerId,
-    name: form.name,
-    email: form.email,
-    subject: form.subject,
-    message: form.message,
-  }),
-})
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          owner_id: ownerId,
+          name: form.name,
+          email: form.email,
+          subject: form.subject,
+          message: form.message,
+        }),
+      })
 
       const data = await res.json()
 
@@ -171,7 +172,6 @@ export default function Contact() {
               className="space-y-5"
               dir={isRTL ? "rtl" : "ltr"}
             >
-              {/* Honeypot hidden */}
               <input
                 type="text"
                 name="company"
