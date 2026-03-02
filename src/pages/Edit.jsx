@@ -640,8 +640,4 @@ function LoginCard() {
   )
 }
 
-console.log({
-  loadingSession,
-  loading,
-  loadingSettings
-})
+
