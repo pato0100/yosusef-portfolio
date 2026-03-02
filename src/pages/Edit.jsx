@@ -626,7 +626,7 @@ function LoginCard() {
     await supabase.auth.signInWithOAuth({
   provider: "github",
   options: {
-    redirectTo: `${window.location.origin}/${slug}/edit`,
+    redirectTo: window.location.href,
   },
 })
     // بعد الدخول GitHub هيحوّلك تلقائيًا للصفحة دي تاني
