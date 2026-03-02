@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 
 import Profile from './pages/Profile.jsx'
 import Projects from './pages/Projects.jsx'
+import ProjectDetails from './pages/ProjectDetails.jsx'
 import Contact from './pages/Contact.jsx'
 import Edit from './pages/Edit.jsx'
 import RootRedirect from './pages/RootRedirect.jsx'
@@ -85,7 +86,7 @@ export default function App() {
       <Navbar />
 
       <main className="container-max py-8">
-        
+
         <Routes>
 
   <Route path="/:slug/edit" element={<Edit />} />
