@@ -991,6 +991,156 @@ setData(prev => ({
 {activeProjectId === project.id && (
   <div className="mt-4 space-y-4">
 
+     {/* Basic Info */}
+<div className="grid md:grid-cols-2 gap-3">
+
+  <div>
+    <label className="text-sm opacity-70">Project Title</label>
+    <input
+      className="input"
+      value={project.title || ''}
+      onChange={(e) =>
+        updateProject(project.id, {
+          title: e.target.value
+        })
+      }
+    />
+  </div>
+
+
+  <div>
+    <label className="text-sm opacity-70">Short Description</label>
+    <input
+      className="input"
+      value={project.short_description || ''}
+      onChange={(e) =>
+        updateProject(project.id, {
+          short_description: e.target.value
+        })
+      }
+    />
+  </div>
+
+</div>
+
+
+<div>
+  <label className="text-sm opacity-70">Full Description</label>
+  <textarea
+    className="input min-h-[120px]"
+    value={project.full_description || ''}
+    onChange={(e) =>
+      updateProject(project.id, {
+        full_description: e.target.value
+      })
+    }
+  />
+</div>
+
+<div>
+  <label className="text-sm opacity-70">
+    Tech Stack (comma separated)
+  </label>
+
+  <input
+    className="input"
+    value={(project.tech_stack || []).join(', ')}
+    onChange={(e) =>
+      updateProject(project.id, {
+        tech_stack: e.target.value
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+      })
+    }
+  />
+</div>
+
+<div>
+  <label className="text-sm opacity-70">
+    Features (comma separated)
+  </label>
+
+  <input
+    className="input"
+    value={(project.features || []).join(', ')}
+    onChange={(e) =>
+      updateProject(project.id, {
+        features: e.target.value
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+      })
+    }
+  />
+</div>
+
+
+
+<div className="grid md:grid-cols-2 gap-3">
+
+  <div>
+    <label className="text-sm opacity-70">GitHub URL</label>
+    <input
+      className="input"
+      value={project.github_url || ''}
+      onChange={(e) =>
+        updateProject(project.id, {
+          github_url: e.target.value
+        })
+      }
+    />
+  </div>
+
+  <div>
+    <label className="text-sm opacity-70">Live URL</label>
+    <input
+      className="input"
+      value={project.live_url || ''}
+      onChange={(e) =>
+        updateProject(project.id, {
+          live_url: e.target.value
+        })
+      }
+    />
+  </div>
+
+</div>
+
+<div className="grid md:grid-cols-2 gap-3">
+
+  <div>
+    <label className="text-sm opacity-70">Start Date</label>
+    <input
+      type="date"
+      className="input"
+      value={project.start_date || ''}
+      onChange={(e) =>
+        updateProject(project.id, {
+          start_date: e.target.value
+        })
+      }
+    />
+  </div>
+
+  <div>
+    <label className="text-sm opacity-70">End Date</label>
+    <input
+      type="date"
+      className="input"
+      value={project.end_date || ''}
+      onChange={(e) =>
+        updateProject(project.id, {
+          end_date: e.target.value
+        })
+      }
+    />
+  </div>
+
+</div>
+
+
+
     {/* Publish Controls */}
     <div className="flex gap-6">
       <label className="flex items-center gap-2">
