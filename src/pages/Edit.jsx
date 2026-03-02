@@ -475,7 +475,13 @@ const updatedGallery = [
     if (dbError) throw dbError
 
     alert("Gallery updated ✅")
-    await getMyProjects()
+    setProjects(prev =>
+  prev.map(p =>
+    p.id === project.id
+      ? { ...p, gallery: updatedGallery }
+      : p
+  )
+)
 
 
   } catch (err) {
@@ -1113,54 +1119,75 @@ setData(prev => ({
     multiple
     accept="image/png,image/jpeg,image/webp"
     onChange={(e) => {
-      const files = Array.from(e.target.files)
+  const files = Array.from(e.target.files)
 
-      // خزّن الملفات
-      setSelectedFiles(files)
+  // 🔥 خزّن الملفات لكل مشروع لوحده
+  setSelectedFiles(prev => ({
+    ...prev,
+    [project.id]: files
+  }))
 
-      // اعمل preview
-      setPreviewImages(
-        files.map(file => URL.createObjectURL(file))
-      )
-    }}
+  // 🔥 اعمل preview مربوط بالمشروع
+  setPreviewImages(prev => ({
+    ...prev,
+    [project.id]: files.map(file =>
+      URL.createObjectURL(file)
+    )
+  }))
+}}
   />
 
-  {previewImages.length > 0 && (
-    <>
-      <div className="grid grid-cols-3 gap-3 mt-3">
-        {previewImages.map(src => (
-          <img
-            key={src}
-            src={src}
-            className="rounded-lg opacity-60 h-24 object-cover"
-          />
-        ))}
-      </div>
+  {previewImages[project.id]?.length > 0 && (
+  <>
+    <div className="grid grid-cols-3 gap-3 mt-3">
+      {previewImages[project.id].map(src => (
+        <img
+          key={src}
+          src={src}
+          className="rounded-lg opacity-60 h-24 object-cover"
+        />
+      ))}
+    </div>
 
-      <div className="flex gap-3 mt-3">
-        <button
-          onClick={() => {
-            uploadGallery(selectedFiles, project)
-            setSelectedFiles([])
-            setPreviewImages([])
-          }}
-          className="btn btn-primary"
-        >
-          Confirm Upload
-        </button>
+    <div className="flex gap-3 mt-3">
+      <button
+        onClick={() => {
+          uploadGallery(selectedFiles[project.id], project)
 
-        <button
-          onClick={() => {
-            setSelectedFiles([])
-            setPreviewImages([])
-          }}
-          className="btn btn-ghost"
-        >
-          Cancel
-        </button>
-      </div>
-    </>
-  )}
+          setSelectedFiles(prev => ({
+            ...prev,
+            [project.id]: null
+          }))
+
+          setPreviewImages(prev => ({
+            ...prev,
+            [project.id]: null
+          }))
+        }}
+        className="btn btn-primary"
+      >
+        Confirm Upload
+      </button>
+
+      <button
+        onClick={() => {
+          setSelectedFiles(prev => ({
+            ...prev,
+            [project.id]: null
+          }))
+          setPreviewImages(prev => ({
+            ...prev,
+            [project.id]: null
+          }))
+        }}
+        className="btn btn-ghost"
+      >
+        Cancel
+      </button>
+    </div>
+  </>
+)}
+
 </div>
 
         {/* Existing Gallery */}
