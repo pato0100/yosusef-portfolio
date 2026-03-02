@@ -624,9 +624,11 @@ function LoginCard() {
         : 'https://youssef-portfolio2001.vercel.app/edit';  // وقت النشر على Vercel
 
     await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: { redirectTo }
-    })
+  provider: "github",
+  options: {
+    redirectTo: `${window.location.origin}/${slug}/edit`,
+  },
+})
     // بعد الدخول GitHub هيحوّلك تلقائيًا للصفحة دي تاني
   } catch (e) {
     setErr(e?.message || 'GitHub login failed')
