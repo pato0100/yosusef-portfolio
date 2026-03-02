@@ -110,7 +110,7 @@ if (error || !data) {
           <img
             src={project.cover_image}
             alt={project.title}
-            className="w-full h-[360px] object-cover"
+            className="w-full aspect-[16/9] object-cover"
             loading="lazy"
           />
         </div>

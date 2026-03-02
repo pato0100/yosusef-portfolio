@@ -19,22 +19,24 @@ export default function CoverCropper({ image, onCancel, onConfirm }) {
       img.onload = resolve
     })
 
-    canvas.width = croppedAreaPixels.width
-    canvas.height = croppedAreaPixels.height
+    const OUTPUT_WIDTH = 1200
+const OUTPUT_HEIGHT = 675
 
-    const ctx = canvas.getContext("2d")
+canvas.width = OUTPUT_WIDTH
+canvas.height = OUTPUT_HEIGHT
 
-    ctx.drawImage(
-      img,
-      croppedAreaPixels.x,
-      croppedAreaPixels.y,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height,
-      0,
-      0,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height
-    )
+ctx.imageSmoothingQuality = "high"
+ctx.drawImage(
+  img,
+  croppedAreaPixels.x,
+  croppedAreaPixels.y,
+  croppedAreaPixels.width,
+  croppedAreaPixels.height,
+  0,
+  0,
+  OUTPUT_WIDTH,
+  OUTPUT_HEIGHT
+)
 
     const croppedBase64 = canvas.toDataURL("image/jpeg", 0.9)
     onConfirm(croppedBase64)
