@@ -91,18 +91,19 @@ export default function Contact() {
 
     try {
       const res = await fetch(FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          owner_id: ownerId,
-          name: form.name,
-          email: form.email,
-          subject: form.subject,
-          message: form.message,
-        }),
-      })
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+  },
+  body: JSON.stringify({
+    owner_id: ownerId,
+    name: form.name,
+    email: form.email,
+    subject: form.subject,
+    message: form.message,
+  }),
+})
 
       const data = await res.json()
 
