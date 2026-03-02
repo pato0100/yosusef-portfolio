@@ -963,17 +963,20 @@ setData(prev => ({
         </div>
 
         {/* Existing Gallery */}
-        {project.gallery?.length > 0 && (
-          <div className="grid grid-cols-3 gap-2">
-            {project.gallery.map(img => (
-              <img
-                key={img}
-                src={img}
-                className="rounded-lg border border-white/10"
-              />
-            ))}
-          </div>
-        )}
+       {project.gallery.map(img => (
+  <div key={img} className="relative group">
+    <img
+      src={img}
+      className="rounded-lg border border-white/10"
+    />
+    <button
+      onClick={() => deleteGalleryImage(project, img)}
+      className="absolute top-1 right-1 text-xs bg-black/70 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
+    >
+      ✕
+    </button>
+  </div>
+))}
 
       </div>
     )}
