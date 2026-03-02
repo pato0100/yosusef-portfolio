@@ -30,8 +30,9 @@ export default function Projects() {
         const { data } = await supabase
           .from('projects')
           .select('*')
-          .eq('owner_id', profile.id)
-          .eq('is_active', true)
+          .eq('is_deleted', false)   // 👈 جديد
+          .eq('is_active', true)     // 👈 موجود
+          .order('is_featured', { ascending: false })  // 👈 featured فوق
           .order('created_at', { ascending: false })
 
         setProjects(data || [])

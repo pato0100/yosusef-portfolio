@@ -36,7 +36,8 @@ const { data, error } = await supabase
   .select('*')
   .eq('owner_id', profile.id)
   .eq('slug', projectSlug)
-  .eq('is_active', true)
+  .eq('is_deleted', false)   // 👈 مهم
+  .eq('is_active', true)     // 👈 مهم
   .single()
 
 if (error || !data) {

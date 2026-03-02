@@ -939,11 +939,39 @@ setData(prev => ({
         {activeProjectId === project.id ? "Close" : "Manage"}
       </div>
     </div>
+{activeProjectId === project.id && (
+  <div className="mt-4 space-y-4">
 
-    {activeProjectId === project.id && (
-      <div className="mt-4 space-y-4">
+    {/* Publish Controls */}
+    <div className="flex gap-6">
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={project.is_active}
+          onChange={(e) =>
+            updateProject(project.id, {
+              is_active: e.target.checked
+            })
+          }
+        />
+        Active
+      </label>
 
-        {/* Cover Upload */}
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={project.is_featured}
+          onChange={(e) =>
+            updateProject(project.id, {
+              is_featured: e.target.checked
+            })
+          }
+        />
+        Featured
+      </label>
+    </div>
+
+    {/* Cover Upload */}
         <div>
           <label className="text-sm opacity-70">Upload Cover</label>
           <input
