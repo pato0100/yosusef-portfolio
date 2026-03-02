@@ -10,60 +10,54 @@ export default function ProjectDetails() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
-  useEffect(() => {
-    if (!slug || !projectSlug) return
+ useEffect(() => {
+  if (!slug || !projectSlug) return
 
-    async function loadProject() {
-      try {
-        setLoading(true)
-        setNotFound(false)
+  async function loadProject() {
+    try {
+      setLoading(true)
+      setNotFound(false)
 
-        // 1️⃣ Load profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('slug', slug)
-          .single()
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          profiles!inner(slug)
+        `)
+        .eq('slug', projectSlug)
+        .eq('profiles.slug', slug)
+        .eq('is_active', true)
+        .single()
 
-        if (profileError || !profile) {
-          setNotFound(true)
-          return
-        }
-
-        // 2️⃣ Load project
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('owner_id', profile.id)
-          .eq('slug', projectSlug)
-          .eq('is_active', true)
-          .single()
-
-        if (error || !data) {
-          setNotFound(true)
-          return
-        }
-
-        setProject(data)
-
-        // 3️⃣ SEO title
-        document.title = `${data.title} | ${slug}`
-
-        // 4️⃣ Atomic views increment (safe)
-        await supabase.rpc('increment_project_views', {
-          project_id: data.id,
-        })
-
-      } catch (err) {
-        console.error(err)
+      if (error || !data) {
         setNotFound(true)
-      } finally {
-        setLoading(false)
+        return
       }
-    }
 
-    loadProject()
-  }, [slug, projectSlug])
+      setProject({
+  ...data,
+  views: (data.views || 0) + 1,
+})
+
+      // SEO
+      document.title = `${data.title} | ${slug}`
+
+      // Increment views (بدون RPC لو مش عامل function)
+      await supabase
+        .from('projects')
+        .update({ views: (data.views || 0) + 1 })
+        .eq('id', data.id)
+
+    } catch (err) {
+      console.error(err)
+      setNotFound(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  loadProject()
+}, [slug, projectSlug])
 
   /* -------------------- STATES -------------------- */
 
