@@ -400,6 +400,7 @@ async function uploadCover(file, project) {
     if (dbError) throw dbError
 
     alert("Cover uploaded ✅")
+    await getMyProjects()
 
   } catch (err) {
     console.error("Upload cover failed:", err)
@@ -451,6 +452,8 @@ async function uploadGallery(files, project) {
     if (dbError) throw dbError
 
     alert("Gallery updated ✅")
+    await getMyProjects()
+
 
   } catch (err) {
     console.error("Gallery upload failed:", err)
@@ -463,7 +466,8 @@ async function deleteGalleryImage(project, imageUrl) {
     const { data: userData } = await supabase.auth.getUser()
     const uid = userData?.user?.id
 
-    const filePath = imageUrl.split('/projects/')[1]
+   const url = new URL(imageUrl)
+const filePath = url.pathname.split('/projects/')[1]
 
     await supabase.storage
       .from('projects')
@@ -479,6 +483,8 @@ async function deleteGalleryImage(project, imageUrl) {
       .eq('id', project.id)
 
     alert("Image deleted ✅")
+    await getMyProjects()
+
 
   } catch (err) {
     console.error("Delete failed:", err)
@@ -495,6 +501,8 @@ async function updateProject(projectId, values) {
     if (error) throw error
 
     alert("Project updated ✅")
+    await getMyProjects()
+
   } catch (err) {
     console.error("Update failed:", err)
   }
@@ -961,6 +969,23 @@ setData(prev => ({
             }}
           />
         </div>
+
+        <div className="grid md:grid-cols-2 gap-3">
+  <input
+    className="input"
+    defaultValue={project.title}
+    onBlur={(e) =>
+      updateProject(project.id, { title: e.target.value })
+    }
+  />
+  <input
+    className="input"
+    defaultValue={project.short_description}
+    onBlur={(e) =>
+      updateProject(project.id, { short_description: e.target.value })
+    }
+  />
+</div>
 
         {/* Existing Gallery */}
        {project.gallery.map(img => (
