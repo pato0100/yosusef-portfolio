@@ -18,7 +18,7 @@ export default function Contact() {
 
   const isRTL = lang === "ar"
 
-  const [ownerId, setOwnerId] = useState(null)
+  
 
   const [form, setForm] = useState({
     name: "",
@@ -97,9 +97,9 @@ export default function Contact() {
     setLoading(true)
 
     try {
-      const { data, error } = await supabase.functions.invoke("send-contact", {
+     const { data, error } = await supabase.functions.invoke("send-contact", {
   body: {
-    owner_id: ownerId,
+    slug: slug,   // 👈 ده المهم
     name: form.name,
     email: form.email,
     subject: form.subject,
