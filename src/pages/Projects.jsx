@@ -1,26 +1,20 @@
-﻿import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
-import { motion } from 'framer-motion'
-
-export default function Projects() {
-  const { username } = useParams()
+﻿export default function Projects() {
+  const { slug } = useParams()
 
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!username) return
+    if (!slug) return
 
     async function loadProjects() {
       try {
         setLoading(true)
 
-        // get profile
         const { data: profile } = await supabase
           .from('profiles')
           .select('id')
-          .eq('slug', username)
+          .eq('slug', slug)
           .single()
 
         if (!profile) {
@@ -28,7 +22,6 @@ export default function Projects() {
           return
         }
 
-        // get projects
         const { data } = await supabase
           .from('projects')
           .select('*')
@@ -46,7 +39,7 @@ export default function Projects() {
     }
 
     loadProjects()
-  }, [username])
+  }, [slug])
 
   if (loading) return <div>Loading projects...</div>
 
@@ -74,7 +67,7 @@ export default function Projects() {
           )}
 
           <Link
-            to={`/${username}/projects/${p.slug}`}
+            to={`/${slug}/projects/${p.slug}`}
             className="mt-4 inline-block underline"
           >
             View Details

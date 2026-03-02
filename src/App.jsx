@@ -92,6 +92,7 @@ export default function App() {
 
           <Route path="/:slug" element={<Profile />} />
           <Route path="/:slug/projects" element={<Projects />} />
+          <Route path="/:slug/projects/:projectSlug" element={<ProjectDetails />} />
           <Route path="/:slug/contact" element={<Contact />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
