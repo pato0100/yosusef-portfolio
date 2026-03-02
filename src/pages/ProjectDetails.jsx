@@ -18,21 +18,31 @@ export default function ProjectDetails() {
       setLoading(true)
       setNotFound(false)
 
-      const { data, error } = await supabase
-        .from('projects')
-        .select(`
-          *,
-          profiles!inner(slug)
-        `)
-        .eq('slug', projectSlug)
-        .eq('profiles.slug', slug)
-        .eq('is_active', true)
-        .single()
+      // 1️⃣ Get profile id
+const { data: profile, error: profileError } = await supabase
+  .from('profiles')
+  .select('id')
+  .eq('slug', slug)
+  .single()
 
-      if (error || !data) {
-        setNotFound(true)
-        return
-      }
+if (profileError || !profile) {
+  setNotFound(true)
+  return
+}
+
+// 2️⃣ Get project
+const { data, error } = await supabase
+  .from('projects')
+  .select('*')
+  .eq('owner_id', profile.id)
+  .eq('slug', projectSlug)
+  .eq('is_active', true)
+  .single()
+
+if (error || !data) {
+  setNotFound(true)
+  return
+}
 
       setProject({
   ...data,
