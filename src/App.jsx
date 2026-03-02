@@ -85,18 +85,21 @@ export default function App() {
       <Navbar />
 
       <main className="container-max py-8">
+        
         <Routes>
 
-          <Route path="/:slug/edit" element={<Edit />} />
-          <Route path="/" element={<RootRedirect />} />
+  <Route path="/:slug/edit" element={<Edit />} />
+  <Route path="/" element={<RootRedirect />} />
 
-          <Route path="/:slug" element={<Profile />} />
-          <Route path="/:slug/projects" element={<Projects />} />
-          <Route path="/:slug/contact" element={<Contact />} />
+  <Route path="/:slug" element={<Profile />} />
+  <Route path="/:slug/projects" element={<Projects />} />
+  <Route path="/:slug/projects/:projectSlug" element={<ProjectDetails />} />
+  <Route path="/:slug/contact" element={<Contact />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+  <Route path="*" element={<Navigate to="/" replace />} />
 
-        </Routes>
+</Routes>
+
       </main>
 
       <footer className="container-max py-10 text-center text-sm opacity-70">
