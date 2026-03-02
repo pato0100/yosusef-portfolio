@@ -54,6 +54,14 @@ function cleanUsername(value) {
     .replace(/[^a-z0-9-]/g, '')
 }
 
+function cleanProjectSlug(value) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+}
+
 async function checkUsernameAvailability(value) {
   if (!value || value.length < 3) {
     setUsernameStatus(null)
@@ -296,24 +304,38 @@ async function getMyProjects() {
 }
 
 async function createProject() {
-  if (!newProject.title || !newProject.slug) {
+  if (!newProject.title.trim() || !newProject.slug.trim()) {
     alert('Title & slug required')
     return
   }
 
+  // 🔒 Prevent duplicate slug (frontend check)
+  const exists = projects.find(
+    p => p.slug === newProject.slug
+  )
+
+  if (exists) {
+    alert('Slug already exists')
+    return
+  }
+
   try {
-    const { data: userData } = await supabase.auth.getUser()
+    const { data: userData, error: userError } =
+      await supabase.auth.getUser()
+
+    if (userError) throw userError
+
     const uid = userData?.user?.id
-    if (!uid) return
+    if (!uid) throw new Error('User not authenticated')
 
     const { data, error } = await supabase
       .from('projects')
       .insert([
         {
           owner_id: uid,
-          title: newProject.title,
-          slug: newProject.slug,
-          short_description: newProject.short_description
+          title: newProject.title.trim(),
+          slug: newProject.slug.trim(),
+          short_description: newProject.short_description?.trim() || null
         }
       ])
       .select()
@@ -321,14 +343,25 @@ async function createProject() {
 
     if (error) throw error
 
+    // Update UI instantly
     setProjects(prev => [data, ...prev])
-    setNewProject({ title: '', slug: '', short_description: '' })
+
+    setNewProject({
+      title: '',
+      slug: '',
+      short_description: ''
+    })
 
     alert('Project created ✅')
 
   } catch (err) {
-    console.error(err)
-    alert('Failed to create project')
+    console.error('Create project failed:', err)
+
+    if (err.message?.includes('unique')) {
+      alert('Slug already exists')
+    } else {
+      alert('Failed to create project')
+    }
   }
 }
 
@@ -689,22 +722,35 @@ setData(prev => ({
 
   {/* Add Project */}
   <div className="grid md:grid-cols-3 gap-3 mb-4">
+  <input
+    className="input"
+    placeholder="Project title"
+    value={newProject.title}
+    onChange={(e) => {
+      const title = e.target.value
+      setNewProject(prev => ({
+        ...prev,
+        title,
+        slug: cleanProjectSlug(title)
+      }))
+    }}
+  />
+
+  <div className="flex items-center rounded-xl border border-white/15 bg-white/5 overflow-hidden">
+    <span className="px-3 text-xs opacity-60 whitespace-nowrap">
+      /projects/
+    </span>
     <input
-      className="input"
-      placeholder="Project title"
-      value={newProject.title}
-      onChange={(e) =>
-        setNewProject(prev => ({ ...prev, title: e.target.value }))
-      }
-    />
-    <input
-      className="input"
-      placeholder="Slug"
+      className="bg-transparent flex-1 px-2 py-2 outline-none"
       value={newProject.slug}
       onChange={(e) =>
-        setNewProject(prev => ({ ...prev, slug: e.target.value }))
+        setNewProject(prev => ({
+          ...prev,
+          slug: cleanProjectSlug(e.target.value)
+        }))
       }
     />
+  </div>
     <input
       className="input"
       placeholder="Short description"
