@@ -48,15 +48,18 @@ serve(async (req) => {
     }
 
     // 🟢 2) Get owner email
-    const { data: userData, error: userError } =
-      await supabase.auth.admin.getUserById(owner_id)
+    const { data: profile, error: profileError } = await supabase
+  .from("profiles")
+  .select("email")
+  .eq("id", owner_id)
+  .single()
 
-    if (userError || !userData?.user?.email) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      })
-    }
+if (profileError || !profile?.email) {
+  return new Response(JSON.stringify({ error: "Profile email not found" }), {
+    status: 404,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  })
+}
 
     // 🟢 3) Send email
     await fetch("https://api.resend.com/emails", {
@@ -67,7 +70,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Portfolio <onboarding@resend.dev>",
-        to: [userData.user.email],
+        to: [profile.email],
         subject: subject || "New Contact Message",
         html: `
           <h2>New Contact Message</h2>
