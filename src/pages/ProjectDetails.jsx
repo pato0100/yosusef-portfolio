@@ -8,6 +8,7 @@ export default function ProjectDetails() {
 
   const [project, setProject] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     if (!slug || !projectSlug) return
@@ -15,8 +16,9 @@ export default function ProjectDetails() {
     async function loadProject() {
       try {
         setLoading(true)
+        setNotFound(false)
 
-        // 1️⃣ Get profile
+        // 1️⃣ Load profile
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id')
@@ -24,11 +26,11 @@ export default function ProjectDetails() {
           .single()
 
         if (profileError || !profile) {
-          setProject(null)
+          setNotFound(true)
           return
         }
 
-        // 2️⃣ Get project
+        // 2️⃣ Load project
         const { data, error } = await supabase
           .from('projects')
           .select('*')
@@ -38,20 +40,23 @@ export default function ProjectDetails() {
           .single()
 
         if (error || !data) {
-          setProject(null)
+          setNotFound(true)
           return
         }
 
         setProject(data)
 
-        // 3️⃣ Increment views
-        await supabase
-          .from('projects')
-          .update({ views: (data.views || 0) + 1 })
-          .eq('id', data.id)
+        // 3️⃣ SEO title
+        document.title = `${data.title} | ${slug}`
+
+        // 4️⃣ Atomic views increment (safe)
+        await supabase.rpc('increment_project_views', {
+          project_id: data.id,
+        })
 
       } catch (err) {
         console.error(err)
+        setNotFound(true)
       } finally {
         setLoading(false)
       }
@@ -60,73 +65,116 @@ export default function ProjectDetails() {
     loadProject()
   }, [slug, projectSlug])
 
-  if (loading) return <div>Loading project...</div>
+  /* -------------------- STATES -------------------- */
 
-  if (!project)
+  if (loading) {
     return (
-      <div>
-        <p>Project not found.</p>
-        <Link to={`/${slug}/projects`} className="underline">
-          Back to projects
+      <div className="min-h-[50vh] flex items-center justify-center opacity-70">
+        Loading project…
+      </div>
+    )
+  }
+
+  if (notFound || !project) {
+    return (
+      <div className="max-w-xl mx-auto text-center space-y-4">
+        <p className="text-lg font-semibold">Project not found</p>
+        <Link
+          to={`/${slug}/projects`}
+          className="underline opacity-80 hover:opacity-100"
+        >
+          ← Back to Projects
         </Link>
       </div>
     )
+  }
+
+  /* -------------------- UI -------------------- */
 
   return (
     <motion.section
-      className="max-w-3xl mx-auto"
-      initial={{ opacity: 0, y: 20 }}
+      className="max-w-5xl mx-auto"
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
     >
-      <h1 className="text-2xl font-bold mb-3">
-        {project.title}
-      </h1>
 
+      {/* Cover */}
+      {project.cover_image && (
+        <div className="mb-10 rounded-3xl overflow-hidden border border-white/10">
+          <img
+            src={project.cover_image}
+            alt={project.title}
+            className="w-full h-[360px] object-cover"
+            loading="lazy"
+          />
+        </div>
+      )}
+
+      {/* Header */}
+      <header className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">
+          {project.title}
+        </h1>
+
+        {project.short_description && (
+          <p className="opacity-80 max-w-3xl">
+            {project.short_description}
+          </p>
+        )}
+
+        <div className="text-sm opacity-60 mt-3">
+          Views: {project.views ?? 0}
+        </div>
+      </header>
+
+      {/* Full Description */}
       {project.full_description && (
-        <p className="opacity-80 mb-6">
+        <p className="leading-relaxed opacity-85 mb-10 max-w-3xl">
           {project.full_description}
         </p>
       )}
 
       {/* Tech Stack */}
       {project.tech_stack?.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-semibold mb-2">Tech Stack</h3>
-          <div className="flex flex-wrap gap-2">
+        <section className="mb-12">
+          <h3 className="text-lg font-semibold mb-4">Tech Stack</h3>
+          <div className="flex flex-wrap gap-3">
             {project.tech_stack.map((tech) => (
               <span
                 key={tech}
-                className="px-3 py-1 rounded-full bg-white/10 text-sm"
+                className="px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-sm"
               >
                 {tech}
               </span>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Gallery */}
       {project.gallery?.length > 0 && (
-        <div className="grid md:grid-cols-2 gap-4 mb-6">
+        <section className="grid md:grid-cols-2 gap-6 mb-12">
           {project.gallery.map((img, i) => (
             <img
               key={i}
               src={img}
               alt=""
-              className="rounded-xl border border-white/10"
+              loading="lazy"
+              className="rounded-2xl border border-white/10 hover:scale-[1.02] transition"
             />
           ))}
-        </div>
+        </section>
       )}
 
-      {/* Links */}
-      <div className="flex gap-4 mt-6">
+      {/* Actions */}
+      <div className="flex flex-wrap gap-4 mb-12">
         {project.live_url && (
           <a
             href={project.live_url}
             target="_blank"
             rel="noreferrer"
-            className="underline"
+            className="px-6 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 transition text-black font-medium"
           >
             Live Demo
           </a>
@@ -137,22 +185,21 @@ export default function ProjectDetails() {
             href={project.github_url}
             target="_blank"
             rel="noreferrer"
-            className="underline"
+            className="px-6 py-2 rounded-xl border border-white/20 hover:bg-white/10 transition"
           >
             GitHub
           </a>
         )}
       </div>
 
-      <div className="mt-8 text-sm opacity-60">
-        Views: {project.views || 0}
-      </div>
+      {/* Back */}
+      <Link
+        to={`/${slug}/projects`}
+        className="inline-block underline opacity-80 hover:opacity-100"
+      >
+        ← Back to Projects
+      </Link>
 
-      <div className="mt-6">
-        <Link to={`/${slug}/projects`} className="underline">
-          ← Back to Projects
-        </Link>
-      </div>
     </motion.section>
   )
 }
