@@ -27,6 +27,15 @@ export default function Edit() {
   // ✅ بيانات الفورم
   const [data, setData] = useState(defaults)
 
+  // ===== Projects State =====
+const [projects, setProjects] = useState([])
+const [loadingProjects, setLoadingProjects] = useState(false)
+const [newProject, setNewProject] = useState({
+  title: '',
+  slug: '',
+  short_description: ''
+})
+
   // ================= Username / Slug =================
 const navigate = useNavigate()
 const { slug: slugFromUrl } = useParams()
@@ -98,6 +107,8 @@ useEffect(() => {
     })()
   }
 }, [session])
+
+
 
 
   // اتجاه الواجهة
@@ -209,6 +220,11 @@ useEffect(() => {
 
 }, [session])
 
+useEffect(() => {
+  if (session) {
+    getMyProjects()
+  }
+}, [session])
 
 useEffect(() => {
   return () => {
@@ -253,6 +269,68 @@ async function saveSettings(e) {
   }
 }
 
+async function getMyProjects() {
+  try {
+    setLoadingProjects(true)
+
+    const { data: userData } = await supabase.auth.getUser()
+    const uid = userData?.user?.id
+
+    if (!uid) return
+
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('owner_id', uid)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    setProjects(data || [])
+
+  } catch (err) {
+    console.error('load projects failed', err)
+  } finally {
+    setLoadingProjects(false)
+  }
+}
+
+async function createProject() {
+  if (!newProject.title || !newProject.slug) {
+    alert('Title & slug required')
+    return
+  }
+
+  try {
+    const { data: userData } = await supabase.auth.getUser()
+    const uid = userData?.user?.id
+    if (!uid) return
+
+    const { data, error } = await supabase
+      .from('projects')
+      .insert([
+        {
+          owner_id: uid,
+          title: newProject.title,
+          slug: newProject.slug,
+          short_description: newProject.short_description
+        }
+      ])
+      .select()
+      .single()
+
+    if (error) throw error
+
+    setProjects(prev => [data, ...prev])
+    setNewProject({ title: '', slug: '', short_description: '' })
+
+    alert('Project created ✅')
+
+  } catch (err) {
+    console.error(err)
+    alert('Failed to create project')
+  }
+}
 
   // bind helper لحقول ثنائية اللغة
   const [editLang, setEditLang] = useState('en') // 'en' | 'ar'
@@ -351,6 +429,9 @@ async function onSave(e) {
   ...data,
   slug: username
 })
+
+
+
 
 // 🔥 مهم جدًا
 setData(prev => ({
@@ -602,6 +683,63 @@ setData(prev => ({
           </div>
         )}
       </section>
+
+<section className="card p-6 mt-6">
+  <h2 className="text-lg font-bold mb-4">Projects Manager</h2>
+
+  {/* Add Project */}
+  <div className="grid md:grid-cols-3 gap-3 mb-4">
+    <input
+      className="input"
+      placeholder="Project title"
+      value={newProject.title}
+      onChange={(e) =>
+        setNewProject(prev => ({ ...prev, title: e.target.value }))
+      }
+    />
+    <input
+      className="input"
+      placeholder="Slug"
+      value={newProject.slug}
+      onChange={(e) =>
+        setNewProject(prev => ({ ...prev, slug: e.target.value }))
+      }
+    />
+    <input
+      className="input"
+      placeholder="Short description"
+      value={newProject.short_description}
+      onChange={(e) =>
+        setNewProject(prev => ({ ...prev, short_description: e.target.value }))
+      }
+    />
+  </div>
+
+  <button
+    onClick={createProject}
+    className="btn btn-primary mb-6"
+  >
+    Add Project
+  </button>
+
+  {/* Projects List */}
+  {loadingProjects ? (
+    <p>Loading projects...</p>
+  ) : (
+    <div className="space-y-3">
+      {projects.map(project => (
+        <div
+          key={project.id}
+          className="border border-white/10 rounded-xl p-3"
+        >
+          <div className="font-semibold">{project.title}</div>
+          <div className="text-sm opacity-70">{project.slug}</div>
+        </div>
+      ))}
+    </div>
+  )}
+</section>
+      
     </>
   )
 } // ← نهاية function Edit
