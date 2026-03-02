@@ -32,6 +32,7 @@ export default function Edit() {
   const [activeProjectId, setActiveProjectId] = useState(null)
 const [projects, setProjects] = useState([])
 const [loadingProjects, setLoadingProjects] = useState(false)
+const [previewImages, setPreviewImages] = useState([])
 const [newProject, setNewProject] = useState({
   title: '',
   slug: '',
@@ -506,6 +507,26 @@ async function updateProject(projectId, values) {
   } catch (err) {
     console.error("Update failed:", err)
   }
+}
+
+async function moveImage(project, imageUrl, direction) {
+  const gallery = [...project.gallery]
+
+  const index = gallery.indexOf(imageUrl)
+  const newIndex = index + direction
+
+  if (newIndex < 0 || newIndex >= gallery.length) return
+
+  // Swap
+  ;[gallery[index], gallery[newIndex]] =
+    [gallery[newIndex], gallery[index]]
+
+  await supabase
+    .from('projects')
+    .update({ gallery })
+    .eq('id', project.id)
+
+  await getMyProjects()
 }
 
 
@@ -988,14 +1009,32 @@ setData(prev => ({
         <div>
           <label className="text-sm opacity-70">Upload Gallery</label>
           <input
-            type="file"
-            multiple
-            accept="image/png,image/jpeg,image/webp"
-            onChange={(e) => {
-              const files = Array.from(e.target.files)
-              if (files.length) uploadGallery(files, project)
-            }}
-          />
+  type="file"
+  multiple
+  accept="image/png,image/jpeg,image/webp"
+  onChange={(e) => {
+    const files = Array.from(e.target.files)
+
+    // 1️⃣ اعمل preview
+    setPreviewImages(
+      files.map(file => URL.createObjectURL(file))
+    )
+
+    // 2️⃣ ارفعهم
+    if (files.length) uploadGallery(files, project)
+  }}
+/>
+{previewImages.length > 0 && (
+  <div className="grid grid-cols-3 gap-3 mt-3">
+    {previewImages.map(src => (
+      <img
+        key={src}
+        src={src}
+        className="rounded-lg opacity-60 h-24 object-cover"
+      />
+    ))}
+  </div>
+)}
         </div>
 
         <div className="grid md:grid-cols-2 gap-3">
@@ -1016,18 +1055,38 @@ setData(prev => ({
 </div>
 
         {/* Existing Gallery */}
-       {project.gallery.map(img => (
+       {project.gallery?.map(img => (
   <div key={img} className="relative group">
+
     <img
       src={img}
       className="rounded-lg border border-white/10"
     />
+
+    {/* Controls */}
+    <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+      <button
+        onClick={() => moveImage(project, img, -1)}
+        className="bg-black/70 px-2 py-1 text-xs rounded"
+      >
+        ↑
+      </button>
+
+      <button
+        onClick={() => moveImage(project, img, 1)}
+        className="bg-black/70 px-2 py-1 text-xs rounded"
+      >
+        ↓
+      </button>
+    </div>
+
     <button
       onClick={() => deleteGalleryImage(project, img)}
-      className="absolute top-1 right-1 text-xs bg-black/70 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
+      className="absolute top-2 right-2 bg-black/70 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition"
     >
       ✕
     </button>
+
   </div>
 ))}
 
