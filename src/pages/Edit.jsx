@@ -37,9 +37,8 @@ const [loadingProjects, setLoadingProjects] = useState(false)
 const [previewImages, setPreviewImages] = useState({})   // { [projectId]: [urls] }
 const [selectedFiles, setSelectedFiles] = useState({})   // { [projectId]: [File] }
 
-// 🔥 Cover preview لكل مشروع
-const [coverPreview, setCoverPreview] = useState({})     // { [projectId]: url }
-const [selectedCover, setSelectedCover] = useState({})   // { [projectId]: File }
+// 🔥 Cover crop
+const [croppingImage, setCroppingImage] = useState({}) // { [projectId]: base64 }
 
 // ➕ New project
 const [newProject, setNewProject] = useState({
@@ -1193,10 +1192,11 @@ setData(prev => ({
       </label>
     </div>
 
-        {/* Cover Upload */}
+{/* Cover Upload */}
 <div>
   <label className="text-sm opacity-70">Upload Cover</label>
 
+  {/* Upload Input */}
   <input
     type="file"
     accept="image/png,image/jpeg,image/webp"
@@ -1204,67 +1204,46 @@ setData(prev => ({
       const file = e.target.files[0]
       if (!file) return
 
-      setSelectedCover(prev => ({
-        ...prev,
-        [project.id]: file
-      }))
-
-      setCoverPreview(prev => ({
-        ...prev,
-        [project.id]: URL.createObjectURL(file)
-      }))
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        setCroppingImage(prev => ({
+          ...prev,
+          [project.id]: ev.target.result
+        }))
+      }
+      reader.readAsDataURL(file)
     }}
   />
 
-  {/* 🔵 Preview قبل الرفع */}
-  {coverPreview[project.id] && (
-    <div className="mt-3 space-y-3">
-      <img
-        src={coverPreview[project.id]}
-        className="rounded-xl h-40 object-cover border border-white/10"
-      />
+  {/* 🔥 Cropper Modal */}
+  {croppingImage[project.id] && (
+    <CoverCropper
+      image={croppingImage[project.id]}
+      onCancel={() =>
+        setCroppingImage(prev => ({
+          ...prev,
+          [project.id]: null
+        }))
+      }
+      onConfirm={async (croppedBase64) => {
 
-      <div className="flex gap-3">
-        <button
-          onClick={() => {
-            uploadCover(selectedCover[project.id], project)
+        const blob = await (await fetch(croppedBase64)).blob()
+        const file = new File([blob], "cover.jpg", {
+          type: "image/jpeg"
+        })
 
-            setSelectedCover(prev => ({
-              ...prev,
-              [project.id]: null
-            }))
+        await uploadCover(file, project)
 
-            setCoverPreview(prev => ({
-              ...prev,
-              [project.id]: null
-            }))
-          }}
-          className="btn btn-primary"
-        >
-          Confirm Upload
-        </button>
-
-        <button
-          onClick={() => {
-            setSelectedCover(prev => ({
-              ...prev,
-              [project.id]: null
-            }))
-            setCoverPreview(prev => ({
-              ...prev,
-              [project.id]: null
-            }))
-          }}
-          className="btn btn-ghost"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
+        setCroppingImage(prev => ({
+          ...prev,
+          [project.id]: null
+        }))
+      }}
+    />
   )}
 
-  {/* 🟢 عرض الكافر الحالي لو مفيش Preview */}
-  {project.cover_image && !coverPreview[project.id] && (
+  {/* 🟢 Existing Cover */}
+  {project.cover_image && !croppingImage[project.id] && (
     <div className="mt-3 space-y-2">
       <img
         src={project.cover_image}
