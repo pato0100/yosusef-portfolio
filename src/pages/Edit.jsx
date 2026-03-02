@@ -512,7 +512,13 @@ const filePath = url.pathname.split('/projects/')[1]
       .eq('id', project.id)
 
     alert("Image deleted ✅")
-    await getMyProjects()
+    setProjects(prev =>
+  prev.map(p =>
+    p.id === project.id
+      ? { ...p, gallery: updatedGallery }
+      : p
+  )
+)
 
 
   } catch (err) {
@@ -529,8 +535,14 @@ async function updateProject(projectId, values) {
 
     if (error) throw error
 
-    alert("Project updated ✅")
-    await getMyProjects()
+    // 🔥 Update locally instead of reload
+    setProjects(prev =>
+      prev.map(p =>
+        p.id === projectId
+          ? { ...p, ...values }
+          : p
+      )
+    )
 
   } catch (err) {
     console.error("Update failed:", err)
@@ -554,7 +566,14 @@ async function moveImage(project, imageUrl, direction) {
     .update({ gallery })
     .eq('id', project.id)
 
-  await getMyProjects()
+  setProjects(prev =>
+  prev.map(p =>
+    p.id === project.id
+      ? { ...p, gallery }
+      : p
+  )
+)
+
 }
 
 
@@ -999,11 +1018,11 @@ setData(prev => ({
     <input
       className="input"
       value={project.title || ''}
-      onChange={(e) =>
-        updateProject(project.id, {
-          title: e.target.value
-        })
-      }
+      onBlur={(e) =>
+  updateProject(project.id, {
+    title: e.target.value
+  })
+}
     />
   </div>
 
@@ -1013,7 +1032,7 @@ setData(prev => ({
     <input
       className="input"
       value={project.short_description || ''}
-      onChange={(e) =>
+      onBlur={(e) =>
         updateProject(project.id, {
           short_description: e.target.value
         })
@@ -1029,7 +1048,7 @@ setData(prev => ({
   <textarea
     className="input min-h-[120px]"
     value={project.full_description || ''}
-    onChange={(e) =>
+    onBlur={(e) =>
       updateProject(project.id, {
         full_description: e.target.value
       })
@@ -1064,7 +1083,7 @@ setData(prev => ({
   <input
     className="input"
     value={(project.features || []).join(', ')}
-    onChange={(e) =>
+    onBlur={(e) =>
       updateProject(project.id, {
         features: e.target.value
           .split(',')
@@ -1084,7 +1103,7 @@ setData(prev => ({
     <input
       className="input"
       value={project.github_url || ''}
-      onChange={(e) =>
+      onBlur={(e) =>
         updateProject(project.id, {
           github_url: e.target.value
         })
@@ -1097,7 +1116,7 @@ setData(prev => ({
     <input
       className="input"
       value={project.live_url || ''}
-      onChange={(e) =>
+      onBlur={(e) =>
         updateProject(project.id, {
           live_url: e.target.value
         })
