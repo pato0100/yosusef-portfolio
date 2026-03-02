@@ -386,7 +386,7 @@ async function uploadCover(file, project) {
     const fileExt = file.name.split('.').pop()
     const filePath = `${uid}/${project.slug}/cover.${fileExt}`
 
-    // Upload with upsert (replace old cover)
+    // 1️⃣ Upload (replace old)
     const { error: uploadError } = await supabase.storage
       .from('projects')
       .upload(filePath, file, {
@@ -396,28 +396,32 @@ async function uploadCover(file, project) {
 
     if (uploadError) throw uploadError
 
-    // Get public URL
+    // 2️⃣ Get public URL
     const { data } = supabase.storage
       .from('projects')
       .getPublicUrl(filePath)
 
-    // Save URL in DB
+    // 🔥 3️⃣ Cache busting
+    const publicUrl = data.publicUrl + `?t=${Date.now()}`
+
+    // 4️⃣ Update DB
     const { error: dbError } = await supabase
       .from('projects')
-      .update({ cover_image: data.publicUrl })
+      .update({ cover_image: publicUrl })
       .eq('id', project.id)
 
     if (dbError) throw dbError
 
-    alert("Cover uploaded ✅")
-    
+    // 5️⃣ Update local state
     setProjects(prev =>
-  prev.map(p =>
-    p.id === project.id
-      ? { ...p, cover_image: data.publicUrl }
-      : p
-  )
-)
+      prev.map(p =>
+        p.id === project.id
+          ? { ...p, cover_image: publicUrl }
+          : p
+      )
+    )
+
+    alert("Cover uploaded ✅")
 
   } catch (err) {
     console.error("Upload cover failed:", err)
