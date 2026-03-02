@@ -28,14 +28,17 @@ export default function Edit() {
   const [data, setData] = useState(defaults)
 
   
-  // ===== Projects State =====
-  const [activeProjectId, setActiveProjectId] = useState(null)
+// ===== Projects State =====
+const [activeProjectId, setActiveProjectId] = useState(null)
 const [projects, setProjects] = useState([])
 const [loadingProjects, setLoadingProjects] = useState(false)
-const [coverPreview, setCoverPreview] = useState(null)
-const [selectedCover, setSelectedCover] = useState(null)
+
 const [previewImages, setPreviewImages] = useState([])
 const [selectedFiles, setSelectedFiles] = useState([])
+
+const [coverPreview, setCoverPreview] = useState(null)
+const [selectedCover, setSelectedCover] = useState(null)
+
 const [newProject, setNewProject] = useState({
   title: '',
   slug: '',
