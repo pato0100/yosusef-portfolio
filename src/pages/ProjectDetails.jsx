@@ -3,9 +3,11 @@ import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { motion } from 'framer-motion'
 import { useI18n } from '../i18n/i18n'
+import { useLocation } from "react-router-dom"
 
 export default function ProjectDetails() {
   const { slug, projectSlug } = useParams()
+const location = useLocation()
 
   const { lang } = useI18n()
 
