@@ -1048,9 +1048,11 @@ setData(prev => ({
 
 {activeTab === 'projects' && (
   <section
-    className={`card p-6 ${lang === 'ar' ? 'text-right' : 'text-left'}`}
-    dir={lang === 'ar' ? 'rtl' : 'ltr'}
-  >
+  className={`card p-6 ${
+    projectLang === 'ar' ? 'text-right' : 'text-left'
+  }`}
+  dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
+>
   <h2 className="text-lg font-bold mb-4">
   {lang === 'ar' ? 'إدارة المشاريع' : 'Projects Manager'}
 </h2>
@@ -1091,7 +1093,11 @@ setData(prev => ({
   <div className="grid md:grid-cols-3 gap-3 mb-4">
   <input
     className="input"
-    placeholder="Project title"
+    placeholder={
+  projectLang === 'ar'
+    ? 'عنوان المشروع'
+    : 'Project title'
+}
     value={newProject.title}
     onChange={(e) => {
       const title = e.target.value
@@ -1105,7 +1111,11 @@ setData(prev => ({
 
   <div className="flex items-center rounded-xl border border-white/15 bg-white/5 overflow-hidden">
     <span className="px-3 text-xs opacity-60 whitespace-nowrap">
-      /projects/
+      {
+  projectLang === 'ar'
+    ? '/المشاريع/'
+    : '/projects/'
+}
     </span>
     <input
       className="bg-transparent flex-1 px-2 py-2 outline-none"
@@ -1120,7 +1130,11 @@ setData(prev => ({
   </div>
     <input
       className="input"
-      placeholder="Short description"
+      placeholder={
+  projectLang === 'ar'
+    ? 'الوصف المختصر'
+    : 'Short description'
+}
       value={newProject.short_description}
       onChange={(e) =>
         setNewProject(prev => ({ ...prev, short_description: e.target.value }))
@@ -1132,7 +1146,11 @@ setData(prev => ({
     onClick={createProject}
     className="btn btn-primary mb-6"
   >
-    Add Project
+    {
+  projectLang === 'ar'
+    ? 'إضافة مشروع'
+    : 'Add Project'
+}
   </button>
 
   {/* Projects List */}
@@ -1166,7 +1184,9 @@ setData(prev => ({
         <div className="text-sm opacity-70">{project.slug}</div>
       </div>
       <div className="text-xs opacity-60">
-        {activeProjectId === project.id ? "Close" : "Manage"}
+        {activeProjectId === project.id
+  ? (projectLang === 'ar' ? 'إغلاق' : 'Close')
+  : (projectLang === 'ar' ? 'إدارة' : 'Manage')}
       </div>
     </div>
 {activeProjectId === project.id && (
@@ -1269,7 +1289,11 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 {/* Tech Stack */}
 <div>
   <label className="text-sm opacity-70">
-    Tech Stack (comma separated)
+    {
+  projectLang === 'ar'
+    ? 'التقنيات المستخدمة (افصل بفاصلة)'
+    : 'Tech Stack (comma separated)'
+}
   </label>
 
   <input
@@ -1293,7 +1317,11 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 {/* Features */}
 <div>
   <label className="text-sm opacity-70">
-    Features (comma separated)
+    {
+  projectLang === 'ar'
+    ? 'التقنيات المستخدمة (افصل بفاصلة)'
+    : 'Tech Stack (comma separated)'
+}
   </label>
 
   <input
@@ -1318,38 +1346,58 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 <div className="grid md:grid-cols-2 gap-3">
 
   <div>
-    <label className="text-sm opacity-70">GitHub URL</label>
-    <input
-      className="input"
-      value={editingProjects[project.id]?.github_url || ''}
-      onChange={(e) =>
-        setEditingProjects(prev => ({
-          ...prev,
-          [project.id]: {
-            ...prev[project.id],
-            github_url: e.target.value
-          }
-        }))
-      }
-    />
-  </div>
+  <label className="text-sm opacity-70 block mb-1">
+    {
+  projectLang === 'ar'
+    ? 'الرابط المباشر'
+    : 'Live URL'
+}
+  </label>
+
+  <input
+    type="url"
+    dir="ltr"
+    className="input text-left"
+    value={editingProjects[project.id]?.github_url || ''}
+    onChange={(e) =>
+      setEditingProjects(prev => ({
+        ...prev,
+        [project.id]: {
+          ...prev[project.id],
+          github_url: e.target.value
+        }
+      }))
+    }
+    placeholder="https://github.com/username/project"
+  />
+</div>
 
   <div>
-    <label className="text-sm opacity-70">Live URL</label>
-    <input
-      className="input"
-      value={editingProjects[project.id]?.live_url || ''}
-      onChange={(e) =>
-        setEditingProjects(prev => ({
-          ...prev,
-          [project.id]: {
-            ...prev[project.id],
-            live_url: e.target.value
-          }
-        }))
-      }
-    />
-  </div>
+  <label className="text-sm opacity-70 block mb-1">
+    {
+  projectLang === 'ar'
+    ? 'الرابط المباشر'
+    : 'Live URL'
+}
+  </label>
+
+  <input
+    type="url"
+    dir="ltr"
+    className="input text-left"
+    value={editingProjects[project.id]?.live_url || ''}
+    onChange={(e) =>
+      setEditingProjects(prev => ({
+        ...prev,
+        [project.id]: {
+          ...prev[project.id],
+          live_url: e.target.value
+        }
+      }))
+    }
+    placeholder="https://example.com"
+  />
+</div>
 
 </div>
 
@@ -1357,7 +1405,13 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 <div className="grid md:grid-cols-2 gap-3">
 
   <div>
-    <label className="text-sm opacity-70">Start Date</label>
+    <label className="text-sm opacity-70">
+      {
+  projectLang === 'ar'
+    ? 'تاريخ البداية'
+    : 'Start Date'
+}
+    </label>
     <input
       type="date"
       className="input"
@@ -1375,7 +1429,13 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
   </div>
 
   <div>
-    <label className="text-sm opacity-70">End Date</label>
+    <label className="text-sm opacity-70">
+      {
+  projectLang === 'ar'
+    ? 'تاريخ النهاية'
+    : 'End Date'
+}
+    </label>
     <input
       type="date"
       className="input"
@@ -1411,7 +1471,11 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
         }))
       }
     />
-    Active
+    {
+  projectLang === 'ar'
+    ? 'نشط'
+    : 'Active'
+}
   </label>
 
   <label className="flex items-center gap-2">
@@ -1428,7 +1492,11 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
         }))
       }
     />
-    Featured
+    {
+  projectLang === 'ar'
+    ? 'مميز'
+    : 'Featured'
+}
   </label>
 
 </div>
@@ -1450,7 +1518,11 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
   }}
   className="btn btn-primary"
 >
-  Update Project
+  {
+  projectLang === 'ar'
+    ? 'تحديث المشروع'
+    : 'Update Project'
+}
 </button>
 
   <button
@@ -1462,13 +1534,22 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
     }
     className="btn btn-ghost"
   >
-    Reset
+    {
+  projectLang === 'ar'
+    ? 'إعادة تعيين'
+    : 'Reset'
+}
   </button>
 </div>
 
 {/* Cover Upload */}
 <div>
-  <label className="text-sm opacity-70">Upload Cover</label>
+  <label className="text-sm opacity-70">{
+  projectLang === 'ar'
+    ? 'رفع صورة الغلاف'
+    : 'Upload Cover'
+}
+</label>
 
   {/* Upload Input */}
   <input
@@ -1530,7 +1611,11 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
         }
         className="btn btn-ghost"
       >
-        Remove Cover
+        {
+  projectLang === 'ar'
+    ? 'حذف الغلاف'
+    : 'Remove Cover'
+}
       </button>
     </div>
   )}
