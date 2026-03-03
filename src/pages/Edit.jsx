@@ -12,11 +12,14 @@ import ProfileCropper from "../components/ProfileCropper"
 
 
 
+
 export default function Edit() {
   
   const [activeTab, setActiveTab] = useState('profile')
 // profile | settings | projects
-  
+
+const [editingProjects, setEditingProjects] = useState({})
+
   const { t, lang } = useI18n()
 
   
@@ -1138,11 +1141,18 @@ setData(prev => ({
 
     <div
       className="flex justify-between items-center cursor-pointer"
-      onClick={() =>
-        setActiveProjectId(
-          activeProjectId === project.id ? null : project.id
-        )
-      }
+      onClick={() => {
+  if (activeProjectId === project.id) {
+    setActiveProjectId(null)
+  } else {
+    setActiveProjectId(project.id)
+
+    setEditingProjects(prev => ({
+      ...prev,
+      [project.id]: { ...project }
+    }))
+  }
+}}
     >
       <div>
         <div className="font-semibold">{project.title}</div>
@@ -1164,14 +1174,18 @@ setData(prev => ({
       className="input"
     value={
   projectLang === 'ar'
-    ? project.title_ar || ''
-    : project.title_en || ''
+    ? editingProjects[project.id]?.title_ar || ''
+    : editingProjects[project.id]?.title_en || ''
 }
-onBlur={(e) =>
-  updateProject(project.id, {
-    [projectLang === 'ar' ? 'title_ar' : 'title_en']:
-      e.target.value
-  })
+onChange={(e) =>
+  setEditingProjects(prev => ({
+    ...prev,
+    [project.id]: {
+      ...prev[project.id],
+      [projectLang === 'ar' ? 'title_ar' : 'title_en']:
+        e.target.value
+    }
+  }))
 }
 dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
     />
@@ -1229,6 +1243,7 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 />
 </div>
 
+{/* Tech Stack */}
 <div>
   <label className="text-sm opacity-70">
     Tech Stack (comma separated)
@@ -1236,18 +1251,23 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 
   <input
     className="input"
-    value={(project.tech_stack || []).join(', ')}
+    value={(editingProjects[project.id]?.tech_stack || []).join(', ')}
     onChange={(e) =>
-      updateProject(project.id, {
-        tech_stack: e.target.value
-          .split(',')
-          .map(s => s.trim())
-          .filter(Boolean)
-      })
+      setEditingProjects(prev => ({
+        ...prev,
+        [project.id]: {
+          ...prev[project.id],
+          tech_stack: e.target.value
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+        }
+      }))
     }
   />
 </div>
 
+{/* Features */}
 <div>
   <label className="text-sm opacity-70">
     Features (comma separated)
@@ -1255,31 +1275,38 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 
   <input
     className="input"
-    value={(project.features || []).join(', ')}
-    onBlur={(e) =>
-      updateProject(project.id, {
-        features: e.target.value
-          .split(',')
-          .map(s => s.trim())
-          .filter(Boolean)
-      })
+    value={(editingProjects[project.id]?.features || []).join(', ')}
+    onChange={(e) =>
+      setEditingProjects(prev => ({
+        ...prev,
+        [project.id]: {
+          ...prev[project.id],
+          features: e.target.value
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+        }
+      }))
     }
   />
 </div>
 
-
-
+{/* URLs */}
 <div className="grid md:grid-cols-2 gap-3">
 
   <div>
     <label className="text-sm opacity-70">GitHub URL</label>
     <input
       className="input"
-      value={project.github_url || ''}
-      onBlur={(e) =>
-        updateProject(project.id, {
-          github_url: e.target.value
-        })
+      value={editingProjects[project.id]?.github_url || ''}
+      onChange={(e) =>
+        setEditingProjects(prev => ({
+          ...prev,
+          [project.id]: {
+            ...prev[project.id],
+            github_url: e.target.value
+          }
+        }))
       }
     />
   </div>
@@ -1288,17 +1315,22 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
     <label className="text-sm opacity-70">Live URL</label>
     <input
       className="input"
-      value={project.live_url || ''}
-      onBlur={(e) =>
-        updateProject(project.id, {
-          live_url: e.target.value
-        })
+      value={editingProjects[project.id]?.live_url || ''}
+      onChange={(e) =>
+        setEditingProjects(prev => ({
+          ...prev,
+          [project.id]: {
+            ...prev[project.id],
+            live_url: e.target.value
+          }
+        }))
       }
     />
   </div>
 
 </div>
 
+{/* Dates */}
 <div className="grid md:grid-cols-2 gap-3">
 
   <div>
@@ -1306,11 +1338,15 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
     <input
       type="date"
       className="input"
-      value={project.start_date || ''}
+      value={editingProjects[project.id]?.start_date || ''}
       onChange={(e) =>
-        updateProject(project.id, {
-          start_date: e.target.value
-        })
+        setEditingProjects(prev => ({
+          ...prev,
+          [project.id]: {
+            ...prev[project.id],
+            start_date: e.target.value
+          }
+        }))
       }
     />
   </div>
@@ -1320,47 +1356,84 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
     <input
       type="date"
       className="input"
-      value={project.end_date || ''}
+      value={editingProjects[project.id]?.end_date || ''}
       onChange={(e) =>
-        updateProject(project.id, {
-          end_date: e.target.value
-        })
+        setEditingProjects(prev => ({
+          ...prev,
+          [project.id]: {
+            ...prev[project.id],
+            end_date: e.target.value
+          }
+        }))
       }
     />
   </div>
 
 </div>
 
+{/* Publish Controls */}
+<div className="flex gap-6">
 
-
-    {/* Publish Controls */}
-    <div className="flex gap-6">
-      <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={project.is_active}
-          onChange={(e) =>
-            updateProject(project.id, {
-              is_active: e.target.checked
-            })
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      checked={!!editingProjects[project.id]?.is_active}
+      onChange={(e) =>
+        setEditingProjects(prev => ({
+          ...prev,
+          [project.id]: {
+            ...prev[project.id],
+            is_active: e.target.checked
           }
-        />
-        Active
-      </label>
+        }))
+      }
+    />
+    Active
+  </label>
 
-      <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={project.is_featured}
-          onChange={(e) =>
-            updateProject(project.id, {
-              is_featured: e.target.checked
-            })
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      checked={!!editingProjects[project.id]?.is_featured}
+      onChange={(e) =>
+        setEditingProjects(prev => ({
+          ...prev,
+          [project.id]: {
+            ...prev[project.id],
+            is_featured: e.target.checked
           }
-        />
-        Featured
-      </label>
-    </div>
+        }))
+      }
+    />
+    Featured
+  </label>
+
+</div>
+
+<div className="flex gap-3 mt-6">
+  <button
+    onClick={async () => {
+      const values = editingProjects[project.id]
+      await updateProject(project.id, values)
+      alert('Project updated ✅')
+    }}
+    className="btn btn-primary"
+  >
+    Update Project
+  </button>
+
+  <button
+    onClick={() =>
+      setEditingProjects(prev => ({
+        ...prev,
+        [project.id]: { ...project }
+      }))
+    }
+    className="btn btn-ghost"
+  >
+    Reset
+  </button>
+</div>
 
 {/* Cover Upload */}
 <div>
