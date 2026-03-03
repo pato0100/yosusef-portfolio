@@ -159,13 +159,16 @@ useEffect(() => {
   className="opacity-80 max-w-3xl"
   dir={lang === 'ar' ? 'rtl' : 'ltr'}
 >
+
+<div className="text-sm opacity-60 mt-3">
+          Views: {project.views ?? 0}
+        </div>
+
   {getLocalized(project, 'short_description')}
 </p>
         )}
 
-        <div className="text-sm opacity-60 mt-3">
-          Views: {project.views ?? 0}
-        </div>
+        
       </header>
 
       {/* Full Description */}
@@ -196,6 +199,26 @@ useEffect(() => {
           </div>
         </section>
       )}
+
+      {/* Features */}
+{project.features?.length > 0 && (
+  <section className="mb-12">
+    <h3 className="text-lg font-semibold mb-4">
+      {lang === 'ar' ? 'المميزات' : 'Features'}
+    </h3>
+
+    <div className="flex flex-wrap gap-3">
+      {project.features.map((feature, index) => (
+        <span
+          key={index}
+          className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm"
+        >
+          {feature}
+        </span>
+      ))}
+    </div>
+  </section>
+)}
 
       {/* Gallery */}
       {project.gallery?.length > 0 && (
