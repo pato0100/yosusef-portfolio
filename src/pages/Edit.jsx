@@ -589,6 +589,7 @@ async function moveImage(project, imageUrl, direction) {
 
   // bind helper لحقول ثنائية اللغة
   const [editLang, setEditLang] = useState('en') // 'en' | 'ar'
+  const [projectLang, setProjectLang] = useState('en')
   const bind = (key) => ({
     dir: editLang === 'ar' ? 'rtl' : 'ltr',
     value: (editLang === 'ar' ? data[`${key}_ar`] : data[`${key}_en`]) ?? data[key] ?? '',
@@ -1046,6 +1047,36 @@ setData(prev => ({
   <section className="card p-6">
   <h2 className="text-lg font-bold mb-4">Projects Manager</h2>
 
+<div className="flex items-center gap-2 mb-4">
+  <span className="text-sm opacity-70">Project content:</span>
+
+  <div className="inline-flex rounded-full border border-[var(--card-border)] overflow-hidden">
+    <button
+      type="button"
+      onClick={() => setProjectLang('en')}
+      className={`px-3 py-1 text-sm ${
+        projectLang === 'en'
+          ? 'bg-[var(--brand)] text-[var(--brand-contrast)]'
+          : ''
+      }`}
+    >
+      EN
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setProjectLang('ar')}
+      className={`px-3 py-1 text-sm ${
+        projectLang === 'ar'
+          ? 'bg-[var(--brand)] text-[var(--brand-contrast)]'
+          : ''
+      }`}
+    >
+      AR
+    </button>
+  </div>
+</div>
+
   {/* Add Project */}
   <div className="grid md:grid-cols-3 gap-3 mb-4">
   <input
@@ -1131,43 +1162,71 @@ setData(prev => ({
     <label className="text-sm opacity-70">Project Title</label>
     <input
       className="input"
-      value={project.title || ''}
-      onBlur={(e) =>
+    value={
+  projectLang === 'ar'
+    ? project.title_ar || ''
+    : project.title_en || ''
+}
+onBlur={(e) =>
   updateProject(project.id, {
-    title: e.target.value
+    [projectLang === 'ar' ? 'title_ar' : 'title_en']:
+      e.target.value
   })
 }
+dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
     />
   </div>
 
 
   <div>
-    <label className="text-sm opacity-70">Short Description</label>
-    <input
-      className="input"
-      value={project.short_description || ''}
-      onBlur={(e) =>
-        updateProject(project.id, {
-          short_description: e.target.value
-        })
-      }
-    />
+   <label className="text-sm opacity-70">
+  {projectLang === 'ar' ? 'الوصف المختصر' : 'Short Description'}
+</label>
+
+<input
+  className="input"
+  dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
+  value={
+    projectLang === 'ar'
+      ? project.short_description_ar || ''
+      : project.short_description_en || ''
+  }
+  onBlur={(e) =>
+    updateProject(project.id, {
+      [projectLang === 'ar'
+        ? 'short_description_ar'
+        : 'short_description_en']:
+        e.target.value
+    })
+  }
+/>
   </div>
 
 </div>
 
 
 <div>
-  <label className="text-sm opacity-70">Full Description</label>
-  <textarea
-    className="input min-h-[120px]"
-    value={project.full_description || ''}
-    onBlur={(e) =>
-      updateProject(project.id, {
-        full_description: e.target.value
-      })
-    }
-  />
+ <label className="text-sm opacity-70">
+  {projectLang === 'ar' ? 'الوصف الكامل' : 'Full Description'}
+</label>
+
+<textarea
+  className="input min-h-[120px]"
+  dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
+  value={
+    projectLang === 'ar'
+      ? project.full_description_ar || ''
+      : project.full_description_en || ''
+  }
+  onBlur={(e) =>
+    updateProject(project.id, {
+      [projectLang === 'ar'
+        ? 'full_description_ar'
+        : 'full_description_en']:
+        e.target.value
+    })
+  }
+/>
 </div>
 
 <div>
