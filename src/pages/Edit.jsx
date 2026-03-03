@@ -765,7 +765,7 @@ setData(prev => ({
     {[
   [
     'profile',
-    lang === 'ar' ? 'تعديل البروفايل' : 'Edit Profile'
+    lang === 'ar' ? 'إدارة الملف الشخصي' : 'Profile Management'
   ],
   [
     'settings',
@@ -773,7 +773,7 @@ setData(prev => ({
   ],
   [
     'projects',
-    lang === 'ar' ? 'إدارة المشاريع' : 'Projects Manager'
+    lang === 'ar' ? 'إدارة المشاريع' : 'Project Management'
   ]
 ].map(([key, label]) => (
       <button
@@ -1056,12 +1056,7 @@ setData(prev => ({
     'showProjectsPage',
     lang === 'ar' ? 'إظهار صفحة المشاريع' : 'Show Projects Page'
   ],
-  [
-    'showContactSection',
-    lang === 'ar'
-      ? 'إظهار قسم التواصل (داخل البروفايل)'
-      : 'Show Contact Section (in Profile)'
-  ],
+  
   [
     'showQR',
     lang === 'ar' ? 'إظهار QR' : 'Show QR'
