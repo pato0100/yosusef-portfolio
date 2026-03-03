@@ -11,36 +11,41 @@ export default function CoverCropper({ image, onCancel, onConfirm }) {
   }, [])
 
   async function createCroppedImage() {
-    const canvas = document.createElement("canvas")
-    const img = new Image()
-    img.src = image
+  if (!croppedAreaPixels) return
 
-    await new Promise(resolve => {
-      img.onload = resolve
-    })
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")   // 🔥 ده كان ناقص
 
-    const OUTPUT_WIDTH = 1200
-const OUTPUT_HEIGHT = 675
+  const img = new Image()
+  img.src = image
 
-canvas.width = OUTPUT_WIDTH
-canvas.height = OUTPUT_HEIGHT
+  await new Promise(resolve => {
+    img.onload = resolve
+  })
 
-ctx.imageSmoothingQuality = "high"
-ctx.drawImage(
-  img,
-  croppedAreaPixels.x,
-  croppedAreaPixels.y,
-  croppedAreaPixels.width,
-  croppedAreaPixels.height,
-  0,
-  0,
-  OUTPUT_WIDTH,
-  OUTPUT_HEIGHT
-)
+  const OUTPUT_WIDTH = 1200
+  const OUTPUT_HEIGHT = 675
 
-    const croppedBase64 = canvas.toDataURL("image/jpeg", 0.9)
-    onConfirm(croppedBase64)
-  }
+  canvas.width = OUTPUT_WIDTH
+  canvas.height = OUTPUT_HEIGHT
+
+  ctx.imageSmoothingQuality = "high"
+
+  ctx.drawImage(
+    img,
+    croppedAreaPixels.x,
+    croppedAreaPixels.y,
+    croppedAreaPixels.width,
+    croppedAreaPixels.height,
+    0,
+    0,
+    OUTPUT_WIDTH,
+    OUTPUT_HEIGHT
+  )
+
+  const croppedBase64 = canvas.toDataURL("image/jpeg", 0.9)
+  onConfirm(croppedBase64)
+}
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center">

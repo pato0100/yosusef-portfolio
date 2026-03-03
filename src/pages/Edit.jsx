@@ -1056,7 +1056,7 @@ setData(prev => ({
     'showProjectsPage',
     lang === 'ar' ? 'إظهار صفحة المشاريع' : 'Show Projects Page'
   ],
-  
+
   [
     'showQR',
     lang === 'ar' ? 'إظهار QR' : 'Show QR'
@@ -1099,7 +1099,7 @@ setData(prev => ({
   <h2 className="text-lg font-bold mb-4">
   {projectsLang === 'ar'
   ? 'إدارة المشاريع'
-  : 'Projects Manager'}
+  : 'Project Management'}
 </h2>
 
 <div className="flex items-center gap-2 mb-4">
