@@ -2,13 +2,36 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { motion } from 'framer-motion'
+import { useI18n } from '../i18n/i18n'
 
 export default function ProjectDetails() {
   const { slug, projectSlug } = useParams()
 
+  const { lang } = useI18n()
+
   const [project, setProject] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+
+function getLocalized(project, key) {
+  if (!project) return ''
+
+  if (lang === 'ar') {
+    return (
+      project[`${key}_ar`] ||
+      project[`${key}_en`] ||
+      project[key] ||
+      ''
+    )
+  }
+
+  return (
+    project[`${key}_en`] ||
+    project[`${key}_ar`] ||
+    project[key] ||
+    ''
+  )
+}
 
  useEffect(() => {
   if (!slug || !projectSlug) return
@@ -51,7 +74,7 @@ if (error || !data) {
 })
 
       // SEO
-      document.title = `${data.title} | ${slug}`
+
 
       // Increment views (بدون RPC لو مش عامل function)
       await supabase
@@ -69,6 +92,15 @@ if (error || !data) {
 
   loadProject()
 }, [slug, projectSlug])
+
+useEffect(() => {
+  if (!project) return
+
+  const localizedTitle = getLocalized(project, 'title')
+  document.title = `${localizedTitle} | ${slug}`
+
+}, [project, lang])
+
 
   /* -------------------- STATES -------------------- */
 
@@ -109,7 +141,7 @@ if (error || !data) {
         <div className="mb-10 rounded-3xl overflow-hidden border border-white/10">
           <img
             src={project.cover_image}
-            alt={project.title}
+            alt={getLocalized(project, 'title')}
             className="w-full aspect-[16/9] object-cover"
             loading="lazy"
           />
@@ -119,13 +151,16 @@ if (error || !data) {
       {/* Header */}
       <header className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          {project.title}
+          {getLocalized(project, 'title')}
         </h1>
 
-        {project.short_description && (
-          <p className="opacity-80 max-w-3xl">
-            {project.short_description}
-          </p>
+        {getLocalized(project, 'short_description') && (
+          <p
+  className="opacity-80 max-w-3xl"
+  dir={lang === 'ar' ? 'rtl' : 'ltr'}
+>
+  {getLocalized(project, 'short_description')}
+</p>
         )}
 
         <div className="text-sm opacity-60 mt-3">
@@ -134,13 +169,16 @@ if (error || !data) {
       </header>
 
       {/* Full Description */}
-      {project.full_description && (
-        <p className="leading-relaxed opacity-85 mb-10 max-w-3xl">
-          {project.full_description}
-        </p>
+      {getLocalized(project, 'full_description') && (
+        <p
+  className="leading-relaxed opacity-85 mb-10 max-w-3xl"
+  dir={lang === 'ar' ? 'rtl' : 'ltr'}
+>
+  {getLocalized(project, 'full_description')}
+</p>
       )}
 
-      {/* Tech Stack */}
+      {/* {lang === 'ar' ? 'التقنيات المستخدمة' : 'Tech Stack'} */}
       {project.tech_stack?.length > 0 && (
         <section className="mb-12">
           <h3 className="text-lg font-semibold mb-4">Tech Stack</h3>
@@ -181,7 +219,7 @@ if (error || !data) {
             rel="noreferrer"
             className="px-6 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 transition text-black font-medium"
           >
-            Live Demo
+            {lang === 'ar' ? 'رابط المشروع' : 'Link Project'}
           </a>
         )}
 
@@ -202,7 +240,8 @@ if (error || !data) {
         to={`/${slug}/projects`}
         className="inline-block underline opacity-80 hover:opacity-100"
       >
-        ← Back to Projects
+        {lang === 'ar' ? 'الرجوع إلى المشاريع →' : '← Back to Projects'}
+        
       </Link>
 
     </motion.section>
