@@ -1047,11 +1047,18 @@ setData(prev => ({
 )}
 
 {activeTab === 'projects' && (
-  <section className="card p-6">
-  <h2 className="text-lg font-bold mb-4">Projects Manager</h2>
+  <section
+    className={`card p-6 ${lang === 'ar' ? 'text-right' : 'text-left'}`}
+    dir={lang === 'ar' ? 'rtl' : 'ltr'}
+  >
+  <h2 className="text-lg font-bold mb-4">
+  {lang === 'ar' ? 'إدارة المشاريع' : 'Projects Manager'}
+</h2>
 
 <div className="flex items-center gap-2 mb-4">
-  <span className="text-sm opacity-70">Project content:</span>
+  <span className="text-sm opacity-70">
+  {lang === 'ar' ? 'لغة محتوى المشروع:' : 'Project content:'}
+</span>
 
   <div className="inline-flex rounded-full border border-[var(--card-border)] overflow-hidden">
     <button
