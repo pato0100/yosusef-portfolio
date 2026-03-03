@@ -1169,7 +1169,9 @@ setData(prev => ({
 <div className="grid md:grid-cols-2 gap-3">
 
   <div>
-    <label className="text-sm opacity-70">Project Title</label>
+    <label className="text-sm opacity-70">
+  {projectLang === 'ar' ? ' عنوان المشروع ' : ' Project Title '}
+  </label>
     <input
       className="input"
     value={
