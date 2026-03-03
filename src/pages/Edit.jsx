@@ -13,8 +13,13 @@ import ProfileCropper from "../components/ProfileCropper"
 
 
 export default function Edit() {
+  
+  const [activeTab, setActiveTab] = useState('profile')
+// profile | settings | projects
+  
   const { t, lang } = useI18n()
 
+  
     // 🧩 إعدادات الموقع (Settings)
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [loadingSettings, setLoadingSettings] = useState(false)
@@ -720,6 +725,8 @@ setData(prev => ({
     )
   }
 
+
+
   // غير موثّق → اعرض واجهة تسجيل الدخول
   if (!session) {
     return <LoginCard />
@@ -743,17 +750,44 @@ setData(prev => ({
   // =======================
   return (
     <>
+    {/* ===== Dashboard Tabs ===== */}
+<div className="flex justify-center mb-6">
+  <div className="flex rounded-full border border-white/10 bg-white/5 backdrop-blur p-1">
+
+    {[
+      ['profile', 'Edit Profile'],
+      ['settings', 'Settings'],
+      ['projects', 'Projects Manager']
+    ].map(([key, label]) => (
+      <button
+        key={key}
+        onClick={() => setActiveTab(key)}
+        className={`px-4 py-2 text-sm rounded-full transition-all duration-300 ${
+          activeTab === key
+            ? 'bg-[var(--brand)] text-[var(--brand-contrast)] shadow-lg'
+            : 'text-white/70 hover:text-white'
+        }`}
+      >
+        {label}
+      </button>
+    ))}
+
+  </div>
+</div>
       {/* ===== Edit Profile ===== */}
-      <section className="card p-6">
+      {activeTab === 'profile' && (
+  <section className="card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Edit Profile</h2>
           <button
             onClick={async () => { try { await signOut() } catch(e){ console.error(e) } }}
             className="px-3 py-2 rounded-xl border border-white/15 hover:bg-white/5"
           >
+            
             Logout
           </button>
         </div>
+        
 
         <form onSubmit={onSave} className="grid md:grid-cols-2 gap-4">
           {/* سويتش لغة المحتوى داخل صفحة التعديل */}
@@ -875,8 +909,10 @@ setData(prev => ({
           <div className="md:col-span-2 flex gap-3">
             <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : t.save}</button>
           </div>
-        </form>
-      </section>
+            </form>
+
+  </section>
+)}
 
       {profileCropping && (
   <ProfileCropper
@@ -926,8 +962,12 @@ setData(prev => ({
   />
 )}
 
+
+
+
       {/* ===== Settings Panel (جديد) ===== */}
-      <section className="card p-6 mt-6">
+      {activeTab === 'settings' && (
+  <section className="card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">Settings</h2>
           <button
@@ -999,9 +1039,11 @@ setData(prev => ({
             </div>
           </div>
         )}
-      </section>
+        </section>
+)}
 
-<section className="card p-6 mt-6">
+{activeTab === 'projects' && (
+  <section className="card p-6">
   <h2 className="text-lg font-bold mb-4">Projects Manager</h2>
 
   {/* Add Project */}
@@ -1454,11 +1496,13 @@ setData(prev => ({
 
     </div>
   )}
-</section>
+  </section>
+)}
 
     </>
   )
 } // ← نهاية function Edit
+
 
 
 
