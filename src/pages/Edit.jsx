@@ -763,10 +763,19 @@ setData(prev => ({
   <div className="flex rounded-full border border-white/10 bg-white/5 backdrop-blur p-1">
 
     {[
-      ['profile', 'Edit Profile'],
-      ['settings', 'Settings'],
-      ['projects', 'Projects Manager']
-    ].map(([key, label]) => (
+  [
+    'profile',
+    lang === 'ar' ? 'تعديل البروفايل' : 'Edit Profile'
+  ],
+  [
+    'settings',
+    lang === 'ar' ? 'الإعدادات' : 'Settings'
+  ],
+  [
+    'projects',
+    lang === 'ar' ? 'إدارة المشاريع' : 'Projects Manager'
+  ]
+].map(([key, label]) => (
       <button
         key={key}
         onClick={() => setActiveTab(key)}
