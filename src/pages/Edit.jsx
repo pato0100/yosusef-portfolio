@@ -1229,28 +1229,26 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 <input
   className="input"
   dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
- value={
-  projectLang === 'ar'
-    ? editingProjects[project.id]?.short_description_ar || ''
-    : editingProjects[project.id]?.short_description_en || ''
-}
-onChange={(e) =>
-  setEditingProjects(prev => ({
-    ...prev,
-    [project.id]: {
-      ...prev[project.id],
-      [projectLang === 'ar'
-        ? 'short_description_ar'
-        : 'short_description_en']:
-        e.target.value
-    }
-  }))
-}
-
-
+  value={
+    projectLang === 'ar'
+      ? editingProjects[project.id]?.short_description_ar || ''
+      : editingProjects[project.id]?.short_description_en || ''
+  }
+  onChange={(e) =>
+    setEditingProjects(prev => ({
+      ...prev,
+      [project.id]: {
+        ...prev[project.id],
+        [projectLang === 'ar'
+          ? 'short_description_ar'
+          : 'short_description_en']:
+          e.target.value
+      }
+    }))
+  }
 />
 
-dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
+
 
   </div>
 
@@ -1319,8 +1317,8 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
   <label className="text-sm opacity-70">
     {
   projectLang === 'ar'
-    ? 'التقنيات المستخدمة (افصل بفاصلة)'
-    : 'Tech Stack (comma separated)'
+    ? 'المميزات (افصل بفاصلة)'
+    : 'Features (comma separated)'
 }
   </label>
 
@@ -1349,8 +1347,8 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
   <label className="text-sm opacity-70 block mb-1">
     {
   projectLang === 'ar'
-    ? 'الرابط المباشر'
-    : 'Live URL'
+    ? 'رابط GitHub'
+    : 'GitHub URL'
 }
   </label>
 
@@ -1623,7 +1621,12 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 
         {/* Gallery Upload */}
 <div>
-  <label className="text-sm opacity-70">Upload Gallery</label>
+  <label className="text-sm opacity-70">{
+  projectLang === 'ar'
+    ? 'رفع صور المشروع'
+    : 'Upload Gallery'
+}
+</label>
 
   <input
     type="file"
@@ -1677,7 +1680,11 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
         }}
         className="btn btn-primary"
       >
-        Confirm Upload
+        {
+  projectLang === 'ar'
+    ? 'تأكيد الرفع'
+    : 'Confirm Upload'
+}
       </button>
 
       <button
@@ -1693,7 +1700,11 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
         }}
         className="btn btn-ghost"
       >
-        Cancel
+        {
+  projectLang === 'ar'
+    ? 'إلغاء'
+    : 'Cancel'
+}
       </button>
     </div>
   </>
