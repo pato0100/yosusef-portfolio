@@ -33,9 +33,19 @@ export default function Navbar() {
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
         {tabs.map(tab => {
-          const active =
-            pathname === tab.path ||
-            pathname.startsWith(tab.path + '/')
+          let active = false
+
+if (tab.key === 'profile') {
+  active = pathname === base
+}
+
+if (tab.key === 'projects') {
+  active = pathname.startsWith(`${base}/projects`)
+}
+
+if (tab.key === 'contact') {
+  active = pathname.startsWith(`${base}/contact`)
+}
 
           return (
             <li key={tab.key} className="relative">
