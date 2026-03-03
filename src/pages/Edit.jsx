@@ -593,6 +593,9 @@ async function moveImage(project, imageUrl, direction) {
   // bind helper لحقول ثنائية اللغة
   const [editLang, setEditLang] = useState('en') // 'en' | 'ar'
   const [projectLang, setProjectLang] = useState('en')
+  useEffect(() => {
+  setProjectLang(lang)
+}, [lang])
   const projectsLang = projectLang ?? lang
   const bind = (key) => ({
     dir: editLang === 'ar' ? 'rtl' : 'ltr',
