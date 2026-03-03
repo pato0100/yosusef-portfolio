@@ -1180,7 +1180,11 @@ setData(prev => ({
 }}
     >
       <div>
-        <div className="font-semibold">{project.title}</div>
+        <div className="font-semibold">
+  {projectLang === 'ar'
+    ? project.title_ar
+    : project.title_en}
+</div>
         <div className="text-sm opacity-70">{project.slug}</div>
       </div>
       <div className="text-xs opacity-60">
@@ -1453,7 +1457,9 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 </div>
 
 {/* Publish Controls */}
-<div className="flex gap-6">
+<div className={`flex gap-6 ${
+  projectLang === 'ar' ? 'flex-row-reverse' : ''
+}`}>
 
   <label className="flex items-center gap-2">
     <input
