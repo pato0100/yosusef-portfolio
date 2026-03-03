@@ -1631,7 +1631,7 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
         }}
         className="btn btn-primary"
       >
-        Confirm Upload
+        {lang === 'ar' ? 'تأكيد الرفع' : 'Confirm Upload'}
       </button>
 
       <button
@@ -1647,7 +1647,7 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
         }}
         className="btn btn-ghost"
       >
-        Cancel
+        {lang === 'ar' ? 'إلغاء' : 'Cancel'}
       </button>
     </div>
   </>
