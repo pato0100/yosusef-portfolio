@@ -222,17 +222,17 @@ useEffect(() => {
 
       {/* Gallery */}
       {project.gallery?.length > 0 && (
-        <section className="grid md:grid-cols-2 gap-6 mb-12">
-          {project.gallery.map((img, i) => (
-            <img
-              key={i}
-              src={img}
-              alt=""
-              loading="lazy"
-              className="rounded-2xl border border-white/10 hover:scale-[1.02] transition"
-            />
-          ))}
-        </section>
+        <section className="columns-1 md:columns-2 gap-6 mb-12 space-y-6">
+  {project.gallery.map((img, i) => (
+    <img
+      key={i}
+      src={img}
+      alt=""
+      loading="lazy"
+      className="rounded-2xl border border-white/10 w-full"
+    />
+  ))}
+</section>
       )}
 
       {/* Actions */}
