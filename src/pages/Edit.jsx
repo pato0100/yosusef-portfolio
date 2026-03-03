@@ -593,6 +593,7 @@ async function moveImage(project, imageUrl, direction) {
   // bind helper لحقول ثنائية اللغة
   const [editLang, setEditLang] = useState('en') // 'en' | 'ar'
   const [projectLang, setProjectLang] = useState('en')
+  const projectsLang = projectLang ?? lang
   const bind = (key) => ({
     dir: editLang === 'ar' ? 'rtl' : 'ltr',
     value: (editLang === 'ar' ? data[`${key}_ar`] : data[`${key}_en`]) ?? data[key] ?? '',
@@ -1054,12 +1055,16 @@ setData(prev => ({
   dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 >
   <h2 className="text-lg font-bold mb-4">
-  {lang === 'ar' ? 'إدارة المشاريع' : 'Projects Manager'}
+  {projectsLang === 'ar'
+  ? 'إدارة المشاريع'
+  : 'Projects Manager'}
 </h2>
 
 <div className="flex items-center gap-2 mb-4">
   <span className="text-sm opacity-70">
-  {lang === 'ar' ? 'لغة محتوى المشروع:' : 'Project content:'}
+   {projectsLang === 'ar'
+  ? 'لغة محتوى المشروع:'
+  : 'Project content:'}
 </span>
 
   <div className="inline-flex rounded-full border border-[var(--card-border)] overflow-hidden">
