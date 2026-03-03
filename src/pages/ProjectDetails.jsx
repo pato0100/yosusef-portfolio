@@ -181,7 +181,9 @@ useEffect(() => {
       {/* {lang === 'ar' ? 'التقنيات المستخدمة' : 'Tech Stack'} */}
       {project.tech_stack?.length > 0 && (
         <section className="mb-12">
-          <h3 className="text-lg font-semibold mb-4">Tech Stack</h3>
+          <h3 className="text-lg font-semibold mb-4">
+  {lang === 'ar' ? 'التقنيات المستخدمة' : 'Tech Stack'}
+</h3>
           <div className="flex flex-wrap gap-3">
             {project.tech_stack.map((tech) => (
               <span
