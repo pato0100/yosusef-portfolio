@@ -986,13 +986,17 @@ setData(prev => ({
       {activeTab === 'settings' && (
   <section className="card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">Settings</h2>
+          <h2 className="text-lg font-bold">
+  {lang === 'ar' ? 'الإعدادات' : 'Settings'}
+</h2>
           <button
             onClick={saveSettings}
             disabled={savingSettings || loadingSettings}
             className="btn btn-primary"
           >
-            {savingSettings ? 'Saving…' : 'Save Settings'}
+            {savingSettings
+  ? (lang === 'ar' ? 'جارٍ الحفظ…' : 'Saving…')
+  : (lang === 'ar' ? 'حفظ الإعدادات' : 'Save Settings')}
           </button>
         </div>
 
@@ -1002,7 +1006,9 @@ setData(prev => ({
           <div className="grid md:grid-cols-2 gap-4">
             {/* Default Language */}
             <div>
-              <label className="block text-sm font-medium mb-1">Default Language</label>
+              <label className="block text-sm font-medium mb-1">
+                {lang === 'ar' ? 'اللغة الافتراضية' : 'Default Language'}
+              </label>
               <select
                 className="input"
                 value={settings.defaultLang}
@@ -1012,13 +1018,17 @@ setData(prev => ({
                 <option value="en">English (EN)</option>
               </select>
               <p className="text-xs opacity-70 mt-1">
-                اللغة الافتراضية عند أول زيارة (لو مفيش اختيار محفوظ محليًا).
-              </p>
+  {lang === 'ar'
+    ? 'اللغة الافتراضية ).'
+    : 'Default language .'}
+</p>
             </div>
 
             {/* Default Theme */}
             <div>
-              <label className="block text-sm font-medium mb-1">Default Theme</label>
+              <label>
+  {lang === 'ar' ? 'الثيم الافتراضي' : 'Default Theme'}
+</label>
               <select
                 className="input"
                 value={settings.defaultTheme}
@@ -1029,21 +1039,46 @@ setData(prev => ({
                 ))}
               </select>
               <p className="text-xs opacity-70 mt-1">
-                الثيم الافتراضي عند أول زيارة (لو مفيش اختيار محفوظ محليًا).
-              </p>
+  {lang === 'ar'
+    ? 'الثيم الافتراضي ).'
+    : 'Default theme .'}
+</p>
             </div>
 
             {/* Toggles */}
             <div className="md:col-span-2 grid md:grid-cols-3 gap-3">
               {[
-                ['showContactPage', 'Show Contact Page'],
-                ['showProjectsPage', 'Show Projects Page'],
-                ['showContactSection', 'Show Contact Section (in Profile)'],
-                ['showQR', 'Show QR'],
-                ['showSocials', 'Show Socials'],
-                ['showDownloadCV', 'Show Download CV'],
-                ['showDownloadVCard', 'Show Download vCard'],
-              ].map(([key, label]) => (
+  [
+    'showContactPage',
+    lang === 'ar' ? 'إظهار صفحة التواصل' : 'Show Contact Page'
+  ],
+  [
+    'showProjectsPage',
+    lang === 'ar' ? 'إظهار صفحة المشاريع' : 'Show Projects Page'
+  ],
+  [
+    'showContactSection',
+    lang === 'ar'
+      ? 'إظهار قسم التواصل (داخل البروفايل)'
+      : 'Show Contact Section (in Profile)'
+  ],
+  [
+    'showQR',
+    lang === 'ar' ? 'إظهار QR' : 'Show QR'
+  ],
+  [
+    'showSocials',
+    lang === 'ar' ? 'إظهار وسائل التواصل' : 'Show Socials'
+  ],
+  [
+    'showDownloadCV',
+    lang === 'ar' ? 'إظهار تحميل السيرة الذاتية' : 'Show Download CV'
+  ],
+  [
+    'showDownloadVCard',
+    lang === 'ar' ? 'إظهار تحميل vCard' : 'Show Download vCard'
+  ]
+].map(([key, label]) => (
                 <label key={key} className="flex items-center gap-2 border border-white/10 rounded-xl px-3 py-2">
                   <input
                     type="checkbox"
