@@ -1200,20 +1200,29 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 <input
   className="input"
   dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
-  value={
-    projectLang === 'ar'
-      ? project.short_description_ar || ''
-      : project.short_description_en || ''
-  }
-  onBlur={(e) =>
-    updateProject(project.id, {
+ value={
+  projectLang === 'ar'
+    ? editingProjects[project.id]?.short_description_ar || ''
+    : editingProjects[project.id]?.short_description_en || ''
+}
+onChange={(e) =>
+  setEditingProjects(prev => ({
+    ...prev,
+    [project.id]: {
+      ...prev[project.id],
       [projectLang === 'ar'
         ? 'short_description_ar'
         : 'short_description_en']:
         e.target.value
-    })
-  }
+    }
+  }))
+}
+
+
 />
+
+dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
+
   </div>
 
 </div>
@@ -1229,18 +1238,23 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
   dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
   value={
     projectLang === 'ar'
-      ? project.full_description_ar || ''
-      : project.full_description_en || ''
+      ? editingProjects[project.id]?.full_description_ar || ''
+      : editingProjects[project.id]?.full_description_en || ''
   }
-  onBlur={(e) =>
-    updateProject(project.id, {
-      [projectLang === 'ar'
-        ? 'full_description_ar'
-        : 'full_description_en']:
-        e.target.value
-    })
+  onChange={(e) =>
+    setEditingProjects(prev => ({
+      ...prev,
+      [project.id]: {
+        ...prev[project.id],
+        [projectLang === 'ar'
+          ? 'full_description_ar'
+          : 'full_description_en']:
+          e.target.value
+      }
+    }))
   }
 />
+
 </div>
 
 {/* Tech Stack */}
@@ -1412,15 +1426,23 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 
 <div className="flex gap-3 mt-6">
   <button
-    onClick={async () => {
-      const values = editingProjects[project.id]
-      await updateProject(project.id, values)
-      alert('Project updated ✅')
-    }}
-    className="btn btn-primary"
-  >
-    Update Project
-  </button>
+  onClick={async () => {
+    const values = { ...editingProjects[project.id] }
+
+    delete values.id
+    delete values.created_at
+    delete values.updated_at
+    delete values.views
+    delete values.owner_id
+
+    await updateProject(project.id, values)
+
+    alert('Project updated ✅')
+  }}
+  className="btn btn-primary"
+>
+  Update Project
+</button>
 
   <button
     onClick={() =>
