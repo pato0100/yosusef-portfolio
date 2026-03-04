@@ -925,7 +925,13 @@ setData(prev => ({
     <>
     {/* ===== Dashboard Tabs ===== */}
 <div className="flex justify-center mb-6">
-  <div className="flex rounded-full border border-white/10 bg-white/5 backdrop-blur p-1">
+  <div
+    className="flex rounded-full backdrop-blur p-1"
+    style={{
+      background: "var(--card-bg)",
+      border: "1px solid var(--card-border)"
+    }}
+  >
 
     {[
   [
@@ -946,8 +952,8 @@ setData(prev => ({
         onClick={() => setActiveTab(key)}
         className={`px-4 py-2 text-sm rounded-full transition-all duration-300 ${
           activeTab === key
-            ? 'bg-[var(--brand)] text-[var(--brand-contrast)] shadow-lg'
-            : 'text-white/70 hover:text-white'
+? 'bg-[var(--brand)] text-[var(--brand-contrast)] shadow-lg'
+: 'opacity-70 hover:opacity-100'
         }`}
       >
         {label}
@@ -1226,7 +1232,7 @@ borderColor:"var(--card-border)"
 value={settings.defaultLang}
 onChange={(v)=>setSetting('defaultLang',v)}
 options={[
-{value:"ar",label:"Arabic"},
+{value:"ar",label:"العربية"},
 {value:"en",label:"English"}
 ]}
 />
