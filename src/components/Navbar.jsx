@@ -2,7 +2,7 @@
 import { useI18n } from '../i18n/i18n'
 import { motion } from 'framer-motion'
 
-export default function Navbar() {
+export default function Navbar({ settings }) {
   const { t, lang } = useI18n()
   const { pathname } = useLocation()
 
@@ -14,10 +14,20 @@ export default function Navbar() {
   const base = `/${currentSlug}`
 
   const tabs = [
-    { key: 'profile', label: t.profile, path: `${base}` },
-    { key: 'projects', label: t.projects, path: `${base}/projects` },
-    { key: 'contact', label: t.contact, path: `${base}/contact` },
-  ]
+  { key: 'profile', label: t.profile, path: `${base}` },
+
+  settings?.showProjectsPage && {
+    key: 'projects',
+    label: t.projects,
+    path: `${base}/projects`,
+  },
+
+  settings?.showContactPage && {
+    key: 'contact',
+    label: t.contact,
+    path: `${base}/contact`,
+  },
+].filter(Boolean)
 
   return (
     <motion.nav

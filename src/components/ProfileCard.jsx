@@ -158,7 +158,7 @@ export function downloadVCard(p, filename) {
 // ProfileCard component (uses the local utils above)
 // ===============================
 
-export default function ProfileCard({ profile }) {
+export default function ProfileCard({ profile, settings }) {
   const { t, lang } = useI18n()
 
   // اختيار النص المناسب حسب لغة الموقع
@@ -339,34 +339,44 @@ function downloadQR() {
           <p className="mt-3 text-gray-600 dark:text-gray-300 leading-relaxed">{displayAbout}</p>
 
 
-          <SocialBar socials={socials} whatsapp={whatsapp} />
+          {settings?.showSocials && (
+  <SocialBar
+  socials={socials}
+  whatsapp={whatsapp}
+  enabled={settings?.showSocials}
+/>
+)}
 
  {/* Actions + QR side-by-side */}
 <div className={`mt-6 grid gap-6 md:grid-cols-[1fr_auto] items-start ${lang === 'ar' ? 'rtl:text-right' : ''}`}>
 
   {/* العمود الأول: الأزرار */}
   <div className="grid grid-cols-1 gap-3 btn-row">
-    {cv ? (
-      <button
-        type="button"
-        onClick={handleDownloadCV}
-        className="btn btn-primary w-full min-w-0"
-      >
-        {t.download_cv}
-      </button>
-    ) : (
-      <a href="/edit" className="btn btn-soft w-full min-w-0">
-        {lang === 'ar' ? 'ارفع CV' : 'Upload CV'}
-      </a>
-    )}
-
+   {settings?.showDownloadCV && (
+  cv ? (
     <button
       type="button"
-      onClick={handleDownloadContact}
+      onClick={handleDownloadCV}
       className="btn btn-primary w-full min-w-0"
     >
-      {t.download_contact}
+      {t.download_cv}
     </button>
+  ) : (
+    <a href="/edit" className="btn btn-soft w-full min-w-0">
+      {lang === 'ar' ? 'ارفع CV' : 'Upload CV'}
+    </a>
+  )
+)}
+ 
+    {settings?.showDownloadVcard && (
+  <button
+    type="button"
+    onClick={handleDownloadContact}
+    className="btn btn-primary w-full min-w-0"
+  >
+    {t.download_contact}
+  </button>
+)}
 
     {(tel1 || tel2) && (
       <div className="relative w-full" ref={callRef}>
@@ -434,7 +444,13 @@ function downloadQR() {
   </div>
 
   {/* العمود الثاني: QR + زر التحميل */}
-  <div className="flex flex-col items-center md:items-end gap-2">
+  <div
+  className={`mt-6 grid gap-6 items-start ${
+    settings?.showQR
+      ? 'md:grid-cols-[1fr_auto]'
+      : 'md:grid-cols-1'
+  } ${lang === 'ar' ? 'rtl:text-right' : ''}`}
+>
     <div className="p-3 rounded-xl border border-[var(--card-border)] bg-white shadow-sm">
       {/* خلفية بيضاء علشان الكود يقرا كويس على أي ثيم */}
       {qrDataUrl ? (

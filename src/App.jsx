@@ -83,7 +83,7 @@ export default function App() {
         </div>
       </header>
 
-      <Navbar />
+      <Navbar settings={settings} />
 
       <main className="container-max py-8">
 
@@ -93,9 +93,32 @@ export default function App() {
   <Route path="/" element={<RootRedirect />} />
 
   <Route path="/:slug" element={<Profile />} />
-  <Route path="/:slug/projects" element={<Projects />} />
-  <Route path="/:slug/projects/:projectSlug" element={<ProjectDetails />} />
-  <Route path="/:slug/contact" element={<Contact />} />
+  <Route
+  path="/:slug/projects"
+  element={
+    settings.showProjectsPage
+      ? <Projects />
+      : <Navigate to={`/${currentSlug}`} replace />
+  }
+/>
+
+  <Route
+  path="/:slug/projects/:projectSlug"
+  element={
+    settings.showProjectsPage
+      ? <ProjectDetails />
+      : <Navigate to={`/${currentSlug}`} replace />
+  }
+/>
+
+  <Route
+  path="/:slug/contact"
+  element={
+    settings.showContactPage
+      ? <Contact />
+      : <Navigate to={`/${currentSlug}`} replace />
+  }
+/>
 
   <Route path="*" element={<Navigate to="/" replace />} />
 

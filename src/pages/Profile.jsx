@@ -77,7 +77,7 @@ export default function Profile() {
 
   return (
     <div className="space-y-8">
-      <ProfileCard profile={profile} />
+      <ProfileCard profile={profile} settings={settings} />
     </div>
   )
 }

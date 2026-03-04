@@ -10,7 +10,10 @@ import {
   FaWhatsapp,
 } from "react-icons/fa6";
 
-export default function SocialBar({ socials = {}, whatsapp }) {
+export default function SocialBar({ socials = {}, whatsapp, enabled = true }) {
+
+  if (!enabled) return null;
+
   const items = [
     { key: "linkedin", label: "LinkedIn", icon: <FaLinkedin size={18} /> },
     { key: "github", label: "GitHub", icon: <FaGithub size={18} /> },
@@ -21,9 +24,9 @@ export default function SocialBar({ socials = {}, whatsapp }) {
     { key: "tiktok", label: "TikTok", icon: <FaTiktok size={18} /> },
   ];
 
-  // واتساب من رقم الهاتف (يفتح شات مباشرة)
-const wa = whatsapp ? `https://wa.me/${String(whatsapp).replace(/[^\d]/g, "")}` : null;
-
+  const wa = whatsapp
+    ? `https://wa.me/${String(whatsapp).replace(/[^\d]/g, "")}`
+    : null;
 
   return (
     <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -37,6 +40,7 @@ const wa = whatsapp ? `https://wa.me/${String(whatsapp).replace(/[^\d]/g, "")}` 
           {it.icon}
         </SocialIcon>
       ))}
+
       {wa && (
         <SocialIcon href={wa} label="WhatsApp" delay={items.length * 0.05}>
           <FaWhatsapp size={18} />
