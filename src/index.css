@@ -407,8 +407,8 @@ border: 1px solid var(--card-border);
 }
 
 select option{
-background: #0f172a;
-color: #ffffff;
+background: var(--card);
+color: var(--text);
 }
 
 /* =========================================
