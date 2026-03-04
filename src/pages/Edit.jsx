@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef, useMemo } from 'react'
+﻿import { useEffect, useState, useRef } from 'react'
 import defaults from '../data/defaultProfile.json'
 import { getProfile, upsertProfile, getMyProfile } from '../services/cloudStorage'
 import { useI18n } from '../i18n/i18n'
@@ -51,14 +51,20 @@ borderColor:"var(--card-border)"
 {/* Theme preview */}
 <div className="flex gap-1">
 
-<div className="w-4 h-4 rounded"
-style={{background:theme.preview?.[0] || '#00bcd4'}} />
+<div
+className="w-4 h-4 rounded"
+style={{background: theme.preview?.[0] || 'var(--brand)'}}
+/>
 
-<div className="w-4 h-4 rounded"
-style={{background:theme.preview?.[1] || '#222'}} />
+<div
+className="w-4 h-4 rounded"
+style={{background: theme.preview?.[1] || 'var(--card)'}}
+/>
 
-<div className="w-4 h-4 rounded"
-style={{background:theme.preview?.[2] || '#fff'}} />
+<div
+className="w-4 h-4 rounded"
+style={{background: theme.preview?.[2] || 'var(--text)'}}
+/>
 
 </div>
 
