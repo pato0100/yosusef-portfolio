@@ -1335,7 +1335,7 @@ setSetting("defaultTheme","custom")
 <div className="grid md:grid-cols-2 gap-4">
 
 {[
-['showContactPage','Contact Page','📞'],
+['showContactPage','Contact Page','📩'],
 ['showProjectsPage','Projects Page','📁']
 ].map(([key,label,icon])=>(
 

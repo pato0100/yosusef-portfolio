@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS = {
   defaultTheme: 'agogovich',
   showContactPage: true,
   showProjectsPage: true,
-  showContactSection: true,
+  showsendemail: true,
   showQR: true,
   showSocials: true,
   showDownloadCV: true,
@@ -25,7 +25,7 @@ function fromDb(row = {}) {
 
     showContactPage: row.show_contact_page ?? DEFAULT_SETTINGS.showContactPage,
     showProjectsPage: row.show_projects_page ?? DEFAULT_SETTINGS.showProjectsPage,
-    showContactSection: row.show_contact_section ?? DEFAULT_SETTINGS.showContactSection,
+    showsendemail: row.show_send_email ?? DEFAULT_SETTINGS.showsendemail,
 
     showQR: row.show_qr ?? DEFAULT_SETTINGS.showQR,
     showSocials: row.show_socials ?? DEFAULT_SETTINGS.showSocials,
@@ -44,7 +44,7 @@ function toDb(patch = {}) {
 
     show_contact_page: patch.showContactPage,
     show_projects_page: patch.showProjectsPage,
-    show_contact_section: patch.showContactSection,
+    showsendemail: patch.showsendemail,
 
     show_qr: patch.showQR,
     show_socials: patch.showSocials,
