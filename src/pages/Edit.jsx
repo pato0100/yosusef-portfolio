@@ -297,7 +297,7 @@ root.setAttribute(
 settings.defaultTheme ?? "dark"
 )
 
-if(settings.defaultTheme === "custom"){
+if(settings.defaultTheme === "custom" && customTheme){
 
 root.style.setProperty("--custom-brand",customTheme.brand)
 root.style.setProperty("--custom-bg",customTheme.background)

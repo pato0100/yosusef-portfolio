@@ -22,13 +22,18 @@ function fromDb(row = {}) {
     id: row.id ?? null,
     defaultLang: row.default_lang ?? DEFAULT_SETTINGS.defaultLang,
     defaultTheme: row.default_theme ?? DEFAULT_SETTINGS.defaultTheme,
-    showContactPage:    row.show_contact_page ?? DEFAULT_SETTINGS.showContactPage,
-    showProjectsPage:   row.show_projects_page ?? DEFAULT_SETTINGS.showProjectsPage,
+
+    showContactPage: row.show_contact_page ?? DEFAULT_SETTINGS.showContactPage,
+    showProjectsPage: row.show_projects_page ?? DEFAULT_SETTINGS.showProjectsPage,
     showContactSection: row.show_contact_section ?? DEFAULT_SETTINGS.showContactSection,
-    showQR:             row.show_qr ?? DEFAULT_SETTINGS.showQR,
-    showSocials:        row.show_socials ?? DEFAULT_SETTINGS.showSocials,
-    showDownloadCV:     row.show_download_cv ?? DEFAULT_SETTINGS.showDownloadCV,
-    showDownloadVcard:  row.show_download_vcard ?? DEFAULT_SETTINGS.showDownloadVcard,
+
+    showQR: row.show_qr ?? DEFAULT_SETTINGS.showQR,
+    showSocials: row.show_socials ?? DEFAULT_SETTINGS.showSocials,
+    showDownloadCV: row.show_download_cv ?? DEFAULT_SETTINGS.showDownloadCV,
+    showDownloadVcard: row.show_download_vcard ?? DEFAULT_SETTINGS.showDownloadVcard,
+
+    // 🔥 مهم
+    custom_theme: row.custom_theme ?? null
   }
 }
 
@@ -36,13 +41,19 @@ function toDb(patch = {}) {
   return {
     default_lang: patch.defaultLang,
     default_theme: patch.defaultTheme,
-    show_contact_page:    patch.showContactPage,
-    show_projects_page:   patch.showProjectsPage,
+
+    show_contact_page: patch.showContactPage,
+    show_projects_page: patch.showProjectsPage,
     show_contact_section: patch.showContactSection,
-    show_qr:              patch.showQR,
-    show_socials:         patch.showSocials,
-    show_download_cv:     patch.showDownloadCV,
-    show_download_vcard:  patch.showDownloadVcard,
+
+    show_qr: patch.showQR,
+    show_socials: patch.showSocials,
+    show_download_cv: patch.showDownloadCV,
+    show_download_vcard: patch.showDownloadVcard,
+
+    // 🔥 أهم سطر
+    custom_theme: patch.custom_theme ?? null,
+
     updated_at: new Date().toISOString(),
   }
 }
