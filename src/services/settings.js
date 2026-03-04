@@ -1,13 +1,23 @@
+```javascript
 // src/services/settings.js
+
 import { supabase } from '../lib/supabase'
+
+// =====================
+// DEFAULT SETTINGS
+// =====================
 
 export const DEFAULT_SETTINGS = {
   defaultLang: 'en',
   defaultTheme: 'agogovich',
+
   showContactPage: true,
   showProjectsPage: true,
+  showContactSection: true,
+
   showQR: true,
   showSocials: true,
+
   showDownloadCV: true,
   showDownloadVCard: true,
 }
@@ -16,32 +26,57 @@ export const DEFAULT_SETTINGS = {
 // Helpers
 // =====================
 
+// تحويل من DB → Frontend
 function fromDb(row = {}) {
   return {
     id: row.id ?? null,
+
     defaultLang: row.default_lang ?? DEFAULT_SETTINGS.defaultLang,
     defaultTheme: row.default_theme ?? DEFAULT_SETTINGS.defaultTheme,
-    showContactPage:    row.show_contact_page ?? DEFAULT_SETTINGS.showContactPage,
-    showProjectsPage:   row.show_projects_page ?? DEFAULT_SETTINGS.showProjectsPage,
-    showQR:             row.show_qr ?? DEFAULT_SETTINGS.showQR,
-    showSocials:        row.show_socials ?? DEFAULT_SETTINGS.showSocials,
-    showDownloadCV:     row.show_download_cv ?? DEFAULT_SETTINGS.showDownloadCV,
-    showDownloadVCard:  row.show_download_vcard ?? DEFAULT_SETTINGS.showDownloadVCard,
+
+    showContactPage:
+      row.show_contact_page ?? DEFAULT_SETTINGS.showContactPage,
+
+    showProjectsPage:
+      row.show_projects_page ?? DEFAULT_SETTINGS.showProjectsPage,
+
+    showContactSection:
+      row.show_contact_section ?? DEFAULT_SETTINGS.showContactSection,
+
+    showQR:
+      row.show_qr ?? DEFAULT_SETTINGS.showQR,
+
+    showSocials:
+      row.show_socials ?? DEFAULT_SETTINGS.showSocials,
+
+    showDownloadCV:
+      row.show_download_cv ?? DEFAULT_SETTINGS.showDownloadCV,
+
+    showDownloadVCard:
+      row.show_download_vcard ?? DEFAULT_SETTINGS.showDownloadVCard,
   }
 }
 
+// تحويل من Frontend → DB
 function toDb(patch = {}) {
-  return {
-    default_lang: patch.defaultLang,
-    default_theme: patch.defaultTheme,
-    show_contact_page:    patch.showContactPage,
-    show_projects_page:   patch.showProjectsPage,
-    show_qr:              patch.showQR,
-    show_socials:         patch.showSocials,
-    show_download_cv:     patch.showDownloadCV,
-    show_download_vcard:  patch.showDownloadVCard,
-    updated_at: new Date().toISOString(),
-  }
+  const db = {}
+
+  if ('defaultLang' in patch) db.default_lang = patch.defaultLang
+  if ('defaultTheme' in patch) db.default_theme = patch.defaultTheme
+
+  if ('showContactPage' in patch) db.show_contact_page = patch.showContactPage
+  if ('showProjectsPage' in patch) db.show_projects_page = patch.showProjectsPage
+  if ('showContactSection' in patch) db.show_contact_section = patch.showContactSection
+
+  if ('showQR' in patch) db.show_qr = patch.showQR
+  if ('showSocials' in patch) db.show_socials = patch.showSocials
+
+  if ('showDownloadCV' in patch) db.show_download_cv = patch.showDownloadCV
+  if ('showDownloadVCard' in patch) db.show_download_vcard = patch.showDownloadVCard
+
+  db.updated_at = new Date().toISOString()
+
+  return db
 }
 
 // =====================
@@ -49,33 +84,42 @@ function toDb(patch = {}) {
 // =====================
 
 export async function getSettings(slug) {
-  // 1️⃣ هات profile.id من slug
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('slug', slug)
-    .single()
+  try {
 
-  if (profileError || !profile) {
-    console.error('⚠️ Profile not found for slug:', slug)
+    // 1️⃣ الحصول على profile.id من slug
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('slug', slug)
+      .single()
+
+    if (profileError || !profile) {
+      console.warn('⚠️ Profile not found for slug:', slug)
+      return { ...DEFAULT_SETTINGS }
+    }
+
+    // 2️⃣ الحصول على settings الخاصة باليوزر
+    const { data, error } = await supabase
+      .from('settings')
+      .select('*')
+      .eq('owner_id', profile.id)
+      .maybeSingle()
+
+    if (error) {
+      console.error('⚠️ getSettings error:', error)
+      return { ...DEFAULT_SETTINGS }
+    }
+
+    if (!data) {
+      return { ...DEFAULT_SETTINGS }
+    }
+
+    return fromDb(data)
+
+  } catch (err) {
+    console.error('⚠️ getSettings unexpected error:', err)
     return { ...DEFAULT_SETTINGS }
   }
-
-  // 2️⃣ هات settings الخاصة بيه
-  const { data, error } = await supabase
-    .from('settings')
-    .select('*')
-    .eq('owner_id', profile.id)
-    .maybeSingle()
-
-  if (error) {
-    console.error('⚠️ getSettings error:', error)
-    return { ...DEFAULT_SETTINGS }
-  }
-
-  if (data) return fromDb(data)
-
-  return { ...DEFAULT_SETTINGS }
 }
 
 // =====================
@@ -83,10 +127,14 @@ export async function getSettings(slug) {
 // =====================
 
 export async function updateSettings(patch) {
-  const { data: authData } = await supabase.auth.getUser()
-  const uid = authData?.user?.id
 
-  if (!uid) throw new Error('Not authenticated')
+  const { data: authData, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !authData?.user) {
+    throw new Error('User not authenticated')
+  }
+
+  const uid = authData.user.id
 
   const payload = {
     owner_id: uid,
@@ -95,7 +143,7 @@ export async function updateSettings(patch) {
 
   const { data, error } = await supabase
     .from('settings')
-    .upsert(payload, { onConflict: 'owner_id' }) // 🔥 المهم هنا
+    .upsert(payload, { onConflict: 'owner_id' })
     .select('*')
     .single()
 
@@ -106,3 +154,4 @@ export async function updateSettings(patch) {
 
   return fromDb(data)
 }
+```
