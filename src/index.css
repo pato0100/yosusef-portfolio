@@ -351,7 +351,7 @@ html[data-theme="cosmic-rose"] {
   --bg-from:#1a0010; --bg-to:#330020;
   --card-bg:rgba(255,255,255,0.07); --card-border:rgba(244,114,182,0.3);
   --text:#fce7f3; --muted:#f9a8d4; --brand:#ec4899; --brand-contrast:#1a0010;
-  color-scheme: dark.
+  color-scheme: dark;
 }
 
 /* Zero Gravity (dark) */
@@ -398,6 +398,23 @@ html[data-theme="custom"] {
 
   color-scheme: dark;
 
+}
+
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-color: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--card-border);
+
+  background-image: none;
+}
+
+select.input option {
+  background-color: var(--card-bg);
+  color: var(--text);
 }
 
 
@@ -659,20 +676,3 @@ button:focus-visible, a:focus-visible {
 }
 .btn.w-full { width: 100% !important; }
 
-select.input {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  background: var(--card-bg);
-  color: var(--text);
-}
-
-select.input {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  background: var(--card-bg);
-  color: var(--text);
-}
