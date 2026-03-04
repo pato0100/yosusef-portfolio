@@ -10,7 +10,7 @@ export const DEFAULT_SETTINGS = {
   showQR: true,
   showSocials: true,
   showDownloadCV: true,
-  showDownloadVCard: true,
+  showDownloadVcard: true,
 }
 
 // =====================
@@ -28,7 +28,7 @@ function fromDb(row = {}) {
     showQR:             row.show_qr ?? DEFAULT_SETTINGS.showQR,
     showSocials:        row.show_socials ?? DEFAULT_SETTINGS.showSocials,
     showDownloadCV:     row.show_download_cv ?? DEFAULT_SETTINGS.showDownloadCV,
-    showDownloadVCard:  row.show_download_vcard ?? DEFAULT_SETTINGS.showDownloadVCard,
+    showDownloadVcard:  row.show_download_vcard ?? DEFAULT_SETTINGS.showDownloadVcard,
   }
 }
 
@@ -42,7 +42,7 @@ function toDb(patch = {}) {
     show_qr:              patch.showQR,
     show_socials:         patch.showSocials,
     show_download_cv:     patch.showDownloadCV,
-    show_download_vcard:  patch.showDownloadVCard,
+    show_download_vcard:  patch.showDownloadVcard,
     updated_at: new Date().toISOString(),
   }
 }
