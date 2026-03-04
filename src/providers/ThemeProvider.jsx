@@ -3,7 +3,7 @@ import { getSettings } from "../services/settings"
 
 const ThemeContext = createContext()
 
-export function ThemeProvider({ slug, children }) {
+export default function ThemeProvider({ slug, children }) {
 
 const [settings,setSettings] = useState(null)
 
