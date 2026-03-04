@@ -1126,9 +1126,15 @@ borderColor:"var(--card-border)"
 
 <select
 className="input"
+style={{
+background:"var(--card)",
+color:"var(--text)",
+borderColor:"var(--card-border)"
+}}
 value={settings.defaultTheme}
 onChange={(e)=>setSetting('defaultTheme',e.target.value)}
 >
+  
 {THEME_OPTIONS.map(opt=>(
 <option key={opt.value} value={opt.value}>
 {opt.label}
