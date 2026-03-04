@@ -50,7 +50,7 @@ className={`rounded-xl border p-3 text-left transition hover:scale-[1.05] ${
 active ? "ring-2 ring-[var(--brand)] shadow-lg" : ""
 }`}
 style={{
-background:"var(--card)",
+background:"var(--card-bg)",
 borderColor:"var(--card-border)"
 }}
 >
@@ -1212,7 +1212,7 @@ borderColor:"var(--card-border)"
 <div
 className="rounded-xl p-4 border hover:shadow-md transition"
 style={{
-background:"var(--card, #0f172a)",
+background:"var(--card-bg)",
 borderColor:"var(--card-border)"
 }}
 >
@@ -1224,7 +1224,7 @@ borderColor:"var(--card-border)"
 <select
 className="input appearance-none"
 style={{
-background:"var(--card)",
+background:"var(--card-bg)",
 color:"var(--text)"
 }}
 value={settings.defaultLang}
@@ -1241,7 +1241,7 @@ onChange={(e)=>setSetting('defaultLang',e.target.value)}
 <div
 className="rounded-xl p-4 border hover:shadow-md transition"
 style={{
-background:"var(--card)",
+background:"var(--card-bg)",
 borderColor:"var(--card-border)"
 }}
 >
@@ -1341,7 +1341,7 @@ setSetting("defaultTheme","custom")
 key={key}
 className="rounded-xl border p-4 flex justify-between items-center hover:shadow-md transition"
 style={{
-background:"var(--card)",
+background:"var(--card-bg)",
 borderColor:"var(--card-border)"
 }}
 >
@@ -1392,7 +1392,7 @@ onChange={()=>setSetting(key,!settings[key])}
 key={key}
 className="rounded-xl border p-4 flex justify-between items-center hover:shadow-md transition"
 style={{
-background:"var(--card)",
+background:"var(--card-bg)",
 borderColor:"var(--card-border)"
 }}
 >
@@ -1443,7 +1443,7 @@ onChange={()=>setSetting(key,!settings[key])}
 key={key}
 className="rounded-xl border p-4 flex justify-between items-center hover:shadow-md transition"
 style={{
-background:"var(--card)",
+background:"var(--card-bg)",
 borderColor:"var(--card-border)"
 }}
 >
