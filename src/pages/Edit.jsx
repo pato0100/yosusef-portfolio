@@ -1386,12 +1386,10 @@ onChange={()=>setSetting(key,!settings[key])}
 <div className="grid md:grid-cols-2 gap-4">
 
 {[
-[
 ['showQR','QR Code','🔳'],
 ['showSocials','Social Links','🌐'],
 ['showCall','Call Button','📞'],
 ['showSendEmail','Send Email','📧']
-]
 ].map(([key,label,icon])=>(
 
 <div
@@ -1442,7 +1440,7 @@ onChange={()=>setSetting(key,!settings[key])}
 
 {[
 ['showDownloadCV','Download CV','📄'],
-['showDownloadVcard','Download vCard','👤']
+['showDownloadVcard','Download Contact','👤']
 ].map(([key,label,icon])=>(
 
 <div
