@@ -129,7 +129,13 @@ const [editingProjects, setEditingProjects] = useState({})
   const [originalSettings, setOriginalSettings] = useState(DEFAULT_SETTINGS)
 
 const settingsChanged =
-  JSON.stringify(settings) !== JSON.stringify(originalSettings)
+JSON.stringify({
+...settings,
+custom_theme: customTheme
+}) !== JSON.stringify({
+...originalSettings,
+custom_theme: originalSettings.custom_theme
+})
 
 
   //Custom Theme State
@@ -286,22 +292,17 @@ useEffect(()=>{
 
 const root = document.documentElement
 
-// لو Custom Theme
-if(settings.defaultTheme === "custom"){
+root.setAttribute(
+"data-theme",
+settings.defaultTheme ?? "dark"
+)
 
-root.setAttribute("data-theme","custom")
+if(settings.defaultTheme === "custom"){
 
 root.style.setProperty("--custom-brand",customTheme.brand)
 root.style.setProperty("--custom-bg",customTheme.background)
 root.style.setProperty("--custom-card",customTheme.card)
 root.style.setProperty("--custom-text",customTheme.text)
-
-}
-
-// أي ثيم تاني
-else{
-
-root.setAttribute("data-theme",settings.defaultTheme)
 
 }
 
@@ -338,52 +339,23 @@ useEffect(() => {
     try {
       setLoading(true)
 
-      const remote = await getMyProfile()
-      const profile = remote || defaults
+      const profile = await getMyProfile()
 
-      setData(profile)
-      setUsername(profile?.slug || '')
-
-    } catch (e) {
-      console.error('load profile failed', e)
-      setData(defaults)
-    } finally {
-      setLoading(false)
-    }
-  })()
-
-}, [session])
-
-  // ⬇️ جلب الإعدادات من Supabase بعد تسجيل الدخول
-useEffect(() => {
-  if (!session) return
-
-  (async () => {
-    try {
-      setLoading(true)
-
-      const remote = await getMyProfile()
-      const profile = remote || null
-
-      // ❌ مش مسجل دخول
       if (!profile) {
         navigate('/login', { replace: true })
         return
       }
 
-      // ❌ معندوش slug
       if (!profile.slug) {
         navigate('/onboarding', { replace: true })
         return
       }
 
-      // ❌ slug في الرابط مش مطابق
       if (slugFromUrl !== profile.slug) {
         navigate(`/${profile.slug}/edit`, { replace: true })
         return
       }
 
-      // ✅ كل حاجة تمام
       setData(profile)
       setUsername(profile.slug)
 
@@ -412,7 +384,11 @@ useEffect(() => {
       const loaded = remote || DEFAULT_SETTINGS
 
       setSettings(loaded)
-      setOriginalSettings(loaded)
+      setOriginalSettings({
+...loaded,
+custom_theme: loaded.custom_theme
+})
+
 
       if(loaded.custom_theme){
 setCustomTheme(loaded.custom_theme)
@@ -472,7 +448,10 @@ async function saveSettings(e) {
 custom_theme: customTheme
 })
 
-setOriginalSettings(settings)
+setOriginalSettings({
+...settings,
+custom_theme: customTheme
+})
 
 alert('Settings saved ✅')
   } catch (e) {

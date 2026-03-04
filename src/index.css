@@ -378,7 +378,9 @@ html[data-theme="synthwave"] {
   color-scheme: dark;
 }
 
-/* Custom Theme (User Builder) */
+/* ==========================
+   Custom Theme (User Builder)
+========================== */
 
 html[data-theme="custom"] {
 
@@ -393,6 +395,8 @@ html[data-theme="custom"] {
 
   --brand: var(--custom-brand);
   --brand-contrast: #000;
+
+  color-scheme: dark;
 
 }
 
