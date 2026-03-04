@@ -443,16 +443,11 @@ function downloadQR() {
     )}
   </div>
 
-  {/* العمود الثاني: QR + زر التحميل */}
-  <div
-  className={`mt-6 grid gap-6 items-start ${
-    settings?.showQR
-      ? 'md:grid-cols-[1fr_auto]'
-      : 'md:grid-cols-1'
-  } ${lang === 'ar' ? 'rtl:text-right' : ''}`}
->
+ {/* العمود الثاني: QR + زر التحميل */}
+{settings?.showQR && (
+  <div className="flex flex-col items-center gap-2">
+
     <div className="p-3 rounded-xl border border-[var(--card-border)] bg-white shadow-sm">
-      {/* خلفية بيضاء علشان الكود يقرا كويس على أي ثيم */}
       {qrDataUrl ? (
         <img
           src={qrDataUrl}
@@ -474,8 +469,10 @@ function downloadQR() {
     >
       {lang === 'ar' ? 'تحميل QR' : 'Download QR'}
     </button>
+
   </div>
-</div>
+)}
+ </div>
         </div>
       </div>
     </motion.section>
