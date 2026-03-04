@@ -25,6 +25,7 @@ const [editingProjects, setEditingProjects] = useState({})
   
     // 🧩 إعدادات الموقع (Settings)
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+  const [settingsTab, setSettingsTab] = useState('general')
   const [loadingSettings, setLoadingSettings] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
   const [originalSettings, setOriginalSettings] = useState(DEFAULT_SETTINGS)
@@ -86,6 +87,38 @@ function cleanProjectSlug(value) {
     .trim()
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
+}
+
+function ToggleSwitch({value,onChange}){
+
+return(
+
+<button
+onClick={onChange}
+className="relative w-12 h-6 rounded-full transition duration-300"
+style={{
+background:value
+? "var(--brand)"
+: "var(--card-border)",
+boxShadow:value
+? "0 0 8px var(--brand)"
+: "none"
+}}
+>
+
+<span
+className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition duration-300"
+style={{
+transform:value
+? "translateX(24px)"
+: "translateX(0)"
+}}
+/>
+
+</button>
+
+)
+
 }
 
 async function checkUsernameAvailability(value) {
@@ -1017,20 +1050,46 @@ className="btn btn-primary"
 <div className="opacity-70">Loading settings…</div>
 ) : (
 
-<div className="space-y-10">
+<>
+{/* ===== SETTINGS TABS ===== */}
 
-{/* ================= GENERAL ================= */}
-<div>
+<div className="flex gap-2 mb-8 flex-wrap">
 
-<h3 className="text-sm font-semibold mb-4 opacity-70">
-{lang === 'ar' ? 'الإعدادات العامة' : 'General'}
-</h3>
+{[
+['general', lang === 'ar' ? 'عام' : 'General'],
+['pages', lang === 'ar' ? 'الصفحات' : 'Pages'],
+['profile', lang === 'ar' ? 'الملف الشخصي' : 'Profile'],
+['downloads', lang === 'ar' ? 'التحميلات' : 'Downloads']
+].map(([key,label]) => (
+
+<button
+key={key}
+onClick={()=>setSettingsTab(key)}
+className={`px-4 py-1.5 rounded-lg text-sm transition ${
+settingsTab===key
+? 'bg-[var(--brand)] text-[var(--brand-contrast)]'
+: 'border'
+}`}
+style={{
+borderColor:"var(--card-border)"
+}}
+>
+{label}
+</button>
+
+))}
+
+</div>
+
+{/* ===== GENERAL TAB ===== */}
+
+{settingsTab === 'general' && (
 
 <div className="grid md:grid-cols-2 gap-4">
 
 {/* Language */}
 <div
-className="rounded-xl p-4 border transition hover:scale-[1.02] hover:shadow-md"
+className="rounded-xl p-4 border hover:shadow-md transition"
 style={{
 background:"var(--card)",
 borderColor:"var(--card-border)"
@@ -1046,21 +1105,15 @@ className="input"
 value={settings.defaultLang}
 onChange={(e)=>setSetting('defaultLang',e.target.value)}
 >
-<option value="ar">Arabic (AR)</option>
-<option value="en">English (EN)</option>
+<option value="ar">Arabic</option>
+<option value="en">English</option>
 </select>
-
-<p className="text-xs opacity-60 mt-2">
-{lang === 'ar'
-? 'اللغة التي يفتح بها الموقع'
-: 'Language your site opens with'}
-</p>
 
 </div>
 
 {/* Theme */}
 <div
-className="rounded-xl p-4 border transition hover:scale-[1.02] hover:shadow-md"
+className="rounded-xl p-4 border hover:shadow-md transition"
 style={{
 background:"var(--card)",
 borderColor:"var(--card-border)"
@@ -1083,39 +1136,26 @@ onChange={(e)=>setSetting('defaultTheme',e.target.value)}
 ))}
 </select>
 
-<p className="text-xs opacity-60 mt-2">
-{lang === 'ar'
-? 'الثيم الذي يظهر للمستخدم'
-: 'Theme your visitors will see'}
-</p>
-
 </div>
 
 </div>
-</div>
 
+)}
 
-{/* ================= FEATURES ================= */}
-<div>
+{/* ===== PAGES TAB ===== */}
 
-<h3 className="text-sm font-semibold mb-4 opacity-70">
-{lang === 'ar' ? 'الميزات' : 'Features'}
-</h3>
+{settingsTab === 'pages' && (
 
-<div className="grid md:grid-cols-3 gap-4">
+<div className="grid md:grid-cols-2 gap-4">
 
 {[
 ['showContactPage','Contact Page','📞'],
-['showProjectsPage','Projects Page','📁'],
-['showQR','QR Code','🔳'],
-['showSocials','Social Links','🌐'],
-['showDownloadCV','Download CV','📄'],
-['showDownloadVcard','Download vCard','👤']
+['showProjectsPage','Projects Page','📁']
 ].map(([key,label,icon])=>(
-  
+
 <div
 key={key}
-className="rounded-xl border p-4 flex items-center justify-between transition hover:scale-[1.03] hover:shadow-lg"
+className="rounded-xl border p-4 flex justify-between items-center hover:shadow-md transition"
 style={{
 background:"var(--card)",
 borderColor:"var(--card-border)"
@@ -1125,7 +1165,7 @@ borderColor:"var(--card-border)"
 <div className="flex items-center gap-3">
 
 <div
-className="w-9 h-9 flex items-center justify-center rounded-lg"
+className="w-9 h-9 rounded-lg flex items-center justify-center"
 style={{
 background:"var(--brand)",
 color:"var(--brand-contrast)"
@@ -1134,57 +1174,128 @@ color:"var(--brand-contrast)"
 {icon}
 </div>
 
-<div>
-
-<div
-className="text-sm font-medium"
-style={{color:"var(--text)"}}
->
+<div className="text-sm font-medium">
 {label}
 </div>
 
-<div className="text-xs opacity-60">
-{lang === 'ar' ? 'التحكم في الظهور' : 'Visibility'}
 </div>
 
-</div>
-
-</div>
-
-{/* Toggle Switch */}
-<button
-type="button"
-onClick={()=>setSetting(key,!settings[key])}
-className="relative w-12 h-6 rounded-full transition duration-300"
-style={{
-background:settings[key]
-? "var(--brand)"
-: "var(--card-border)",
-boxShadow:settings[key]
-? "0 0 8px var(--brand)"
-: "none"
-}}
->
-
-<span
-className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition duration-300"
-style={{
-transform:settings[key]
-? "translateX(24px)"
-: "translateX(0)"
-}}
+<ToggleSwitch
+value={settings[key]}
+onChange={()=>setSetting(key,!settings[key])}
 />
-
-</button>
 
 </div>
 
 ))}
 
 </div>
+
+)}
+
+{/* ===== PROFILE TAB ===== */}
+
+{settingsTab === 'profile' && (
+
+<div className="grid md:grid-cols-2 gap-4">
+
+{[
+['showQR','QR Code','🔳'],
+['showSocials','Social Links','🌐']
+].map(([key,label,icon])=>(
+
+<div
+key={key}
+className="rounded-xl border p-4 flex justify-between items-center hover:shadow-md transition"
+style={{
+background:"var(--card)",
+borderColor:"var(--card-border)"
+}}
+>
+
+<div className="flex items-center gap-3">
+
+<div
+className="w-9 h-9 rounded-lg flex items-center justify-center"
+style={{
+background:"var(--brand)",
+color:"var(--brand-contrast)"
+}}
+>
+{icon}
+</div>
+
+<div className="text-sm font-medium">
+{label}
 </div>
 
 </div>
+
+<ToggleSwitch
+value={settings[key]}
+onChange={()=>setSetting(key,!settings[key])}
+/>
+
+</div>
+
+))}
+
+</div>
+
+)}
+
+{/* ===== DOWNLOADS TAB ===== */}
+
+{settingsTab === 'downloads' && (
+
+<div className="grid md:grid-cols-2 gap-4">
+
+{[
+['showDownloadCV','Download CV','📄'],
+['showDownloadVcard','Download vCard','👤']
+].map(([key,label,icon])=>(
+
+<div
+key={key}
+className="rounded-xl border p-4 flex justify-between items-center hover:shadow-md transition"
+style={{
+background:"var(--card)",
+borderColor:"var(--card-border)"
+}}
+>
+
+<div className="flex items-center gap-3">
+
+<div
+className="w-9 h-9 rounded-lg flex items-center justify-center"
+style={{
+background:"var(--brand)",
+color:"var(--brand-contrast)"
+}}
+>
+{icon}
+</div>
+
+<div className="text-sm font-medium">
+{label}
+</div>
+
+</div>
+
+<ToggleSwitch
+value={settings[key]}
+onChange={()=>setSetting(key,!settings[key])}
+/>
+
+</div>
+
+))}
+
+</div>
+
+)}
+
+</>
 
 )}
 
