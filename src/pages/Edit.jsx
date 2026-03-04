@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import defaults from '../data/defaultProfile.json'
 import { getProfile, upsertProfile, getMyProfile } from '../services/cloudStorage'
 import { useI18n } from '../i18n/i18n'
@@ -11,6 +12,69 @@ import CoverCropper from '../components/CoverCropper'
 import ProfileCropper from "../components/ProfileCropper"
 
 
+
+function ThemeSelector({ value, onChange }) {
+
+return (
+
+<div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+
+{THEME_OPTIONS.map(theme => {
+
+const active = value === theme.value
+
+return (
+
+<button
+key={theme.value}
+type="button"
+onClick={()=>onChange(theme.value)}
+className={`rounded-xl border p-3 text-left transition hover:scale-[1.02] ${
+active ? 'ring-2 ring-[var(--brand)]' : ''
+}`}
+style={{
+background:"var(--card)",
+borderColor:"var(--card-border)"
+}}
+>
+
+<div className="flex items-center gap-2 mb-2">
+
+<span className="text-lg">
+{theme.icon || '🎨'}
+</span>
+
+<span className="text-sm font-medium">
+{theme.label}
+</span>
+
+</div>
+
+{/* Theme preview */}
+<div className="flex gap-1">
+
+<div className="w-4 h-4 rounded"
+style={{background:theme.preview?.[0] || '#00bcd4'}} />
+
+<div className="w-4 h-4 rounded"
+style={{background:theme.preview?.[1] || '#222'}} />
+
+<div className="w-4 h-4 rounded"
+style={{background:theme.preview?.[2] || '#fff'}} />
+
+</div>
+
+</button>
+
+)
+
+})}
+
+</div>
+
+)
+
+}
 
 
 export default function Edit() {
@@ -1124,23 +1188,10 @@ borderColor:"var(--card-border)"
 {lang === 'ar' ? 'الثيم الافتراضي' : 'Default Theme'}
 </label>
 
-<select
-className="input"
-style={{
-background:"var(--card)",
-color:"var(--text)",
-borderColor:"var(--card-border)"
-}}
+<ThemeSelector
 value={settings.defaultTheme}
-onChange={(e)=>setSetting('defaultTheme',e.target.value)}
->
-  
-{THEME_OPTIONS.map(opt=>(
-<option key={opt.value} value={opt.value}>
-{opt.label}
-</option>
-))}
-</select>
+onChange={(v)=>setSetting('defaultTheme',v)}
+/>
 
 </div>
 
