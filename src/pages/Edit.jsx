@@ -1059,53 +1059,55 @@ setData(prev => ({
 
             {/* Toggles */}
 <div className="md:col-span-2 grid md:grid-cols-3 gap-3">
-  {[
-    [
-      'showContactPage',
-      lang === 'ar' ? 'صفحة التواصل' : 'Contact Page'
-    ],
-    [
-      'showProjectsPage',
-      lang === 'ar' ? 'صفحة المشاريع' : 'Projects Page'
-    ],
-    [
-      'showQR',
-      lang === 'ar' ? 'QR' : 'QR'
-    ],
-    [
-      'showSocials',
-      lang === 'ar' ? 'وسائل التواصل' : 'Socials'
-    ],
-    [
-      'showDownloadCV',
-      lang === 'ar' ? 'تحميل السيرة الذاتية' : 'Download CV'
-    ],
-    [
-      'showDownloadVcard',
-      lang === 'ar' ? 'تحميل vCard' : 'Download vCard'
-    ]
-  ].map(([key, label]) => (
-    <div
-      key={key}
-      className="flex items-center justify-between border border-white/10 rounded-xl px-4 py-3"
-    >
-      <span className="text-sm">{label}</span>
 
-      <button
-        type="button"
-        onClick={() => setSetting(key, !settings[key])}
-        className={`px-3 py-1 text-xs rounded-lg transition ${
-          settings[key]
-            ? 'bg-green-500 text-white'
-            : 'bg-gray-500/40 text-white'
-        }`}
-      >
-        {settings[key]
-          ? (lang === 'ar' ? 'إخفاء' : 'Hide')
-          : (lang === 'ar' ? 'إظهار' : 'Show')}
-      </button>
-    </div>
-  ))}
+{[
+  ['showContactPage', 'Contact Page'],
+  ['showProjectsPage', 'Projects Page'],
+  ['showQR', 'QR'],
+  ['showSocials', 'Socials'],
+  ['showDownloadCV', 'Download CV'],
+  ['showDownloadVcard', 'Download vCard']
+].map(([key, label]) => (
+
+<div
+  key={key}
+  className="flex items-center justify-between rounded-xl px-4 py-3 border"
+  style={{
+    background: "var(--card)",
+    borderColor: "var(--card-border)"
+  }}
+>
+
+<span
+  className="text-sm"
+  style={{ color: "var(--text)" }}
+>
+{label}
+</span>
+
+<button
+  type="button"
+  onClick={() => setSetting(key, !settings[key])}
+  className="px-3 py-1 text-xs rounded-lg transition"
+  style={{
+    background: settings[key]
+      ? "var(--brand)"
+      : "transparent",
+    color: settings[key]
+      ? "var(--brand-contrast)"
+      : "var(--text)",
+    border: "1px solid var(--card-border)"
+  }}
+>
+{settings[key]
+? (lang === 'ar' ? 'إخفاء' : 'Hide')
+: (lang === 'ar' ? 'إظهار' : 'Show')}
+</button>
+
+</div>
+
+))}
+
 </div>
           </div>
         )}
