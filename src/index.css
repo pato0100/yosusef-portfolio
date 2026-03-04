@@ -400,23 +400,15 @@ html[data-theme="custom"] {
 
 }
 
-select.input {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  background-color: var(--card-bg);
-  color: var(--text);
-  border: 1px solid var(--card-border);
-
-  background-image: none;
+select {
+background: var(--card-bg);
+color: var(--text);
+border: 1px solid var(--card-border);
 }
 
-select.input option {
-  background-color: var(--card-bg);
-  color: var(--text);
-  
-  color-scheme: dark;
+select option {
+background: var(--card-bg);
+color: var(--text);
 }
 
 
