@@ -1204,6 +1204,8 @@ borderColor:"var(--card-border)"
 
 {settingsTab === 'general' && (
 
+  <>
+
 <div className="grid md:grid-cols-2 gap-4">
 
 {/* Language */}
@@ -1244,17 +1246,17 @@ borderColor:"var(--card-border)"
 </label>
 
 <ThemeSelector
-  value={settings.defaultTheme}
-  onChange={(v)=>setSetting('defaultTheme',v)}
-  customTheme={customTheme}
+value={settings.defaultTheme}
+onChange={(v)=>setSetting('defaultTheme',v)}
+customTheme={customTheme}
 />
 
 </div>
 
 </div>
 
-)}
 
+{/* 🎨 Custom Theme */}
 <div className="mt-6 border rounded-xl p-4">
 
 <h3 className="font-semibold mb-3">
@@ -1314,6 +1316,10 @@ setSetting("defaultTheme","custom")
 </div>
 
 </div>
+
+</>
+
+)}
 
 {/* ===== PAGES TAB ===== */}
 
