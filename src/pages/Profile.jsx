@@ -5,6 +5,8 @@ import { useParams } from 'react-router-dom'
 import defaultData from '../data/defaultProfile.json'
 import ProfileCard from '../components/ProfileCard'
 import { supabase } from '../lib/supabase' // تأكد المسار صح
+import { getSettings } from '../services/settings'
+
 
 function mergeDefaults(defaults, remote) {
   if (!remote) return defaults
@@ -25,6 +27,7 @@ export default function Profile() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [settings, setSettings] = useState(null)
 
  useEffect(() => {
   const loadProfile = async () => {
@@ -48,8 +51,13 @@ export default function Profile() {
 
     const merged = mergeDefaults(defaultData, data)
 
-    setProfile(merged)
-    setLoading(false)
+setProfile(merged)
+
+const settingsData = await getSettings(slug)
+setSettings(settingsData)
+
+setLoading(false)
+
   }
 
   loadProfile()
@@ -73,7 +81,7 @@ export default function Profile() {
     )
   }
 
-  if (!profile) return null
+  if (!profile || !settings) return null
 
   return (
     <div className="space-y-8">
