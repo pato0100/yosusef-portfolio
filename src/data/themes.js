@@ -74,9 +74,13 @@ export const THEME_OPTIONS = [
 
 { value:"black-hole", label:"🕳️ Black Hole", preview:["#6b21a8","#000000","#e5e7eb"] },
 
-{ value:"synthwave", label:"🎛️ Synthwave", preview:["#ec4899","#1b003a","#fbcfe8"] }
+{ value:"synthwave", label:"🎛️ Synthwave", preview:["#ec4899","#1b003a","#fbcfe8"] },
+
+{ value:"custom", label:"🎨 My Theme", preview:["#00c9ff","#0a0f1a","#ffffff"] }
 
 ]
+
+
 
 export function isValidTheme(v){
 return THEME_OPTIONS.some(t=>t.value===v)

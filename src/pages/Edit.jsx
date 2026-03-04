@@ -276,14 +276,29 @@ useEffect(() => {
 
 useEffect(()=>{
 
-const root=document.documentElement
+const root = document.documentElement
+
+// لو الثيم المختار Custom
+if(settings.defaultTheme === "custom" && customTheme){
 
 root.style.setProperty("--brand",customTheme.brand)
 root.style.setProperty("--bg-from",customTheme.background)
 root.style.setProperty("--card-bg",customTheme.card)
 root.style.setProperty("--text",customTheme.text)
 
-},[customTheme])
+}
+
+// لو المستخدم اختار أي ثيم تاني
+else{
+
+root.style.removeProperty("--brand")
+root.style.removeProperty("--bg-from")
+root.style.removeProperty("--card-bg")
+root.style.removeProperty("--text")
+
+}
+
+},[settings.defaultTheme, customTheme])
 
 
 
@@ -1263,7 +1278,10 @@ Brand Color
 <input
 type="color"
 value={customTheme.brand}
-onChange={(e)=>setCustomTheme(prev=>({...prev,brand:e.target.value}))}
+onChange={(e)=>{
+setCustomTheme(prev=>({...prev,brand:e.target.value}))
+setSetting("defaultTheme","custom")
+}}
 />
 </label>
 
@@ -1272,7 +1290,10 @@ Background
 <input
 type="color"
 value={customTheme.background}
-onChange={(e)=>setCustomTheme(prev=>({...prev,background:e.target.value}))}
+onChange={(e)=>{
+setCustomTheme(prev=>({...prev,brand:e.target.value}))
+setSetting("defaultTheme","custom")
+}}
 />
 </label>
 
@@ -1281,7 +1302,10 @@ Card
 <input
 type="color"
 value={customTheme.card}
-onChange={(e)=>setCustomTheme(prev=>({...prev,card:e.target.value}))}
+onChange={(e)=>{
+setCustomTheme(prev=>({...prev,brand:e.target.value}))
+setSetting("defaultTheme","custom")
+}}
 />
 </label>
 
@@ -1290,7 +1314,10 @@ Text
 <input
 type="color"
 value={customTheme.text}
-onChange={(e)=>setCustomTheme(prev=>({...prev,text:e.target.value}))}
+onChange={(e)=>{
+setCustomTheme(prev=>({...prev,brand:e.target.value}))
+setSetting("defaultTheme","custom")
+}}
 />
 </label>
 
