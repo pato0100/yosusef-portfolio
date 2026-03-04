@@ -27,6 +27,8 @@ return (
 
 {THEME_OPTIONS.map(theme => {
 
+const active = value === theme.value
+
 const colors =
 theme.value === "custom" && customTheme
 ? [
