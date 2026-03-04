@@ -298,7 +298,7 @@ html[data-theme="infrared"] {
   --bg-from:#200000; --bg-to:#400000;
   --card-bg:rgba(255,255,255,0.08); --card-border:rgba(239,68,68,0.3);
   --text:#fee2e2; --muted:#f87171; --brand:#ef4444; --brand-contrast:#1a0000;
-  color-scheme: dark.
+  color-scheme: dark;
 }
 
 /* Neptune (dark) */
@@ -658,3 +658,21 @@ button:focus-visible, a:focus-visible {
   background: color-mix(in srgb, var(--brand) 10%, transparent);
 }
 .btn.w-full { width: 100% !important; }
+
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background: var(--card-bg);
+  color: var(--text);
+}
