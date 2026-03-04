@@ -1335,8 +1335,8 @@ setSetting("defaultTheme","custom")
 <div className="grid md:grid-cols-2 gap-4">
 
 {[
-['showContactPage','Contact Page','📩'],
-['showProjectsPage','Projects Page','📁']
+['showContactPage', lang === 'ar' ? 'صفحة التواصل' : 'Contact Page', '📩'],
+['showProjectsPage', lang === 'ar' ? 'صفحة المشاريع' : 'Projects Page', '📁']
 ].map(([key,label,icon])=>(
 
 <div
@@ -1386,10 +1386,10 @@ onChange={()=>setSetting(key,!settings[key])}
 <div className="grid md:grid-cols-2 gap-4">
 
 {[
-['showQR','QR Code','🔳'],
-['showSocials','Social Links','🌐'],
-['showCall','Call Button','📞'],
-['showSendEmail','Send Email','📧']
+['showQR', lang === 'ar' ? 'رمز QR' : 'QR Code', '🔳'],
+['showSocials', lang === 'ar' ? 'روابط التواصل' : 'Social Links', '🌐'],
+['showCall', lang === 'ar' ? 'زر الاتصال' : 'Call Button', '📞'],
+['showSendEmail', lang === 'ar' ? 'زر ارسال البريد الإلكتروني' : 'Send Email', '📧']
 ].map(([key,label,icon])=>(
 
 <div
@@ -1439,8 +1439,8 @@ onChange={()=>setSetting(key,!settings[key])}
 <div className="grid md:grid-cols-2 gap-4">
 
 {[
-['showDownloadCV','Download CV','📄'],
-['showDownloadVcard','Download Contact','👤']
+['showDownloadCV', lang === 'ar' ? 'تحميل السيرة الذاتية' : 'Download CV', '📄'],
+['showDownloadVcard', lang === 'ar' ? 'تحميل جهة الاتصال' : 'Download Contact', '👤']
 ].map(([key,label,icon])=>(
 
 <div
