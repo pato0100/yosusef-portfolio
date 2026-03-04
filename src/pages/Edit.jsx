@@ -28,6 +28,7 @@ return (
 {THEME_OPTIONS.map(theme => {
 
 const active = value === theme.value
+const colors = theme.preview || ['#00bcd4','#0f172a','#ffffff']
 
 return (
 
@@ -67,17 +68,17 @@ borderColor:"var(--card-border)"
 
 <div
 className="w-4 h-4 rounded"
-style={{background: theme.preview?.[0] || 'var(--brand)'}}
+style={{background: colors[0]}}
 />
 
 <div
 className="w-4 h-4 rounded"
-style={{background: theme.preview?.[1] || 'var(--card)'}}
+style={{background: colors[1]}}
 />
 
 <div
 className="w-4 h-4 rounded"
-style={{background: theme.preview?.[2] || 'var(--text)'}}
+style={{background: colors[2]}}
 />
 
 </div>
