@@ -35,16 +35,12 @@ return (
 <button
 key={theme.value}
 type="button"
-
 onClick={()=>onChange(theme.value)}
-
 onMouseEnter={()=>previewTheme(theme.value)}
 onMouseLeave={resetTheme}
-
 className={`rounded-xl border p-3 text-left transition hover:scale-[1.05] ${
 active ? 'ring-2 ring-[var(--brand)] shadow-lg' : ''
 }`}
-
 style={{
 background:"var(--card)",
 borderColor:"var(--card-border)"
@@ -52,35 +48,14 @@ borderColor:"var(--card-border)"
 >
 
 <div className="flex items-center gap-2 mb-2">
-
-<span className="text-lg">
-{theme.icon || '🎨'}
-</span>
-
-<span className="text-sm font-medium">
-{theme.label}
-</span>
-
+<span className="text-lg">{theme.icon || '🎨'}</span>
+<span className="text-sm font-medium">{theme.label}</span>
 </div>
 
-{/* Theme preview colors */}
 <div className="flex gap-1">
-
-<div
-className="w-4 h-4 rounded"
-style={{background: colors[0]}}
-/>
-
-<div
-className="w-4 h-4 rounded"
-style={{background: colors[1]}}
-/>
-
-<div
-className="w-4 h-4 rounded"
-style={{background: colors[2]}}
-/>
-
+<div className="w-4 h-4 rounded" style={{background:colors[0]}} />
+<div className="w-4 h-4 rounded" style={{background:colors[1]}} />
+<div className="w-4 h-4 rounded" style={{background:colors[2]}} />
 </div>
 
 </button>
