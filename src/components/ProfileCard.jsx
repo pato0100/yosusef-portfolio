@@ -378,7 +378,7 @@ function downloadQR() {
   </button>
 )}
 
-    {(tel1 || tel2) && (
+    {settings?.showCall && (tel1 || tel2) && (
       <div className="relative w-full" ref={callRef}>
         <button
           type="button"
@@ -431,7 +431,7 @@ function downloadQR() {
       </div>
     )}
 
-    {email && (
+    {settings?.showSendEmail && email && (
       <a
         className="btn btn-primary w-full min-w-0"
         href={`mailto:${email}`}

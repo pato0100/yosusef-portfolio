@@ -1386,8 +1386,12 @@ onChange={()=>setSetting(key,!settings[key])}
 <div className="grid md:grid-cols-2 gap-4">
 
 {[
+[
 ['showQR','QR Code','🔳'],
-['showSocials','Social Links','🌐']
+['showSocials','Social Links','🌐'],
+['showCall','Call Button','📞'],
+['showSendEmail','Send Email','📧']
+]
 ].map(([key,label,icon])=>(
 
 <div

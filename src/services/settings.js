@@ -6,7 +6,8 @@ export const DEFAULT_SETTINGS = {
   defaultTheme: 'agogovich',
   showContactPage: true,
   showProjectsPage: true,
-  showsendemail: true,
+  showSendEmail: true,
+  showCall: true,  
   showQR: true,
   showSocials: true,
   showDownloadCV: true,
@@ -20,19 +21,19 @@ export const DEFAULT_SETTINGS = {
 function fromDb(row = {}) {
   return {
     id: row.id ?? null,
+
     defaultLang: row.default_lang ?? DEFAULT_SETTINGS.defaultLang,
     defaultTheme: row.default_theme ?? DEFAULT_SETTINGS.defaultTheme,
 
     showContactPage: row.show_contact_page ?? DEFAULT_SETTINGS.showContactPage,
     showProjectsPage: row.show_projects_page ?? DEFAULT_SETTINGS.showProjectsPage,
-    showsendemail: row.show_send_email ?? DEFAULT_SETTINGS.showsendemail,
-
+    showSendEmail: row.show_send_email ?? DEFAULT_SETTINGS.showSendEmail,
+    showCall: row.show_call ?? DEFAULT_SETTINGS.showCall,
     showQR: row.show_qr ?? DEFAULT_SETTINGS.showQR,
     showSocials: row.show_socials ?? DEFAULT_SETTINGS.showSocials,
     showDownloadCV: row.show_download_cv ?? DEFAULT_SETTINGS.showDownloadCV,
     showDownloadVcard: row.show_download_vcard ?? DEFAULT_SETTINGS.showDownloadVcard,
 
-    // 🔥 مهم
     custom_theme: row.custom_theme ?? null
   }
 }
@@ -44,14 +45,14 @@ function toDb(patch = {}) {
 
     show_contact_page: patch.showContactPage,
     show_projects_page: patch.showProjectsPage,
-    showsendemail: patch.showsendemail,
-
+    show_send_email: patch.showSendEmail,
+    show_call: patch.showCall,
+    
     show_qr: patch.showQR,
     show_socials: patch.showSocials,
     show_download_cv: patch.showDownloadCV,
     show_download_vcard: patch.showDownloadVcard,
 
-    // 🔥 أهم سطر
     custom_theme: patch.custom_theme ?? null,
 
     updated_at: new Date().toISOString(),
