@@ -123,11 +123,22 @@ const [editingProjects, setEditingProjects] = useState({})
   
     // 🧩 إعدادات الموقع (Settings)
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
-  const [settingsTab, setSettingsTab] = useState('general')
-  const [loadingSettings, setLoadingSettings] = useState(false)
-  const [savingSettings, setSavingSettings] = useState(false)
-  const [originalSettings, setOriginalSettings] = useState(DEFAULT_SETTINGS)
+const [settingsTab, setSettingsTab] = useState('general')
+const [loadingSettings, setLoadingSettings] = useState(false)
+const [savingSettings, setSavingSettings] = useState(false)
+const [originalSettings, setOriginalSettings] = useState(DEFAULT_SETTINGS)
 
+
+// 🔥 Custom Theme State يجب أن يكون هنا
+const [customTheme, setCustomTheme] = useState({
+brand:"#00c9ff",
+background:"#0a0f1a",
+card:"#101828",
+text:"#e5e7eb"
+})
+
+
+// بعده نحسب settingsChanged
 const settingsChanged =
 JSON.stringify({
 ...settings,
@@ -136,17 +147,6 @@ custom_theme: customTheme
 ...originalSettings,
 custom_theme: originalSettings.custom_theme
 })
-
-
-  //Custom Theme State
-
-  const [customTheme, setCustomTheme] = useState({
-brand:"#00c9ff",
-background:"#0a0f1a",
-card:"#101828",
-text:"#e5e7eb"
-})
-
 
   // ✅ حالة الجلسة الفعلية من Supabase
   const [session, setSession] = useState(null)
