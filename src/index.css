@@ -378,6 +378,25 @@ html[data-theme="synthwave"] {
   color-scheme: dark;
 }
 
+/* Custom Theme (User Builder) */
+
+html[data-theme="custom"] {
+
+  --bg-from: var(--custom-bg);
+  --bg-to: var(--custom-bg);
+
+  --card-bg: var(--custom-card);
+  --card-border: rgba(255,255,255,0.12);
+
+  --text: var(--custom-text);
+  --muted: #9ca3af;
+
+  --brand: var(--custom-brand);
+  --brand-contrast: #000;
+
+}
+
+
 /* =========================================
    Navbar (Glass + underline fill behind active)
 ========================================= */

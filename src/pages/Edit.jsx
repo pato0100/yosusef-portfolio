@@ -286,23 +286,22 @@ useEffect(()=>{
 
 const root = document.documentElement
 
-// لو الثيم المختار Custom
-if(settings.defaultTheme === "custom" && customTheme){
+// لو Custom Theme
+if(settings.defaultTheme === "custom"){
 
-root.style.setProperty("--brand", customTheme.brand)
-root.style.setProperty("--bg", customTheme.background)
-root.style.setProperty("--card", customTheme.card)
-root.style.setProperty("--text", customTheme.text)
+root.setAttribute("data-theme","custom")
+
+root.style.setProperty("--custom-brand",customTheme.brand)
+root.style.setProperty("--custom-bg",customTheme.background)
+root.style.setProperty("--custom-card",customTheme.card)
+root.style.setProperty("--custom-text",customTheme.text)
 
 }
 
-// لو المستخدم اختار أي ثيم تاني
+// أي ثيم تاني
 else{
 
-root.style.removeProperty("--brand")
-root.style.removeProperty("--bg")
-root.style.removeProperty("--card")
-root.style.removeProperty("--text")
+root.setAttribute("data-theme",settings.defaultTheme)
 
 }
 
