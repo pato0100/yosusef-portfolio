@@ -400,16 +400,7 @@ html[data-theme="custom"] {
 
 }
 
-select {
-background: var(--card-bg);
-color: var(--text);
-border: 1px solid var(--card-border);
-}
 
-select option {
-background: var(--card-bg);
-color: var(--text);
-}
 
 
 /* =========================================

@@ -8,6 +8,7 @@ import { THEME_OPTIONS } from '../data/themes'
 import { useNavigate, useParams } from 'react-router-dom'
 import CoverCropper from '../components/CoverCropper'
 import ProfileCropper from "../components/ProfileCropper"
+import Dropdown from "../components/Dropdown"
 
 
 
@@ -1221,21 +1222,14 @@ borderColor:"var(--card-border)"
 {lang === 'ar' ? 'اللغة الافتراضية' : 'Default Language'}
 </label>
 
-<select
-className="input appearance-none"
-style={{
-background:"var(--card-bg)",
-color:"var(--text)",
-borderColor:"var(--card-border)",
-colorScheme:"dark"
-}}
+<Dropdown
 value={settings.defaultLang}
-onChange={(e)=>setSetting('defaultLang',e.target.value)}
->
-
-<option value="ar">Arabic</option>
-<option value="en">English</option>
-</select>
+onChange={(v)=>setSetting('defaultLang',v)}
+options={[
+{value:"ar",label:"Arabic"},
+{value:"en",label:"English"}
+]}
+/>
 
 </div>
 
