@@ -124,6 +124,15 @@ const settingsChanged =
   JSON.stringify(settings) !== JSON.stringify(originalSettings)
 
 
+  //Custom Theme State
+
+  const [customTheme, setCustomTheme] = useState({
+brand:"#00c9ff",
+background:"#0a0f1a",
+card:"#101828",
+text:"#e5e7eb"
+})
+
 
   // ✅ حالة الجلسة الفعلية من Supabase
   const [session, setSession] = useState(null)
@@ -265,6 +274,18 @@ useEffect(() => {
   }
 }, [session])
 
+useEffect(()=>{
+
+const root=document.documentElement
+
+root.style.setProperty("--brand",customTheme.brand)
+root.style.setProperty("--bg-from",customTheme.background)
+root.style.setProperty("--card-bg",customTheme.card)
+root.style.setProperty("--text",customTheme.text)
+
+},[customTheme])
+
+
 
 
 
@@ -370,6 +391,10 @@ useEffect(() => {
 
       setSettings(loaded)
       setOriginalSettings(loaded)
+
+      if(settings.custom_theme){
+setCustomTheme(settings.custom_theme)
+}
 
     } catch (err) {
       console.error('settings load failed', err)
@@ -1224,6 +1249,54 @@ onChange={(v)=>setSetting('defaultTheme',v)}
 </div>
 
 )}
+
+<div className="mt-6 border rounded-xl p-4">
+
+<h3 className="font-semibold mb-3">
+🎨 Custom Theme
+</h3>
+
+<div className="grid md:grid-cols-2 gap-3">
+
+<label className="text-sm">
+Brand Color
+<input
+type="color"
+value={customTheme.brand}
+onChange={(e)=>setCustomTheme(prev=>({...prev,brand:e.target.value}))}
+/>
+</label>
+
+<label className="text-sm">
+Background
+<input
+type="color"
+value={customTheme.background}
+onChange={(e)=>setCustomTheme(prev=>({...prev,background:e.target.value}))}
+/>
+</label>
+
+<label className="text-sm">
+Card
+<input
+type="color"
+value={customTheme.card}
+onChange={(e)=>setCustomTheme(prev=>({...prev,card:e.target.value}))}
+/>
+</label>
+
+<label className="text-sm">
+Text
+<input
+type="color"
+value={customTheme.text}
+onChange={(e)=>setCustomTheme(prev=>({...prev,text:e.target.value}))}
+/>
+</label>
+
+</div>
+
+</div>
 
 {/* ===== PAGES TAB ===== */}
 
