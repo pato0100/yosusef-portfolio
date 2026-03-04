@@ -13,6 +13,14 @@ import ProfileCropper from "../components/ProfileCropper"
 
 function ThemeSelector({ value, onChange }) {
 
+const previewTheme = (theme) => {
+  document.documentElement.setAttribute("data-theme", theme)
+}
+
+const resetTheme = () => {
+  document.documentElement.setAttribute("data-theme", value)
+}
+
 return (
 
 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
@@ -26,10 +34,16 @@ return (
 <button
 key={theme.value}
 type="button"
+
 onClick={()=>onChange(theme.value)}
-className={`rounded-xl border p-3 text-left transition hover:scale-[1.02] ${
-active ? 'ring-2 ring-[var(--brand)]' : ''
+
+onMouseEnter={()=>previewTheme(theme.value)}
+onMouseLeave={resetTheme}
+
+className={`rounded-xl border p-3 text-left transition hover:scale-[1.05] ${
+active ? 'ring-2 ring-[var(--brand)] shadow-lg' : ''
 }`}
+
 style={{
 background:"var(--card)",
 borderColor:"var(--card-border)"
@@ -48,7 +62,7 @@ borderColor:"var(--card-border)"
 
 </div>
 
-{/* Theme preview */}
+{/* Theme preview colors */}
 <div className="flex gap-1">
 
 <div
