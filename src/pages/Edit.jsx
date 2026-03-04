@@ -992,9 +992,7 @@ setData(prev => ({
 )}
 
 
-
-
-     {/* ===== Settings Panel ===== */}
+{/* ===== Settings Panel ===== */}
 {activeTab === 'settings' && (
 <section className="card p-6">
 
@@ -1019,12 +1017,12 @@ className="btn btn-primary"
 <div className="opacity-70">Loading settings…</div>
 ) : (
 
-<div className="space-y-8">
+<div className="space-y-10">
 
 {/* ================= GENERAL ================= */}
 <div>
 
-<h3 className="text-sm font-semibold mb-3 opacity-70">
+<h3 className="text-sm font-semibold mb-4 opacity-70">
 {lang === 'ar' ? 'الإعدادات العامة' : 'General'}
 </h3>
 
@@ -1032,10 +1030,10 @@ className="btn btn-primary"
 
 {/* Language */}
 <div
-className="rounded-xl p-4 border"
+className="rounded-xl p-4 border transition hover:scale-[1.02] hover:shadow-md"
 style={{
-background: "var(--card)",
-borderColor: "var(--card-border)"
+background:"var(--card)",
+borderColor:"var(--card-border)"
 }}
 >
 
@@ -1046,7 +1044,7 @@ borderColor: "var(--card-border)"
 <select
 className="input"
 value={settings.defaultLang}
-onChange={(e) => setSetting('defaultLang', e.target.value)}
+onChange={(e)=>setSetting('defaultLang',e.target.value)}
 >
 <option value="ar">Arabic (AR)</option>
 <option value="en">English (EN)</option>
@@ -1062,10 +1060,10 @@ onChange={(e) => setSetting('defaultLang', e.target.value)}
 
 {/* Theme */}
 <div
-className="rounded-xl p-4 border"
+className="rounded-xl p-4 border transition hover:scale-[1.02] hover:shadow-md"
 style={{
-background: "var(--card)",
-borderColor: "var(--card-border)"
+background:"var(--card)",
+borderColor:"var(--card-border)"
 }}
 >
 
@@ -1076,9 +1074,9 @@ borderColor: "var(--card-border)"
 <select
 className="input"
 value={settings.defaultTheme}
-onChange={(e) => setSetting('defaultTheme', e.target.value)}
+onChange={(e)=>setSetting('defaultTheme',e.target.value)}
 >
-{THEME_OPTIONS.map(opt => (
+{THEME_OPTIONS.map(opt=>(
 <option key={opt.value} value={opt.value}>
 {opt.label}
 </option>
@@ -1097,121 +1095,85 @@ onChange={(e) => setSetting('defaultTheme', e.target.value)}
 </div>
 
 
-{/* ================= VISIBILITY ================= */}
+{/* ================= FEATURES ================= */}
 <div>
 
-<h3 className="text-sm font-semibold mb-3 opacity-70">
-{lang === 'ar' ? 'الظهور' : 'Visibility'}
+<h3 className="text-sm font-semibold mb-4 opacity-70">
+{lang === 'ar' ? 'الميزات' : 'Features'}
 </h3>
 
 <div className="grid md:grid-cols-3 gap-4">
 
 {[
-['showContactPage','Contact Page'],
-['showProjectsPage','Projects Page'],
-['showQR','QR Code'],
-['showSocials','Social Links']
-].map(([key,label]) => (
-
+['showContactPage','Contact Page','📞'],
+['showProjectsPage','Projects Page','📁'],
+['showQR','QR Code','🔳'],
+['showSocials','Social Links','🌐'],
+['showDownloadCV','Download CV','📄'],
+['showDownloadVcard','Download vCard','👤']
+].map(([key,label,icon])=>(
+  
 <div
 key={key}
-className="rounded-xl border p-4 flex flex-col gap-3"
+className="rounded-xl border p-4 flex items-center justify-between transition hover:scale-[1.03] hover:shadow-lg"
 style={{
 background:"var(--card)",
 borderColor:"var(--card-border)"
 }}
 >
 
-<div className="text-sm font-medium">
-{label}
-</div>
-
-<div className="text-xs opacity-60">
-{lang === 'ar'
-? 'التحكم في الظهور'
-: 'Control visibility'}
-</div>
-
-<button
-type="button"
-onClick={()=>setSetting(key,!settings[key])}
-className="mt-2 px-3 py-1 text-xs rounded-lg w-fit transition"
-style={{
-background:settings[key]
-? "var(--brand)"
-: "transparent",
-color:settings[key]
-? "var(--brand-contrast)"
-: "var(--text)",
-border:"1px solid var(--card-border)"
-}}
->
-
-{settings[key]
-? (lang === 'ar' ? 'إخفاء' : 'Hide')
-: (lang === 'ar' ? 'إظهار' : 'Show')}
-
-</button>
-
-</div>
-
-))}
-
-</div>
-</div>
-
-
-{/* ================= DOWNLOADS ================= */}
-<div>
-
-<h3 className="text-sm font-semibold mb-3 opacity-70">
-{lang === 'ar' ? 'التحميلات' : 'Downloads'}
-</h3>
-
-<div className="grid md:grid-cols-3 gap-4">
-
-{[
-['showDownloadCV','Download CV'],
-['showDownloadVcard','Download vCard']
-].map(([key,label]) => (
+<div className="flex items-center gap-3">
 
 <div
-key={key}
-className="rounded-xl border p-4 flex flex-col gap-3"
+className="w-9 h-9 flex items-center justify-center rounded-lg"
 style={{
-background:"var(--card)",
-borderColor:"var(--card-border)"
+background:"var(--brand)",
+color:"var(--brand-contrast)"
 }}
 >
+{icon}
+</div>
 
-<div className="text-sm font-medium">
+<div>
+
+<div
+className="text-sm font-medium"
+style={{color:"var(--text)"}}
+>
 {label}
 </div>
 
 <div className="text-xs opacity-60">
-{lang === 'ar'
-? 'التحكم في الظهور'
-: 'Control visibility'}
+{lang === 'ar' ? 'التحكم في الظهور' : 'Visibility'}
 </div>
 
+</div>
+
+</div>
+
+{/* Toggle Switch */}
 <button
 type="button"
 onClick={()=>setSetting(key,!settings[key])}
-className="mt-2 px-3 py-1 text-xs rounded-lg w-fit transition"
+className="relative w-12 h-6 rounded-full transition duration-300"
 style={{
 background:settings[key]
 ? "var(--brand)"
-: "transparent",
-color:settings[key]
-? "var(--brand-contrast)"
-: "var(--text)",
-border:"1px solid var(--card-border)"
+: "var(--card-border)",
+boxShadow:settings[key]
+? "0 0 8px var(--brand)"
+: "none"
 }}
 >
 
-{settings[key]
-? (lang === 'ar' ? 'إخفاء' : 'Hide')
-: (lang === 'ar' ? 'إظهار' : 'Show')}
+<span
+className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition duration-300"
+style={{
+transform:settings[key]
+? "translateX(24px)"
+: "translateX(0)"
+}}
+/>
 
 </button>
 
@@ -1228,6 +1190,8 @@ border:"1px solid var(--card-border)"
 
 </section>
 )}
+
+     
 
 {activeTab === 'projects' && (
   <section
