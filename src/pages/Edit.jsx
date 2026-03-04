@@ -1070,8 +1070,8 @@ setData(prev => ({
     lang === 'ar' ? 'إظهار تحميل السيرة الذاتية' : 'Show Download CV'
   ],
   [
-    'showDownloadVCard',
-    lang === 'ar' ? 'إظهار تحميل vCard' : 'Show Download vCard'
+    'showDownloadVcard',
+    lang === 'ar' ? 'إظهار تحميل vcard' : 'Show Download vcard'
   ]
 ].map(([key, label]) => (
                 <label key={key} className="flex items-center gap-2 border border-white/10 rounded-xl px-3 py-2">
