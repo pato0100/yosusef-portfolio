@@ -400,6 +400,16 @@ html[data-theme="custom"] {
 
 }
 
+select{
+background: var(--card);
+color: var(--text);
+border: 1px solid var(--card-border);
+}
+
+select option{
+background: #0f172a;
+color: #ffffff;
+}
 
 /* =========================================
    Navbar (Glass + underline fill behind active)
