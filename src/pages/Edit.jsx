@@ -14,21 +14,21 @@ import ProfileCropper from "../components/ProfileCropper"
 function ThemeSelector({ value, onChange }) {
 
 const previewTheme = (theme) => {
-  document.documentElement.setAttribute("data-theme", theme)
+document.documentElement.setAttribute("data-theme", theme)
 }
 
 const resetTheme = () => {
-  document.documentElement.setAttribute("data-theme", value)
+document.documentElement.setAttribute("data-theme", value)
 }
 
 return (
 
-<div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+<div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3">
 
 {THEME_OPTIONS.map(theme => {
 
 const active = value === theme.value
-const colors = theme.preview || ['#00bcd4','#0f172a','#ffffff']
+const colors = theme.preview || ["#00bcd4","#0f172a","#ffffff"]
 
 return (
 
@@ -39,7 +39,7 @@ onClick={()=>onChange(theme.value)}
 onMouseEnter={()=>previewTheme(theme.value)}
 onMouseLeave={resetTheme}
 className={`rounded-xl border p-3 text-left transition hover:scale-[1.05] ${
-active ? 'ring-2 ring-[var(--brand)] shadow-lg' : ''
+active ? "ring-2 ring-[var(--brand)] shadow-lg" : ""
 }`}
 style={{
 background:"var(--card)",
@@ -47,15 +47,47 @@ borderColor:"var(--card-border)"
 }}
 >
 
+{/* Theme Name */}
 <div className="flex items-center gap-2 mb-2">
-<span className="text-lg">{theme.icon || '🎨'}</span>
+<span className="text-lg">{theme.icon || "🎨"}</span>
 <span className="text-sm font-medium">{theme.label}</span>
 </div>
 
-<div className="flex gap-1">
-<div className="w-4 h-4 rounded" style={{background:colors[0]}} />
-<div className="w-4 h-4 rounded" style={{background:colors[1]}} />
-<div className="w-4 h-4 rounded" style={{background:colors[2]}} />
+{/* Mini Website Preview */}
+<div
+className="rounded-lg border overflow-hidden"
+style={{
+borderColor:"var(--card-border)",
+background:colors[1]
+}}
+>
+
+{/* Navbar */}
+<div
+className="h-2"
+style={{background:colors[0]}}
+/>
+
+{/* Content */}
+<div className="p-2 space-y-1">
+
+<div
+className="h-2 rounded"
+style={{background:colors[2],opacity:.8}}
+/>
+
+<div
+className="h-2 rounded w-3/4"
+style={{background:colors[2],opacity:.6}}
+/>
+
+<div
+className="h-2 rounded w-1/2"
+style={{background:colors[2],opacity:.4}}
+/>
+
+</div>
+
 </div>
 
 </button>
