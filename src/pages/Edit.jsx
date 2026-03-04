@@ -415,8 +415,8 @@ useEffect(() => {
       setSettings(loaded)
       setOriginalSettings(loaded)
 
-      if(settings.custom_theme){
-setCustomTheme(settings.custom_theme)
+      if(loaded.custom_theme){
+setCustomTheme(loaded.custom_theme)
 }
 
     } catch (err) {
@@ -468,7 +468,10 @@ async function saveSettings(e) {
   e?.preventDefault?.()
   try {
     setSavingSettings(true)
-    await updateSettings(settings)
+    await updateSettings({
+...settings,
+custom_theme: customTheme
+})
 
 setOriginalSettings(settings)
 
@@ -1300,7 +1303,7 @@ Background
 type="color"
 value={customTheme.background}
 onChange={(e)=>{
-setCustomTheme(prev=>({...prev,brand:e.target.value}))
+setCustomTheme(prev=>({...prev,background:e.target.value}))
 setSetting("defaultTheme","custom")
 }}
 />
@@ -1312,7 +1315,7 @@ Card
 type="color"
 value={customTheme.card}
 onChange={(e)=>{
-setCustomTheme(prev=>({...prev,brand:e.target.value}))
+setCustomTheme(prev=>({...prev,card:e.target.value}))
 setSetting("defaultTheme","custom")
 }}
 />
@@ -1324,7 +1327,7 @@ Text
 type="color"
 value={customTheme.text}
 onChange={(e)=>{
-setCustomTheme(prev=>({...prev,brand:e.target.value}))
+setCustomTheme(prev=>({...prev,text:e.target.value}))
 setSetting("defaultTheme","custom")
 }}
 />
