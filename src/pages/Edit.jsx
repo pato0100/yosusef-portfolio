@@ -11,7 +11,7 @@ import ProfileCropper from "../components/ProfileCropper"
 
 
 
-function ThemeSelector({ value, onChange }) {
+function ThemeSelector({ value, onChange, customTheme }) {
 
 const previewTheme = (theme) => {
 document.documentElement.setAttribute("data-theme", theme)
@@ -27,8 +27,14 @@ return (
 
 {THEME_OPTIONS.map(theme => {
 
-const active = value === theme.value
-const colors = theme.preview || ["#00bcd4","#0f172a","#ffffff"]
+const colors =
+theme.value === "custom" && customTheme
+? [
+    customTheme.brand,
+    customTheme.background,
+    customTheme.text
+  ]
+: (theme.preview || ['#00bcd4','#0f172a','#ffffff'])
 
 return (
 
@@ -1255,8 +1261,9 @@ borderColor:"var(--card-border)"
 </label>
 
 <ThemeSelector
-value={settings.defaultTheme}
-onChange={(v)=>setSetting('defaultTheme',v)}
+  value={settings.defaultTheme}
+  onChange={(v)=>setSetting('defaultTheme',v)}
+  customTheme={customTheme}
 />
 
 </div>
