@@ -1225,7 +1225,9 @@ borderColor:"var(--card-border)"
 className="input appearance-none"
 style={{
 background:"var(--card-bg)",
-color:"var(--text)"
+color:"var(--text)",
+borderColor:"var(--card-border)",
+colorScheme:"dark"
 }}
 value={settings.defaultLang}
 onChange={(e)=>setSetting('defaultLang',e.target.value)}

@@ -415,6 +415,8 @@ select.input {
 select.input option {
   background-color: var(--card-bg);
   color: var(--text);
+  
+  color-scheme: dark;
 }
 
 
