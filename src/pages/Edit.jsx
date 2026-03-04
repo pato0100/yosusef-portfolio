@@ -289,10 +289,10 @@ const root = document.documentElement
 // لو الثيم المختار Custom
 if(settings.defaultTheme === "custom" && customTheme){
 
-root.style.setProperty("--brand",customTheme.brand)
-root.style.setProperty("--bg-from",customTheme.background)
-root.style.setProperty("--card-bg",customTheme.card)
-root.style.setProperty("--text",customTheme.text)
+root.style.setProperty("--brand", customTheme.brand)
+root.style.setProperty("--bg", customTheme.background)
+root.style.setProperty("--card", customTheme.card)
+root.style.setProperty("--text", customTheme.text)
 
 }
 
@@ -300,8 +300,8 @@ root.style.setProperty("--text",customTheme.text)
 else{
 
 root.style.removeProperty("--brand")
-root.style.removeProperty("--bg-from")
-root.style.removeProperty("--card-bg")
+root.style.removeProperty("--bg")
+root.style.removeProperty("--card")
 root.style.removeProperty("--text")
 
 }
@@ -1232,7 +1232,7 @@ borderColor:"var(--card-border)"
 <div
 className="rounded-xl p-4 border hover:shadow-md transition"
 style={{
-background:"var(--card)",
+background:"var(--card, #0f172a)",
 borderColor:"var(--card-border)"
 }}
 >
