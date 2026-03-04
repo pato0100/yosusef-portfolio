@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-
+import ThemeProvider from "./providers/ThemeProvider"
 import Profile from './pages/Profile.jsx'
 import Projects from './pages/Projects.jsx'
 import ProjectDetails from './pages/ProjectDetails.jsx'
@@ -72,7 +72,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen">
+
+<ThemeProvider slug={currentSlug}>
+
+<div className="min-h-screen">
 
       <header className="container-max flex items-center justify-between py-6">
         <Link to="/" className="text-lg font-bold"></Link>
@@ -131,5 +134,8 @@ export default function App() {
       </footer>
 
     </div>
-  )
+
+</ThemeProvider>
+
+)
 }
