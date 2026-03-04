@@ -1222,16 +1222,15 @@ borderColor:"var(--card-border)"
 </label>
 
 <select
-className="input"
+className="input appearance-none"
 style={{
-background: "var(--card)",
-color: "var(--text)",
-borderColor: "var(--card-border)"
+background:"var(--card)",
+color:"var(--text)"
 }}
 value={settings.defaultLang}
 onChange={(e)=>setSetting('defaultLang',e.target.value)}
 >
-  
+
 <option value="ar">Arabic</option>
 <option value="en">English</option>
 </select>
