@@ -27,6 +27,11 @@ const [editingProjects, setEditingProjects] = useState({})
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [loadingSettings, setLoadingSettings] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
+  const [originalSettings, setOriginalSettings] = useState(DEFAULT_SETTINGS)
+
+const settingsChanged =
+  JSON.stringify(settings) !== JSON.stringify(originalSettings)
+
 
 
   // ✅ حالة الجلسة الفعلية من Supabase
@@ -227,7 +232,7 @@ useEffect(() => {
 }, [session, slugFromUrl])
 
 useEffect(() => {
-  if (!session) {
+  if (!session || !slugFromUrl) {
     setLoadingSettings(false)
     return
   }
@@ -236,8 +241,12 @@ useEffect(() => {
     try {
       setLoadingSettings(true)
 
-      const remote = await getSettings()
-      setSettings(remote || DEFAULT_SETTINGS)
+      const remote = await getSettings(slugFromUrl)
+
+      const loaded = remote || DEFAULT_SETTINGS
+
+      setSettings(loaded)
+      setOriginalSettings(loaded)
 
     } catch (err) {
       console.error('settings load failed', err)
@@ -247,7 +256,7 @@ useEffect(() => {
     }
   })()
 
-}, [session])
+}, [session, slugFromUrl])
 
 useEffect(() => {
   if (session) {
@@ -289,7 +298,10 @@ async function saveSettings(e) {
   try {
     setSavingSettings(true)
     await updateSettings(settings)
-    alert('Settings saved ✅')
+
+setOriginalSettings(settings)
+
+alert('Settings saved ✅')
   } catch (e) {
     console.error(e)
     alert('Failed to save settings')
@@ -991,7 +1003,7 @@ setData(prev => ({
 </h2>
           <button
             onClick={saveSettings}
-            disabled={savingSettings || loadingSettings}
+            disabled={savingSettings || loadingSettings || !settingsChanged}
             className="btn btn-primary"
           >
             {savingSettings
@@ -1046,44 +1058,55 @@ setData(prev => ({
             </div>
 
             {/* Toggles */}
-            <div className="md:col-span-2 grid md:grid-cols-3 gap-3">
-              {[
-  [
-    'showContactPage',
-    lang === 'ar' ? 'إظهار صفحة التواصل' : 'Show Contact Page'
-  ],
-  [
-    'showProjectsPage',
-    lang === 'ar' ? 'إظهار صفحة المشاريع' : 'Show Projects Page'
-  ],
+<div className="md:col-span-2 grid md:grid-cols-3 gap-3">
+  {[
+    [
+      'showContactPage',
+      lang === 'ar' ? 'صفحة التواصل' : 'Contact Page'
+    ],
+    [
+      'showProjectsPage',
+      lang === 'ar' ? 'صفحة المشاريع' : 'Projects Page'
+    ],
+    [
+      'showQR',
+      lang === 'ar' ? 'QR' : 'QR'
+    ],
+    [
+      'showSocials',
+      lang === 'ar' ? 'وسائل التواصل' : 'Socials'
+    ],
+    [
+      'showDownloadCV',
+      lang === 'ar' ? 'تحميل السيرة الذاتية' : 'Download CV'
+    ],
+    [
+      'showDownloadVcard',
+      lang === 'ar' ? 'تحميل vCard' : 'Download vCard'
+    ]
+  ].map(([key, label]) => (
+    <div
+      key={key}
+      className="flex items-center justify-between border border-white/10 rounded-xl px-4 py-3"
+    >
+      <span className="text-sm">{label}</span>
 
-  [
-    'showQR',
-    lang === 'ar' ? 'إظهار QR' : 'Show QR'
-  ],
-  [
-    'showSocials',
-    lang === 'ar' ? 'إظهار وسائل التواصل' : 'Show Socials'
-  ],
-  [
-    'showDownloadCV',
-    lang === 'ar' ? 'إظهار تحميل السيرة الذاتية' : 'Show Download CV'
-  ],
-  [
-    'showDownloadVcard',
-    lang === 'ar' ? 'إظهار تحميل vcard' : 'Show Download vcard'
-  ]
-].map(([key, label]) => (
-                <label key={key} className="flex items-center gap-2 border border-white/10 rounded-xl px-3 py-2">
-                  <input
-                    type="checkbox"
-                    checked={!!settings[key]}
-                    onChange={(e) => setSetting(key, e.target.checked)}
-                  />
-                  <span className="text-sm">{label}</span>
-                </label>
-              ))}
-            </div>
+      <button
+        type="button"
+        onClick={() => setSetting(key, !settings[key])}
+        className={`px-3 py-1 text-xs rounded-lg transition ${
+          settings[key]
+            ? 'bg-green-500 text-white'
+            : 'bg-gray-500/40 text-white'
+        }`}
+      >
+        {settings[key]
+          ? (lang === 'ar' ? 'إخفاء' : 'Hide')
+          : (lang === 'ar' ? 'إظهار' : 'Show')}
+      </button>
+    </div>
+  ))}
+</div>
           </div>
         )}
         </section>
