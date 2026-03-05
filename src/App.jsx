@@ -7,6 +7,7 @@ import ProjectDetails from './pages/ProjectDetails.jsx'
 import Contact from './pages/Contact.jsx'
 import Edit from './pages/Edit.jsx'
 import RootRedirect from './pages/RootRedirect.jsx'
+import RedirectToMyEdit from "./pages/RedirectToMyEdit"
 import ProtectedRoute from "./components/ProtectedRoute"
 import Login from "./pages/Login"
 import ForgotPassword from "./pages/ForgotPassword"
