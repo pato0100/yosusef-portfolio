@@ -336,21 +336,27 @@ root.style.setProperty("--custom-text",customTheme.text)
   // اتجاه الواجهة
   const dir = lang === 'ar' ? 'rtl' : 'ltr'
   useEffect(() => {
-    document.documentElement.setAttribute('dir', dir)
-  }, [dir])
 
-  // جلب حالة الجلسة ومتابعة تغيّرها
-  useEffect(() => {
-    let unsubscribe
-    (async () => {
-      const current = await getSession()
-      setSession(current)
-      setLoadingSession(false)
-      const { data: sub } = onAuthChange((sess) => setSession(sess))
-      unsubscribe = sub.subscription.unsubscribe
-    })()
-    return () => { if (unsubscribe) unsubscribe() }
-  }, [])
+  const { data: listener } =
+    supabase.auth.onAuthStateChange(
+      (_event, session) => {
+
+        setSession(session)
+        setLoadingSession(false)
+
+      }
+    )
+
+  supabase.auth.getSession().then(({ data }) => {
+
+    setSession(data.session)
+    setLoadingSession(false)
+
+  })
+
+  return () => listener.subscription.unsubscribe()
+
+}, [])
 
   // ⬇️ جلب البيانات من Supabase أول ما الصفحة تتفتح بعد ما المستخدم يتوثّق
 useEffect(() => {
