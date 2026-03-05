@@ -7,7 +7,7 @@ import ProjectDetails from './pages/ProjectDetails.jsx'
 import Contact from './pages/Contact.jsx'
 import Edit from './pages/Edit.jsx'
 import RootRedirect from './pages/RootRedirect.jsx'
-
+import Login from "./pages/Login"
 import Navbar from './components/Navbar.jsx'
 import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import LanguageToggle from './components/LanguageToggle.jsx'
@@ -92,6 +92,7 @@ export default function App() {
 
         <Routes>
 
+<Route path="/login" element={<Login />} />
   <Route path="/:slug/edit" element={<Edit />} />
   <Route path="/" element={<RootRedirect />} />
 

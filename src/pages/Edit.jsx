@@ -280,6 +280,23 @@ function handleUsernameChange(e) {
   const [saving, setSaving] = useState(false)
 // Debug: Show current UID in console
 useEffect(() => {
+
+  if(!loadingSession && !session){
+    navigate("/login")
+  }
+
+},[session,loadingSession])
+
+if (loadingSession) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      Loading...
+    </div>
+  )
+}
+
+
+useEffect(() => {
   if (session) {
     (async () => {
       const { data, error } = await supabase.auth.getUser()
@@ -903,10 +920,6 @@ setData(prev => ({
 
 
 
-  // غير موثّق → اعرض واجهة تسجيل الدخول
-  if (!session) {
-    return <LoginCard />
-  }
 
 
   // موثّق → اعرض لوحة التعديل
@@ -2226,60 +2239,6 @@ dir={projectLang === 'ar' ? 'rtl' : 'ltr'}
 
 
 
-function LoginCard() {
-  const [loading, setLoading] = useState(false)
-  const [err, setErr] = useState('')
 
- async function signInWithGitHub() {
-  try {
-    setErr('')
-    setLoading(true)
-
-    const redirectTo =
-      import.meta.env.DEV
-        ? 'http://localhost:5173/edit'        // وقت التطوير
-        : 'https://youssef-portfolio2001.vercel.app/edit';  // وقت النشر على Vercel
-
-    await supabase.auth.signInWithOAuth({
-  provider: "github",
-  options: {
-    redirectTo: window.location.href,
-  },
-})
-    // بعد الدخول GitHub هيحوّلك تلقائيًا للصفحة دي تاني
-  } catch (e) {
-    setErr(e?.message || 'GitHub login failed')
-    setLoading(false)
-  }
-}
-
-
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-lg">
-        <h2 className="text-xl font-bold mb-2">Admin Login</h2>
-        <p className="text-sm opacity-75 mb-6">Sign in to manage your portfolio.</p>
-
-        {err && (
-          <div className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-lg p-2 mb-3">
-            {err}
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={signInWithGitHub}
-          disabled={loading}
-          className="w-full rounded-xl px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 disabled:opacity-60"
-        >
-          {loading ? 'Redirecting…' : 'Sign in with GitHub'}
-        </button>
-
-        <p className="mt-4 text-xs opacity-70">
-          You’ll be redirected to GitHub, then back here.
-        </p>
-      </div>
-    </div>
-  )
-}
+    
 
