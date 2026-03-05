@@ -281,19 +281,15 @@ function handleUsernameChange(e) {
 // Debug: Show current UID in console
 useEffect(() => {
 
-  if(!loadingSession && !session){
-    navigate("/login")
+  if (loadingSession) return
+
+  if (!session) {
+    navigate("/login", { replace: true })
   }
 
-},[session,loadingSession])
+}, [session, loadingSession])
 
-if (loadingSession) {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      Loading...
-    </div>
-  )
-}
+
 
 
 useEffect(() => {
@@ -359,6 +355,7 @@ root.style.setProperty("--custom-text",customTheme.text)
 }, [])
 
   // ⬇️ جلب البيانات من Supabase أول ما الصفحة تتفتح بعد ما المستخدم يتوثّق
+
 useEffect(() => {
   if (!session) return
 
