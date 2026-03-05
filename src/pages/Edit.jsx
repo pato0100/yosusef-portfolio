@@ -203,7 +203,7 @@ function cleanProjectSlug(value) {
     .replace(/[^a-z0-9-]/g, '')
 }
 
-function ToggleSwitch({value,onChange}){
+function ToggleSwitch({value,onChange,lang}){
 
 return(
 
@@ -221,11 +221,14 @@ boxShadow:value
 >
 
 <span
-className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition duration-300"
+className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition duration-300"
 style={{
-transform:value
-? "translateX(24px)"
-: "translateX(0)"
+left: lang === "ar" ? "auto" : "0.5px",
+right: lang === "ar" ? "0.5px" : "auto",
+transform:
+lang === "ar"
+? (value ? "translateX(-24px)" : "translateX(0)")
+: (value ? "translateX(24px)" : "translateX(0)")
 }}
 />
 
@@ -1369,6 +1372,7 @@ color:"var(--brand-contrast)"
 <ToggleSwitch
 value={settings[key]}
 onChange={()=>setSetting(key,!settings[key])}
+lang={lang}
 />
 
 </div>
