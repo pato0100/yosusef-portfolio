@@ -15,7 +15,10 @@ import ResetPassword from "./pages/ResetPassword"
 import Navbar from './components/Navbar.jsx'
 import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import LanguageToggle from './components/LanguageToggle.jsx'
-
+import AdminLayout from "./admin/AdminLayout"
+import Dashboard from "./admin/Dashboard"
+import Users from "./admin/Users"
+import Invites from "./admin/Invites"
 import { useI18n } from './i18n/i18n.jsx'
 import { getSettings } from './services/settings'
 
@@ -100,7 +103,16 @@ export default function App() {
 <Route path="/forgot-password" element={<ForgotPassword />} />
 <Route path="/reset-password" element={<ResetPassword />} />
 <Route path="/edit" element={<RedirectToMyEdit />} />
-  
+<Route path="/admin" element={<AdminLayout/>}>
+
+<Route index element={<Dashboard/>} />
+
+<Route path="users" element={<Users/>} />
+
+<Route path="invites" element={<Invites/>} />
+
+</Route>
+
 <Route
   path="/:slug/edit"
   element={
