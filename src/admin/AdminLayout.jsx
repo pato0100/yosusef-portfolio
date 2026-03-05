@@ -44,6 +44,4 @@ Admin Panel
 
 }
 
-if(!profile?.is_admin){
-navigate("/")
-}
+
