@@ -7,7 +7,10 @@ import ProjectDetails from './pages/ProjectDetails.jsx'
 import Contact from './pages/Contact.jsx'
 import Edit from './pages/Edit.jsx'
 import RootRedirect from './pages/RootRedirect.jsx'
+import ProtectedRoute from "./components/ProtectedRoute"
 import Login from "./pages/Login"
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
 import Navbar from './components/Navbar.jsx'
 import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import LanguageToggle from './components/LanguageToggle.jsx'
@@ -93,7 +96,18 @@ export default function App() {
         <Routes>
 
 <Route path="/login" element={<Login />} />
-  <Route path="/:slug/edit" element={<Edit />} />
+<Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/reset-password" element={<ResetPassword />} />
+  
+<Route
+  path="/:slug/edit"
+  element={
+    <ProtectedRoute>
+      <Edit />
+    </ProtectedRoute>
+  }
+/>
+
   <Route path="/" element={<RootRedirect />} />
 
   <Route path="/:slug" element={<Profile />} />

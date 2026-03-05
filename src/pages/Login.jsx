@@ -83,6 +83,13 @@ export default function Login() {
 
         </form>
 
+        <a
+  href="/forgot-password"
+  className="text-xs opacity-70 hover:underline"
+>
+  Forgot password?
+</a>
+
       </div>
 
     </div>
