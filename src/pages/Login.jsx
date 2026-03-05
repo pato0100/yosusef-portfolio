@@ -11,34 +11,41 @@ export default function Login() {
   const [err,setErr] = useState("")
   const [loading,setLoading] = useState(false)
 
-  async function signIn(e){
-    e.preventDefault()
+  async function signIn(e) {
+  e.preventDefault()
 
-    try{
+  try {
 
-      setLoading(true)
-      setErr("")
+    setLoading(true)
+    setErr('')
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
 
-      if(error) throw error
+    if (error) throw error
 
-      // بعد تسجيل الدخول
-      navigate("/edit")
+    // 🔥 جيب البروفايل
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("slug")
+      .eq("id", data.user.id)
+      .single()
 
-    }catch(e){
-
-      setErr(e.message)
-
-    }finally{
-
-      setLoading(false)
-
+    if (!profile?.slug) {
+      navigate("/onboarding")
+      return
     }
+
+    navigate(`/${profile.slug}/edit`)
+
+  } catch (e) {
+    setErr(e.message)
+  } finally {
+    setLoading(false)
   }
+}
 
   return(
     <div className="min-h-screen flex items-center justify-center p-4">
