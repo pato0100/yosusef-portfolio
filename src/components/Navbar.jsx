@@ -8,14 +8,10 @@ export default function Navbar({ settings }) {
 
   // استخراج slug من URL
   const pathParts = pathname.split('/').filter(Boolean)
-const currentSlug = pathParts[0]
+  const currentSlug = pathParts[0]
+  if (!currentSlug) return null
 
-// الصفحات التي لا يظهر فيها Navbar
-const hiddenRoutes = ["forgot-password", "login", "admin", "reset-password"]
-
-if (!currentSlug || hiddenRoutes.includes(currentSlug)) return null
-
-const base = `/${currentSlug}`
+  const base = `/${currentSlug}`
 
   const tabs = [
   { key: 'profile', label: t.profile, path: `${base}` },
