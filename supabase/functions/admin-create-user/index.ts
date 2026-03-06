@@ -53,6 +53,12 @@ password,
 inviteCode
 } = await req.json()
 
+if(!username){
+return new Response(JSON.stringify({
+error:"Username is required"
+}),{status:400,headers:corsHeaders})
+}
+
 
 if(!email || !password || !inviteCode){
   return new Response(JSON.stringify({
