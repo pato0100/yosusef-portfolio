@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { getUsers } from "../services/admin"
+import { getUsers, deleteUser, banUser } from "../services/adminUsers"
 
 export default function Users(){
 
@@ -23,6 +23,29 @@ useEffect(()=>{
 load()
 },[])
 
+
+async function handleDelete(id){
+
+if(!confirm("Delete this user?")) return
+
+await deleteUser(id)
+
+load()
+
+}
+
+
+async function handleBan(id){
+
+if(!confirm("Ban this user?")) return
+
+await banUser(id)
+
+load()
+
+}
+
+
 return(
 
 <div>
@@ -33,33 +56,27 @@ Users
 
 <input
 className="input mb-4"
-placeholder="Search email..."
+placeholder="Search by email"
 value={search}
 onChange={(e)=>setSearch(e.target.value)}
+onKeyDown={(e)=> e.key==="Enter" && load()}
 />
 
-<button
-onClick={load}
-className="btn btn-primary mb-6"
->
-Search
-</button>
+{loading && <div>Loading...</div>}
 
-<table className="w-full text-sm">
+<table className="w-full text-left">
 
 <thead>
 
 <tr className="border-b border-white/10">
 
-<th className="text-left p-2">Email</th>
+<th className="p-2">Email</th>
 
-<th className="text-left p-2">Slug</th>
+<th className="p-2">Slug</th>
 
-<th className="text-left p-2">Admin</th>
+<th className="p-2">Admin</th>
 
-<th className="text-left p-2">Status</th>
-
-<th className="text-left p-2">Actions</th>
+<th className="p-2">Actions</th>
 
 </tr>
 
@@ -67,46 +84,31 @@ Search
 
 <tbody>
 
-{loading && (
+{users.map(u=>(
 
-<tr>
+<tr key={u.id} className="border-b border-white/5">
 
-<td colSpan="5">Loading...</td>
+<td className="p-2">{u.email}</td>
 
-</tr>
-
-)}
-
-{users.map(user => (
-
-<tr
-key={user.id}
-className="border-b border-white/5"
->
-
-<td className="p-2">{user.email}</td>
-
-<td className="p-2">{user.slug}</td>
+<td className="p-2">{u.slug}</td>
 
 <td className="p-2">
-{user.is_admin ? "Yes" : "No"}
-</td>
-
-<td className="p-2">
-{user.is_banned ? "Banned" : "Active"}
+{u.is_admin ? "Yes" : "No"}
 </td>
 
 <td className="p-2 flex gap-2">
 
-<button className="btn btn-outline">
-Edit
-</button>
-
-<button className="btn btn-outline">
+<button
+onClick={()=>handleBan(u.id)}
+className="px-2 py-1 bg-yellow-600 rounded"
+>
 Ban
 </button>
 
-<button className="btn btn-outline">
+<button
+onClick={()=>handleDelete(u.id)}
+className="px-2 py-1 bg-red-600 rounded"
+>
 Delete
 </button>
 
