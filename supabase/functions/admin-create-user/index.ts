@@ -154,9 +154,11 @@ await supabase.auth.admin.createUser({
 })
 
 if(userError){
-  return new Response(JSON.stringify({
-    error:userError.message
-  }),{status:400,headers:corsHeaders})
+console.log(userError)
+
+return new Response(JSON.stringify({
+error:userError.message
+}),{status:400,headers:corsHeaders})
 }
 
 const fullName = `${firstName || ""} ${lastName || ""}`.trim()
