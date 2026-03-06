@@ -97,6 +97,47 @@ if(invite.max_uses && invite.used_count >= invite.max_uses){
   }),{status:400,headers:corsHeaders})
 }
 
+//pp
+
+
+const slug = (userSlug || username)
+.toLowerCase()
+.replace(/[^a-z0-9-]/g,"")
+
+// ======================
+// check slug
+// ======================
+
+const { data:existingSlug } = await supabase
+.from("profiles")
+.select("id")
+.eq("slug",slug)
+.single()
+
+if(existingSlug){
+return new Response(JSON.stringify({
+error:"Slug already taken"
+}),{status:400,headers:corsHeaders})
+}
+
+// ======================
+// check username
+// ======================
+
+const { data:existingUsername } = await supabase
+.from("profiles")
+.select("id")
+.eq("username",username)
+.single()
+
+if(existingUsername){
+return new Response(JSON.stringify({
+error:"Username already taken"
+}),{status:400,headers:corsHeaders})
+}
+
+
+
 // ======================
 // create user
 // ======================
@@ -163,9 +204,10 @@ await supabase.from("subscriptions").insert({
 await supabase
 .from("invites")
 .update({
-  used_count:invite.used_count + 1
+used_count: invite.used_count + 1
 })
 .eq("id",invite.id)
+.select()
 
 return new Response(JSON.stringify({
   success:true,
