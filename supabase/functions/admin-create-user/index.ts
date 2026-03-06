@@ -2,50 +2,100 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-admin-secret, content-type",
+"Access-Control-Allow-Origin": "*",
+"Access-Control-Allow-Headers": "authorization, x-admin-secret, content-type"
 }
 
 serve(async (req) => {
 
-  // Handle preflight
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders })
-  }
+if(req.method === "OPTIONS"){
+return new Response("ok",{headers:corsHeaders})
+}
 
-  try {
-    // 🔐 Check admin secret
-    const adminSecret = req.headers.get("x-admin-secret")
+try{
 
-    if (adminSecret !== Deno.env.get("ADMIN_SECRET")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: corsHeaders,
-      })
-    }
+const adminSecret = req.headers.get("x-admin-secret")
 
-    const { email, password } = await req.json()
+if(adminSecret !== Deno.env.get("ADMIN_SECRET")){
+return new Response(JSON.stringify({error:"Unauthorized"}),{
+status:401,
+headers:corsHeaders
+})
+}
 
-    if (!email || !password) {
-      return new Response(JSON.stringify({ error: "Missing fields" }), {
-        status: 400,
-        headers: corsHeaders,
-      })
-    }
+const { email,password,inviteCode } = await req.json()
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!  // مهم تستخدم الاسم اللي خزّنته
-    )
-
-    const { data: test, error: testError } = await supabase
-  .from("auth.users")
-  .select("id")
-  .limit(1)
-
-return new Response(
-  JSON.stringify({
-    testError
-  }),
-  { status: 200, headers: corsHeaders }
+const supabase = createClient(
+Deno.env.get("SUPABASE_URL")!,
+Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 )
+
+const { data:invite,error:inviteError } = await supabase
+.from("invites")
+.select("*")
+.eq("code",inviteCode)
+.single()
+
+if(inviteError || !invite){
+return new Response(JSON.stringify({error:"Invalid invite"}),{
+status:400,
+headers:corsHeaders
+})
+}
+
+if(invite.max_uses && invite.used_count >= invite.max_uses){
+return new Response(JSON.stringify({error:"Invite already used"}),{
+status:400,
+headers:corsHeaders
+})
+}
+
+const { data:user,error:userError } = await supabase.auth.admin.createUser({
+email,
+password,
+email_confirm:true
+})
+
+if(userError){
+return new Response(JSON.stringify({error:userError.message}),{
+status:400,
+headers:corsHeaders
+})
+}
+
+await supabase.from("profiles").insert({
+id:user.user.id,
+email
+})
+
+if(invite.plan_id){
+
+await supabase.from("subscriptions").insert({
+user_id:user.user.id,
+plan_id:invite.plan_id,
+status:"active"
+})
+
+}
+
+await supabase
+.from("invites")
+.update({used_count:invite.used_count + 1})
+.eq("id",invite.id)
+
+return new Response(JSON.stringify({
+success:true
+}),{
+headers:corsHeaders
+})
+
+}catch(e){
+
+return new Response(JSON.stringify({error:e.message}),{
+status:500,
+headers:corsHeaders
+})
+
+}
+
+})

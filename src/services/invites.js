@@ -1,11 +1,7 @@
 import { supabase } from "../lib/supabase"
 
 function generateCode(){
-
-return Math.random()
-.toString(36)
-.substring(2,10)
-
+return crypto.randomUUID().slice(0,8)
 }
 
 export async function createInvite(planId){
@@ -19,6 +15,8 @@ const { data, error } = await supabase
 .insert({
 code,
 plan_id:planId,
+max_uses:1,
+used_count:0,
 created_by:user.user.id
 })
 .select()
@@ -27,7 +25,6 @@ created_by:user.user.id
 if(error) throw error
 
 return data
-
 }
 
 export async function getInvites(){

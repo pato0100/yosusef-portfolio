@@ -1,31 +1,118 @@
+import { useEffect,useState } from "react"
 import { useSearchParams } from "react-router-dom"
+import { validateInvite } from "../services/signup"
+
+export default function Signup(){
 
 const [params] = useSearchParams()
-
 const inviteCode = params.get("invite")
 
+const [invite,setInvite] = useState(null)
+const [loading,setLoading] = useState(true)
+const [error,setError] = useState(null)
 
-const { data:invite } = await supabase
-.from("invites")
-.select("*")
-.eq("code",inviteCode)
-.single()
+const [email,setEmail] = useState("")
+const [password,setPassword] = useState("")
 
-if(!invite){
+useEffect(()=>{
 
-setError("Invalid invite")
+async function check(){
 
+if(!inviteCode){
+setError("Signup is invite only")
+setLoading(false)
 return
+}
+
+try{
+
+const data = await validateInvite(inviteCode)
+
+setInvite(data)
+
+}catch(e){
+
+setError(e.message)
 
 }
 
+setLoading(false)
 
-await supabase
-.from("invites")
-.update({
-used_count:invite.used_count+1
+}
+
+check()
+
+},[])
+
+async function handleSignup(e){
+
+e.preventDefault()
+
+const res = await fetch(
+`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"x-admin-secret":import.meta.env.VITE_ADMIN_SECRET
+},
+body:JSON.stringify({
+email,
+password,
+inviteCode
 })
-.eq("id",invite.id)
+}
+)
 
-invite.used_count < invite.max_uses
-invite.expires_at > now()
+const data = await res.json()
+
+if(data.error){
+alert(data.error)
+return
+}
+
+alert("Account created. You can login now.")
+
+}
+
+if(loading) return <p>Checking invite...</p>
+
+if(error) return <p>{error}</p>
+
+return(
+
+<div className="max-w-md mx-auto mt-20">
+
+<h1 className="text-2xl font-bold mb-6">
+Create account
+</h1>
+
+<form onSubmit={handleSignup} className="space-y-4">
+
+<input
+type="email"
+placeholder="Email"
+value={email}
+onChange={e=>setEmail(e.target.value)}
+className="input"
+/>
+
+<input
+type="password"
+placeholder="Password"
+value={password}
+onChange={e=>setPassword(e.target.value)}
+className="input"
+/>
+
+<button className="btn btn-primary w-full">
+Create account
+</button>
+
+</form>
+
+</div>
+
+)
+
+}
