@@ -28,17 +28,27 @@ export default function Login() {
 
     // 🔥 جيب البروفايل
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("slug")
-      .eq("id", data.user.id)
-      .single()
+  .from("profiles")
+  .select("slug, banned")
+  .eq("id", data.user.id)
+  .single()
 
-    if (!profile?.slug) {
-      navigate("/onboarding")
-      return
-    }
+// 🚫 منع المستخدم المحظور
+if (profile?.banned) {
 
-    navigate(`/${profile.slug}/edit`)
+  await supabase.auth.signOut()
+
+  setErr("Your account has been banned")
+
+  return
+}
+
+if (!profile?.slug) {
+  navigate("/onboarding")
+  return
+}
+
+navigate(`/${profile.slug}/edit`)
 
   } catch (e) {
     setErr(e.message)
