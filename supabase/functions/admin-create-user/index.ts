@@ -161,13 +161,21 @@ const fullName = `${firstName || ""} ${lastName || ""}`.trim()
 // create profile
 // ======================
 
-await supabase.from("profiles").insert({
+const { error:profileError } = await supabase
+.from("profiles")
+.insert({
 id: user.user.id,
 email: email,
 slug: slug,
 username: username,
-name_en:fullName
+name_en: fullName
 })
+
+if(profileError){
+return new Response(JSON.stringify({
+error: profileError.message
+}),{status:400,headers:corsHeaders})
+}
 
 // ======================
 // create settings
