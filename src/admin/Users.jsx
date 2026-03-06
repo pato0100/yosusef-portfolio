@@ -120,8 +120,15 @@ onKeyDown={(e)=> e.key==="Enter" && load()}
 </td>
 
 <td className="p-2">
+
+<span className={`px-2 py-1 rounded text-xs ${
+u.banned ? "bg-red-600" : "bg-green-600"
+}`}>
 {u.banned ? "Banned" : "Active"}
+</span>
+
 </td>
+
 
 <td className="p-2 flex gap-2">
 
