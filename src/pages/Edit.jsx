@@ -457,8 +457,6 @@ useEffect(() => {
     })
   }, [])
 
-
-  
   // 🧩 تحديث إعداد منفرد
 function setSetting(key, value) {
   setSettings(prev => ({ ...prev, [key]: value }))
@@ -513,8 +511,6 @@ async function getMyProjects() {
     setLoadingProjects(false)
   }
 }
-
-
 
 async function createProject() {
   if (!newProject.title.trim() || !newProject.slug.trim()) {
@@ -660,16 +656,6 @@ async function uploadGallery(files, project) {
 
       uploadedUrls.push(data.publicUrl)
     }
-
-const limits = await getMyLimits()
-
-if(project.gallery.length + files.length > limits.max_gallery_images){
-
-alert("Image limit reached")
-
-return
-
-}
 
     const { data: currentProject } = await supabase
   .from('projects')
