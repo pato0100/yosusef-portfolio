@@ -49,23 +49,24 @@ async function handleSignup(e){
 e.preventDefault()
 
 const res = await fetch(
-`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
-{
-method:"POST",
-headers:{
-"Content-Type":"application/json",
+  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
 
-// مهم جدا
-Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      // مهم جدا لتمرير سياسة Edge Functions
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
 
-"x-admin-secret": import.meta.env.VITE_ADMIN_SECRET
-},
-body:JSON.stringify({
-email,
-password,
-inviteCode
-})
-}
+      // ده السر اللي بتشيّك عليه في الـ Edge Function
+      "x-admin-secret": import.meta.env.VITE_ADMIN_SECRET
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      inviteCode
+    })
+  }
 )
 
 const data = await res.json()
