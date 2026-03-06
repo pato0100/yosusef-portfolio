@@ -104,7 +104,7 @@ banned,
 projects_count,
 storage_used_mb,
 created_at,
-subscriptions (
+subscriptions!subscriptions_user_id_fkey (
 id,
 status,
 start_date,
