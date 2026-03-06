@@ -12,7 +12,7 @@ export default function Navbar({ settings }) {
 const currentSlug = pathParts[0]
 
 // الصفحات التي لا يظهر فيها Navbar
-const hiddenRoutes = ["forgot-password", "login", "admin", "singup", "reset-password"]
+const hiddenRoutes = ["forgot-password", "singup", "admin", "reset-password"]
 
 if (!currentSlug || hiddenRoutes.includes(currentSlug)) return null
 
