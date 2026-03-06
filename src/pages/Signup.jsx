@@ -54,7 +54,11 @@ const res = await fetch(
 method:"POST",
 headers:{
 "Content-Type":"application/json",
-"x-admin-secret":import.meta.env.VITE_ADMIN_SECRET
+
+// مهم جدا
+Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+
+"x-admin-secret": import.meta.env.VITE_ADMIN_SECRET
 },
 body:JSON.stringify({
 email,
