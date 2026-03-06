@@ -21,6 +21,7 @@ import Users from "./admin/Users"
 import Invites from "./admin/Invites"
 import { useI18n } from './i18n/i18n.jsx'
 import { getSettings } from './services/settings'
+import UserDetails from "./admin/UserDetails"
 
 export default function App() {
   const { t, setLang } = useI18n()
@@ -108,6 +109,7 @@ export default function App() {
 <Route index element={<Dashboard/>} />
 
 <Route path="users" element={<Users/>} />
+<Route path="/admin/users/:id" element={<UserDetails/>}/>
 
 <Route path="invites" element={<Invites/>} />
 

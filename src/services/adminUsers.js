@@ -89,3 +89,43 @@ end_date:newDate
 if(error) throw error
 
 }
+
+
+// 👤 Get single user details
+export async function getUserDetails(userId){
+
+const { data, error } = await supabase
+.from("profiles")
+.select(`
+id,
+email,
+slug,
+banned,
+projects_count,
+storage_used_mb,
+created_at,
+subscriptions (
+id,
+status,
+start_date,
+end_date,
+plans (
+name,
+max_projects,
+storage_limit_mb
+)
+),
+projects (
+id,
+title,
+created_at
+)
+`)
+.eq("id",userId)
+.single()
+
+if(error) throw error
+
+return data
+
+}

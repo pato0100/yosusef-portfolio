@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { getUsers, deleteUser, banUser, unbanUser } from "../services/adminUsers"
+import { useNavigate } from "react-router-dom"
 
 export default function Users(){
 
@@ -8,6 +9,7 @@ const [search,setSearch] = useState("")
 const [loading,setLoading] = useState(true)
 const [page,setPage] = useState(1)
 const [total,setTotal] = useState(0)
+const navigate = useNavigate()
 
 const limit = 10
 
@@ -122,6 +124,13 @@ onKeyDown={(e)=> e.key==="Enter" && load()}
 </td>
 
 <td className="p-2 flex gap-2">
+
+<button
+onClick={()=>navigate(`/admin/users/${u.id}`)}
+className="px-2 py-1 bg-blue-600 rounded"
+>
+View
+</button>
 
 {u.banned ? (
 
