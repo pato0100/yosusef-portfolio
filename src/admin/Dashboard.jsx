@@ -1,4 +1,26 @@
+import { useEffect, useState } from "react"
+import { getAdminStats } from "../services/adminStats"
+
 export default function Dashboard(){
+
+const [stats,setStats] = useState(null)
+
+useEffect(()=>{
+
+async function load(){
+
+const data = await getAdminStats()
+setStats(data)
+
+}
+
+load()
+
+},[])
+
+if(!stats){
+return <div>Loading...</div>
+}
 
 return(
 
@@ -11,19 +33,23 @@ Admin Dashboard
 <div className="grid grid-cols-4 gap-4">
 
 <div className="card p-4">
-Total Users
+<div className="text-sm opacity-70">Total Users</div>
+<div className="text-2xl font-bold">{stats.users}</div>
 </div>
 
 <div className="card p-4">
-Total Projects
+<div className="text-sm opacity-70">Total Projects</div>
+<div className="text-2xl font-bold">{stats.projects}</div>
 </div>
 
 <div className="card p-4">
-Active Subscriptions
+<div className="text-sm opacity-70">Active Subscriptions</div>
+<div className="text-2xl font-bold">{stats.subscriptions}</div>
 </div>
 
 <div className="card p-4">
-Contact Messages
+<div className="text-sm opacity-70">Contact Messages</div>
+<div className="text-2xl font-bold">{stats.messages}</div>
 </div>
 
 </div>
