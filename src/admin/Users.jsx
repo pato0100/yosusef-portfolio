@@ -1,27 +1,34 @@
 import { useEffect, useState } from "react"
-import { getUsers, deleteUser, banUser } from "../services/adminUsers"
+import { getUsers, deleteUser, banUser, unbanUser } from "../services/adminUsers"
 
 export default function Users(){
 
 const [users,setUsers] = useState([])
 const [search,setSearch] = useState("")
 const [loading,setLoading] = useState(true)
+const [page,setPage] = useState(1)
+const [total,setTotal] = useState(0)
+
+const limit = 10
+
 
 async function load(){
 
 setLoading(true)
 
-const data = await getUsers(search)
+const { users,total } = await getUsers(page,search)
 
-setUsers(data)
+setUsers(users)
+setTotal(total)
 
 setLoading(false)
 
 }
 
+
 useEffect(()=>{
 load()
-},[])
+},[page])
 
 
 async function handleDelete(id){
@@ -44,6 +51,18 @@ await banUser(id)
 load()
 
 }
+
+
+async function handleUnban(id){
+
+await unbanUser(id)
+
+load()
+
+}
+
+
+const totalPages = Math.ceil(total / limit)
 
 
 return(
@@ -76,6 +95,8 @@ onKeyDown={(e)=> e.key==="Enter" && load()}
 
 <th className="p-2">Admin</th>
 
+<th className="p-2">Status</th>
+
 <th className="p-2">Actions</th>
 
 </tr>
@@ -96,7 +117,22 @@ onKeyDown={(e)=> e.key==="Enter" && load()}
 {u.is_admin ? "Yes" : "No"}
 </td>
 
+<td className="p-2">
+{u.banned ? "Banned" : "Active"}
+</td>
+
 <td className="p-2 flex gap-2">
+
+{u.banned ? (
+
+<button
+onClick={()=>handleUnban(u.id)}
+className="px-2 py-1 bg-green-600 rounded"
+>
+Unban
+</button>
+
+) : (
 
 <button
 onClick={()=>handleBan(u.id)}
@@ -104,6 +140,8 @@ className="px-2 py-1 bg-yellow-600 rounded"
 >
 Ban
 </button>
+
+)}
 
 <button
 onClick={()=>handleDelete(u.id)}
@@ -121,6 +159,34 @@ Delete
 </tbody>
 
 </table>
+
+
+{/* Pagination */}
+
+<div className="flex gap-2 mt-6">
+
+<button
+disabled={page===1}
+onClick={()=>setPage(page-1)}
+className="btn"
+>
+Prev
+</button>
+
+<span className="px-2">
+Page {page} / {totalPages}
+</span>
+
+<button
+disabled={page===totalPages}
+onClick={()=>setPage(page+1)}
+className="btn"
+>
+Next
+</button>
+
+</div>
+
 
 </div>
 
