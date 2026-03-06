@@ -9,9 +9,7 @@ const corsHeaders = {
 // rate limit map
 const ipRequests = new Map()
 
-function generateSlug(email:string){
-  return email.split("@")[0] + "-" + crypto.randomUUID().slice(0,4)
-}
+
 
 serve(async (req) => {
 
@@ -112,7 +110,7 @@ const { data:existingSlug } = await supabase
 .from("profiles")
 .select("id")
 .eq("slug",slug)
-.single()
+.maybeSingle()
 
 if(existingSlug){
 return new Response(JSON.stringify({
@@ -128,7 +126,7 @@ const { data:existingUsername } = await supabase
 .from("profiles")
 .select("id")
 .eq("username",username)
-.single()
+.maybeSingle()
 
 if(existingUsername){
 return new Response(JSON.stringify({
@@ -158,7 +156,6 @@ if(userError){
 const fullName = `${firstName || ""} ${lastName || ""}`.trim()
 
 
-const slug = userSlug
 
 // ======================
 // create profile
