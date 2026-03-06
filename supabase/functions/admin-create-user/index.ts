@@ -43,7 +43,16 @@ if(adminSecret !== Deno.env.get("ADMIN_SECRET")){
   }),{status:401,headers:corsHeaders})
 }
 
-const { email,password,inviteCode } = await req.json()
+const {
+firstName,
+lastName,
+username,
+slug,
+email,
+password,
+inviteCode
+} = await req.json()
+
 
 if(!email || !password || !inviteCode){
   return new Response(JSON.stringify({
@@ -114,9 +123,11 @@ const slug = generateSlug(email)
 // ======================
 
 await supabase.from("profiles").insert({
-  id:user.user.id,
-  email,
-  slug
+id:user.user.id,
+email,
+slug,
+name_en:`${firstName} ${lastName}`,
+username
 })
 
 // ======================
