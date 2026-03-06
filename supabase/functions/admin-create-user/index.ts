@@ -43,11 +43,13 @@ if(adminSecret !== Deno.env.get("ADMIN_SECRET")){
   }),{status:401,headers:corsHeaders})
 }
 
+
+
 const {
 firstName,
 lastName,
 username,
-slug,
+slug: userSlug,
 email,
 password,
 inviteCode
@@ -112,22 +114,21 @@ if(userError){
   }),{status:400,headers:corsHeaders})
 }
 
-// ======================
-// slug generation
-// ======================
+const fullName = `${firstName || ""} ${lastName || ""}`.trim()
 
-const slug = generateSlug(email)
+
+const slug = userSlug
 
 // ======================
 // create profile
 // ======================
 
 await supabase.from("profiles").insert({
-id:user.user.id,
-email,
-slug,
-name_en:`${firstName} ${lastName}`,
-username
+id: user.user.id,
+email: email,
+slug: slug,
+username: username,
+name_en:fullName
 })
 
 // ======================
