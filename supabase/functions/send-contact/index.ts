@@ -84,7 +84,7 @@ serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405)
+    return jsonResponse({ error: "METHOD_NOT_ALLOWED" }, 405)
   }
 
   try {
@@ -99,15 +99,15 @@ serve(async (req) => {
     const turnstileToken = normalizeText(body.turnstileToken, 4000)
 
     if (!slug || !name || !email || !message) {
-      return jsonResponse({ error: "Missing required fields" }, 400)
+      return jsonResponse({ error: "MISSING_REQUIRED_FIELDS" }, 400)
     }
 
     if (!isValidEmail(email)) {
-      return jsonResponse({ error: "Invalid email address" }, 400)
+      return jsonResponse({ error: "INVALID_EMAIL" }, 400)
     }
 
     if (!turnstileToken) {
-      return jsonResponse({ error: "Missing security token" }, 400)
+      return jsonResponse({ error: "MISSING_SECURITY_TOKEN" }, 400)
     }
 
     const ip = getClientIp(req)
@@ -118,7 +118,7 @@ serve(async (req) => {
     if (!turnstileResult?.success) {
       return jsonResponse(
         {
-          error: "Security verification failed",
+          error: "SECURITY_VERIFICATION_FAILED",
           details: turnstileResult?.["error-codes"] ?? [],
         },
         403
@@ -137,11 +137,11 @@ serve(async (req) => {
       .single()
 
     if (profileError || !profile) {
-      return jsonResponse({ error: "Profile not found" }, 404)
+      return jsonResponse({ error: "PROFILE_NOT_FOUND" }, 404)
     }
 
     if (!profile.email) {
-      return jsonResponse({ error: "Profile email missing" }, 400)
+      return jsonResponse({ error: "PROFILE_EMAIL_MISSING" }, 400)
     }
 
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
@@ -158,7 +158,7 @@ serve(async (req) => {
 
       if (rateLimitError) {
         console.error("IP rate limit check failed:", rateLimitError)
-        return jsonResponse({ error: "Failed to validate request" }, 500)
+        return jsonResponse({ error: "RATE_LIMIT_CHECK_FAILED" }, 500)
       }
 
       recentCount = count ?? 0
@@ -172,17 +172,14 @@ serve(async (req) => {
 
       if (rateLimitError) {
         console.error("Email rate limit check failed:", rateLimitError)
-        return jsonResponse({ error: "Failed to validate request" }, 500)
+        return jsonResponse({ error: "RATE_LIMIT_CHECK_FAILED" }, 500)
       }
 
       recentCount = count ?? 0
     }
 
     if (recentCount >= 3) {
-      return jsonResponse(
-        { error: "Too many messages sent recently. Please try again later." },
-        429
-      )
+      return jsonResponse({ error: "RATE_LIMIT_EXCEEDED" }, 429)
     }
 
     const { error: insertError } = await supabase
@@ -199,7 +196,7 @@ serve(async (req) => {
 
     if (insertError) {
       console.error("Insert error:", insertError)
-      return jsonResponse({ error: "Failed to save message" }, 500)
+      return jsonResponse({ error: "FAILED_TO_SAVE_MESSAGE" }, 500)
     }
 
     const safeName = escapeHtml(name)
@@ -237,13 +234,13 @@ serve(async (req) => {
       console.error("Resend error:", emailData)
       return jsonResponse({
         success: true,
-        warning: "Message saved, but email notification failed",
+        warning: "EMAIL_NOTIFICATION_FAILED",
       })
     }
 
     return jsonResponse({ success: true })
   } catch (err) {
     console.error("send-contact error:", err)
-    return jsonResponse({ error: "Server error" }, 500)
+    return jsonResponse({ error: "SERVER_ERROR" }, 500)
   }
 })
