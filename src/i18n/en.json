@@ -34,5 +34,17 @@
 "contact_sending": "Sending...",
 "contact_success": "Message sent successfully!",
 "contact_required": "Please fill all required fields.",
-"contact_invalid_email": "Invalid email address."
+"contact_invalid_email": "Invalid email address.",
+  "login_title": "Login",
+  "login_email": "Email",
+  "login_password": "Password",
+  "login_button": "Login",
+  "login_loading": "Signing in...",
+  "login_forgot_password": "Forgot password?",
+  "login_banned": "Your account has been banned",
+  "login_invalid_credentials": "Invalid email or password",
+  "login_email_not_confirmed": "Please confirm your email first",
+  "login_too_many_requests": "Too many attempts. Please try again later",
+  "login_unexpected_error": "Something went wrong. Please try again"
+
 }

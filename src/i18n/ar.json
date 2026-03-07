@@ -34,6 +34,17 @@
 "contact_sending": "جاري الإرسال...",
 "contact_success": "تم إرسال الرسالة بنجاح!",
 "contact_required": "من فضلك املأ جميع الحقول المطلوبة.",
-"contact_invalid_email": "البريد الإلكتروني غير صالح."
+"contact_invalid_email": "البريد الإلكتروني غير صالح.",
+  "login_title": "تسجيل الدخول",
+  "login_email": "البريد الإلكتروني",
+  "login_password": "كلمة المرور",
+  "login_button": "تسجيل الدخول",
+  "login_loading": "جارٍ تسجيل الدخول...",
+  "login_forgot_password": "نسيت كلمة المرور؟",
+  "login_banned": "تم حظر حسابك",
+  "login_invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+  "login_email_not_confirmed": "يرجى تأكيد بريدك الإلكتروني أولًا",
+  "login_too_many_requests": "محاولات كثيرة جدًا. حاول مرة أخرى لاحقًا",
+  "login_unexpected_error": "حدث خطأ، حاول مرة أخرى"
 
 }

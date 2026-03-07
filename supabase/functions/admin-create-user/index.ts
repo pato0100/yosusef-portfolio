@@ -3,236 +3,252 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-admin-secret, content-type"
+  "Access-Control-Allow-Headers": "authorization, x-admin-secret, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
 }
 
-// rate limit map
-const ipRequests = new Map()
+// Temporary in-memory rate limit
+const ipRequests = new Map<string, number>()
 
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: corsHeaders,
+  })
+}
 
+function getClientIp(req: Request): string {
+  const forwardedFor = req.headers.get("x-forwarded-for")
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0]?.trim() || "unknown"
+  }
+
+  return req.headers.get("cf-connecting-ip")?.trim() || "unknown"
+}
+
+function normalizeText(value: unknown, maxLength: number): string {
+  if (typeof value !== "string") return ""
+  return value.trim().replace(/\s+/g, " ").slice(0, maxLength)
+}
+
+function normalizeUsername(value: unknown): string {
+  return normalizeText(value, 50).toLowerCase().replace(/[^a-z0-9_]/g, "")
+}
+
+function normalizeSlug(value: unknown): string {
+  return normalizeText(value, 80).toLowerCase().replace(/[^a-z0-9-]/g, "")
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
 
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders })
+  }
 
-if(req.method === "OPTIONS"){
-  return new Response("ok",{headers:corsHeaders})
-}
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "METHOD_NOT_ALLOWED" }, 405)
+  }
 
-try{
+  try {
+    const ip = getClientIp(req)
 
-const ip = req.headers.get("x-forwarded-for") || "unknown"
+    // Simple rate limit: one request every 5 seconds per IP
+    const now = Date.now()
+    const last = ipRequests.get(ip)
 
-// simple rate limit
-const now = Date.now()
-const last = ipRequests.get(ip)
+    if (last && now - last < 5000) {
+      return jsonResponse({ error: "TOO_MANY_REQUESTS" }, 429)
+    }
 
-if(last && now - last < 5000){
-  return new Response(JSON.stringify({
-    error:"Too many requests"
-  }),{status:429,headers:corsHeaders})
-}
+    ipRequests.set(ip, now)
 
-ipRequests.set(ip,now)
+    const adminSecret = req.headers.get("x-admin-secret")
 
-const adminSecret = req.headers.get("x-admin-secret")
+    if (!adminSecret || adminSecret !== Deno.env.get("ADMIN_SECRET")) {
+      return jsonResponse({ error: "UNAUTHORIZED" }, 401)
+    }
 
-if(adminSecret !== Deno.env.get("ADMIN_SECRET")){
-  return new Response(JSON.stringify({
-    error:"Unauthorized"
-  }),{status:401,headers:corsHeaders})
-}
+    const body = await req.json()
 
+    const firstName = normalizeText(body.firstName, 50)
+    const lastName = normalizeText(body.lastName, 50)
+    const email = normalizeText(body.email, 200).toLowerCase()
+    const password = typeof body.password === "string" ? body.password : ""
+    const inviteCode = normalizeText(body.inviteCode, 100)
+    const username = normalizeUsername(body.username)
+    const userSlug = normalizeSlug(body.slug)
 
+    if (!username) {
+      return jsonResponse({ error: "USERNAME_REQUIRED" }, 400)
+    }
 
-const {
-firstName,
-lastName,
-username,
-slug: userSlug,
-email,
-password,
-inviteCode
-} = await req.json()
+    if (!email || !password || !inviteCode) {
+      return jsonResponse({ error: "MISSING_REQUIRED_FIELDS" }, 400)
+    }
 
-if(!username){
-return new Response(JSON.stringify({
-error:"Username is required"
-}),{status:400,headers:corsHeaders})
-}
+    if (!isValidEmail(email)) {
+      return jsonResponse({ error: "INVALID_EMAIL" }, 400)
+    }
 
+    if (password.length < 6) {
+      return jsonResponse({ error: "PASSWORD_TOO_SHORT" }, 400)
+    }
 
-if(!email || !password || !inviteCode){
-  return new Response(JSON.stringify({
-    error:"Missing fields"
-  }),{status:400,headers:corsHeaders})
-}
+    const slug = normalizeSlug(userSlug || username)
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-)
+    if (!slug) {
+      return jsonResponse({ error: "INVALID_SLUG" }, 400)
+    }
 
-// ======================
-// validate invite
-// ======================
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    )
 
-const { data:invite,error:inviteError } = await supabase
-.from("invites")
-.select("*")
-.eq("code",inviteCode)
-.single()
+    // Validate invite
+    const { data: invite, error: inviteError } = await supabase
+      .from("invites")
+      .select("*")
+      .eq("code", inviteCode)
+      .single()
 
-if(inviteError || !invite){
-  return new Response(JSON.stringify({
-    error:"Invalid invite"
-  }),{status:400,headers:corsHeaders})
-}
+    if (inviteError || !invite) {
+      return jsonResponse({ error: "INVALID_INVITE" }, 400)
+    }
 
-const nowDate = new Date()
+    const nowDate = new Date()
 
-if(invite.expires_at && new Date(invite.expires_at) < nowDate){
-  return new Response(JSON.stringify({
-    error:"Invite expired"
-  }),{status:400,headers:corsHeaders})
-}
+    if (invite.expires_at && new Date(invite.expires_at) < nowDate) {
+      return jsonResponse({ error: "INVITE_EXPIRED" }, 400)
+    }
 
-if(invite.max_uses && invite.used_count >= invite.max_uses){
-  return new Response(JSON.stringify({
-    error:"Invite already used"
-  }),{status:400,headers:corsHeaders})
-}
+    if (invite.max_uses && invite.used_count >= invite.max_uses) {
+      return jsonResponse({ error: "INVITE_ALREADY_USED" }, 400)
+    }
 
-//pp
+    // Check slug uniqueness
+    const { data: existingSlug, error: existingSlugError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle()
 
+    if (existingSlugError) {
+      console.error("Slug check error:", existingSlugError)
+      return jsonResponse({ error: "FAILED_TO_VALIDATE_SLUG" }, 500)
+    }
 
-const slug = (userSlug || username)
-.toLowerCase()
-.replace(/[^a-z0-9-]/g,"")
+    if (existingSlug) {
+      return jsonResponse({ error: "SLUG_ALREADY_TAKEN" }, 400)
+    }
 
-// ======================
-// check slug
-// ======================
+    // Check username uniqueness
+    const { data: existingUsername, error: existingUsernameError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle()
 
-const { data:existingSlug } = await supabase
-.from("profiles")
-.select("id")
-.eq("slug",slug)
-.maybeSingle()
+    if (existingUsernameError) {
+      console.error("Username check error:", existingUsernameError)
+      return jsonResponse({ error: "FAILED_TO_VALIDATE_USERNAME" }, 500)
+    }
 
-if(existingSlug){
-return new Response(JSON.stringify({
-error:"Slug already taken"
-}),{status:400,headers:corsHeaders})
-}
+    if (existingUsername) {
+      return jsonResponse({ error: "USERNAME_ALREADY_TAKEN" }, 400)
+    }
 
-// ======================
-// check username
-// ======================
+    // Create user
+    const { data: user, error: userError } =
+      await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: false,
+      })
 
-const { data:existingUsername } = await supabase
-.from("profiles")
-.select("id")
-.eq("username",username)
-.maybeSingle()
+    if (userError || !user?.user) {
+      console.error("Create user error:", userError)
+      return jsonResponse(
+        {
+          error: "FAILED_TO_CREATE_USER",
+          details: userError?.message || null,
+        },
+        400
+      )
+    }
 
-if(existingUsername){
-return new Response(JSON.stringify({
-error:"Username already taken"
-}),{status:400,headers:corsHeaders})
-}
+    const fullName = `${firstName || ""} ${lastName || ""}`.trim()
 
+    // Create profile
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: user.user.id,
+        email,
+        slug,
+        username,
+        name_en: fullName,
+      })
 
+    if (profileError) {
+      console.error("Profile insert error:", profileError)
+      return jsonResponse({ error: "FAILED_TO_CREATE_PROFILE" }, 500)
+    }
 
-// ======================
-// create user
-// ======================
+    // Create settings
+    const { error: settingsError } = await supabase
+      .from("settings")
+      .insert({
+        owner_id: user.user.id,
+        default_lang: "en",
+        default_theme: "dark",
+      })
 
-const { data:user,error:userError } =
-await supabase.auth.admin.createUser({
-  email,
-  password,
-  email_confirm:false
-})
+    if (settingsError) {
+      console.error("Settings insert error:", settingsError)
+      return jsonResponse({ error: "FAILED_TO_CREATE_SETTINGS" }, 500)
+    }
 
-if(userError){
-console.log(userError)
+    // Create subscription if invite has plan
+    if (invite.plan_id) {
+      const { error: subscriptionError } = await supabase
+        .from("subscriptions")
+        .insert({
+          user_id: user.user.id,
+          plan_id: invite.plan_id,
+          status: "active",
+          start_date: new Date().toISOString(),
+        })
 
-return new Response(JSON.stringify({
-error:userError.message
-}),{status:400,headers:corsHeaders})
-}
+      if (subscriptionError) {
+        console.error("Subscription insert error:", subscriptionError)
+        return jsonResponse({ error: "FAILED_TO_CREATE_SUBSCRIPTION" }, 500)
+      }
+    }
 
-const fullName = `${firstName || ""} ${lastName || ""}`.trim()
+    // Update invite usage
+    const { error: inviteUpdateError } = await supabase
+      .from("invites")
+      .update({
+        used_count: invite.used_count + 1,
+      })
+      .eq("id", invite.id)
 
+    if (inviteUpdateError) {
+      console.error("Invite update error:", inviteUpdateError)
+      return jsonResponse({ error: "FAILED_TO_UPDATE_INVITE_USAGE" }, 500)
+    }
 
-
-// ======================
-// create profile
-// ======================
-
-const { error:profileError } = await supabase
-.from("profiles")
-.insert({
-id: user.user.id,
-email: email,
-slug: slug,
-username: username,
-name_en: fullName
-})
-
-if(profileError){
-return new Response(JSON.stringify({
-error: profileError.message
-}),{status:400,headers:corsHeaders})
-}
-
-// ======================
-// create settings
-// ======================
-
-await supabase.from("settings").insert({
-  owner_id:user.user.id,
-  default_lang:"en",
-  default_theme:"dark"
-})
-
-// ======================
-// subscription
-// ======================
-
-if(invite.plan_id){
-
-await supabase.from("subscriptions").insert({
-  user_id:user.user.id,
-  plan_id:invite.plan_id,
-  status:"active",
-  start_date:new Date()
-})
-
-}
-
-// ======================
-// update invite usage
-// ======================
-
-await supabase
-.from("invites")
-.update({
-used_count: invite.used_count + 1
-})
-.eq("id",invite.id)
-.select()
-
-return new Response(JSON.stringify({
-  success:true,
-  slug
-}),{headers:corsHeaders})
-
-}catch(e){
-
-return new Response(JSON.stringify({
-  error:e.message
-}),{status:500,headers:corsHeaders})
-
-}
-
+    return jsonResponse({
+      success: true,
+      slug,
+    })
+  } catch (e) {
+    console.error("admin-create-user error:", e)
+    return jsonResponse({ error: "SERVER_ERROR" }, 500)
+  }
 })
