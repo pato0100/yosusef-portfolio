@@ -3,24 +3,122 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
+}
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: corsHeaders,
+  })
+}
+
+function getClientIp(req: Request): string | null {
+  const forwardedFor = req.headers.get("x-forwarded-for")
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0]?.trim() || null
+  }
+
+  const cfIp = req.headers.get("cf-connecting-ip")
+  if (cfIp) {
+    return cfIp.trim()
+  }
+
+  return null
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function normalizeText(value: unknown, maxLength: number): string {
+  if (typeof value !== "string") return ""
+  return value.trim().replace(/\s+/g, " ").slice(0, maxLength)
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;")
+}
+
+async function verifyTurnstileToken(token: string, ip?: string | null) {
+  const secret = Deno.env.get("TURNSTILE_SECRET_KEY")
+
+  if (!secret) {
+    throw new Error("TURNSTILE_SECRET_KEY is not configured")
+  }
+
+  const formData = new FormData()
+  formData.append("secret", secret)
+  formData.append("response", token)
+
+  if (ip) {
+    formData.append("remoteip", ip)
+  }
+
+  const response = await fetch(
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    {
+      method: "POST",
+      body: formData,
+    }
+  )
+
+  return await response.json()
 }
 
 serve(async (req) => {
-
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
   }
 
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405)
+  }
+
   try {
     const body = await req.json()
-    const { slug, name, email, subject, message } = body
+
+    const slug = normalizeText(body.slug, 120)
+    const name = normalizeText(body.name, 120)
+    const email = normalizeText(body.email, 200).toLowerCase()
+    const subject = normalizeText(body.subject, 200)
+    const message =
+      typeof body.message === "string" ? body.message.trim().slice(0, 5000) : ""
+    const turnstileToken = normalizeText(body.turnstileToken, 4000)
 
     if (!slug || !name || !email || !message) {
-      return new Response(JSON.stringify({ error: "Missing fields" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      })
+      return jsonResponse({ error: "Missing required fields" }, 400)
+    }
+
+    if (!isValidEmail(email)) {
+      return jsonResponse({ error: "Invalid email address" }, 400)
+    }
+
+    if (!turnstileToken) {
+      return jsonResponse({ error: "Missing security token" }, 400)
+    }
+
+    const ip = getClientIp(req)
+
+    // 1) Verify Turnstile
+    const turnstileResult = await verifyTurnstileToken(turnstileToken, ip)
+
+    if (!turnstileResult?.success) {
+      return jsonResponse(
+        {
+          error: "Security verification failed",
+          details: turnstileResult?.["error-codes"] ?? [],
+        },
+        403
+      )
     }
 
     const supabase = createClient(
@@ -28,7 +126,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     )
 
-    // 1️⃣ Get profile by slug
+    // 2) Get profile by slug
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id, email")
@@ -36,20 +134,37 @@ serve(async (req) => {
       .single()
 
     if (profileError || !profile) {
-      return new Response(JSON.stringify({ error: "Profile not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      })
+      return jsonResponse({ error: "Profile not found" }, 404)
     }
 
     if (!profile.email) {
-      return new Response(JSON.stringify({ error: "Profile email missing" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      })
+      return jsonResponse({ error: "Profile email missing" }, 400)
     }
 
-    // 2️⃣ Save message
+    // 3) Basic rate limit by owner + email + recent time window
+    // ملحوظة: ده حل مبدئي لأن جدولك الحالي لا يحتوي على ip
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+
+    const { count: recentCount, error: rateLimitError } = await supabase
+      .from("contact_messages")
+      .select("*", { count: "exact", head: true })
+      .eq("owner_id", profile.id)
+      .eq("email", email)
+      .gte("created_at", tenMinutesAgo)
+
+    if (rateLimitError) {
+      console.error("Rate limit check failed:", rateLimitError)
+      return jsonResponse({ error: "Failed to validate request" }, 500)
+    }
+
+    if ((recentCount ?? 0) >= 3) {
+      return jsonResponse(
+        { error: "Too many messages sent recently. Please try again later." },
+        429
+      )
+    }
+
+    // 4) Save message
     const { error: insertError } = await supabase
       .from("contact_messages")
       .insert({
@@ -61,13 +176,16 @@ serve(async (req) => {
       })
 
     if (insertError) {
-      return new Response(JSON.stringify({ error: insertError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      })
+      console.error("Insert error:", insertError)
+      return jsonResponse({ error: "Failed to save message" }, 500)
     }
 
-    // 3️⃣ Send email
+    // 5) Send email notification
+    const safeName = escapeHtml(name)
+    const safeEmail = escapeHtml(email)
+    const safeSubject = escapeHtml(subject || "New Contact Message")
+    const safeMessage = escapeHtml(message).replaceAll("\n", "<br />")
+
     const emailRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -79,10 +197,14 @@ serve(async (req) => {
         to: [profile.email],
         subject: subject || "New Contact Message",
         html: `
-          <h2>New Contact Message</h2>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p>${message}</p>
+          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2>New Contact Message</h2>
+            <p><strong>Name:</strong> ${safeName}</p>
+            <p><strong>Email:</strong> ${safeEmail}</p>
+            <p><strong>Subject:</strong> ${safeSubject}</p>
+            <hr />
+            <p>${safeMessage}</p>
+          </div>
         `,
       }),
     })
@@ -90,20 +212,19 @@ serve(async (req) => {
     const emailData = await emailRes.json()
 
     if (!emailRes.ok) {
-      return new Response(JSON.stringify({ error: emailData }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      console.error("Resend error:", emailData)
+
+      // هنا الرسالة اتحفظت بالفعل، لكن الإيميل فشل
+      // وده أفضل من فقدان الرسالة نفسها
+      return jsonResponse({
+        success: true,
+        warning: "Message saved, but email notification failed",
       })
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    })
-
+    return jsonResponse({ success: true })
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    })
+    console.error("send-contact error:", err)
+    return jsonResponse({ error: "Server error" }, 500)
   }
 })

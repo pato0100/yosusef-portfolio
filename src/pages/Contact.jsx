@@ -1,16 +1,20 @@
-﻿import { useState } from "react"
+﻿import { useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Turnstile } from "react-turnstile"
 import { useI18n } from "../i18n/i18n"
 import { useParams } from "react-router-dom"
 
 const FUNCTION_URL =
   "https://vmehwkqdptatlmygavgb.supabase.co/functions/v1/send-contact"
 
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY
+
 export default function Contact() {
   const { t, lang } = useI18n()
   const { slug } = useParams()
 
   const isRTL = lang === "ar"
+  const turnstileRef = useRef(null)
 
   const [form, setForm] = useState({
     name: "",
@@ -20,6 +24,7 @@ export default function Contact() {
     company: "", // honeypot
   })
 
+  const [turnstileToken, setTurnstileToken] = useState("")
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
@@ -40,25 +45,47 @@ export default function Contact() {
       return t.contact_invalid_email
     }
 
+    if (!turnstileToken) {
+      return lang === "ar"
+        ? "من فضلك أكمل التحقق الأمني."
+        : "Please complete the security check."
+    }
+
     return null
+  }
+
+  const resetForm = () => {
+    setForm({
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+      company: "",
+    })
+    setTurnstileToken("")
+    turnstileRef.current?.reset?.()
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
 
-    // 🛡 Honeypot
+    // Honeypot
     if (form.company) return
 
     if (!slug) {
-      setError("Invalid profile.")
+      setError(lang === "ar" ? "الملف الشخصي غير صالح." : "Invalid profile.")
       return
     }
 
-    // 🛡 Rate limit (30 sec)
+    // Client cooldown
     const lastSent = localStorage.getItem("lastContactTime")
-    if (lastSent && Date.now() - lastSent < 30000) {
-      setError("Please wait before sending again.")
+    if (lastSent && Date.now() - Number(lastSent) < 30000) {
+      setError(
+        lang === "ar"
+          ? "من فضلك انتظر قليلًا قبل إرسال رسالة أخرى."
+          : "Please wait before sending again."
+      )
       return
     }
 
@@ -77,40 +104,39 @@ export default function Contact() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          slug: slug,
-          name: form.name,
-          email: form.email,
-          subject: form.subject,
-          message: form.message,
+          slug,
+          name: form.name.trim(),
+          email: form.email.trim(),
+          subject: form.subject.trim(),
+          message: form.message.trim(),
+          turnstileToken,
         }),
       })
 
       const data = await res.json()
 
       if (!res.ok) {
-        console.error("Function error:", data)
-        throw new Error(data.error || "Failed")
+        throw new Error(data?.error || "Failed to send message.")
       }
 
-      localStorage.setItem("lastContactTime", Date.now())
-
+      localStorage.setItem("lastContactTime", Date.now().toString())
       setSuccess(true)
-      setForm({
-        name: "",
-        email: "",
-        subject: "",
-        message: "",
-        company: "",
-      })
+      resetForm()
 
       setTimeout(() => setSuccess(false), 3000)
-
     } catch (err) {
       console.error(err)
-      setError("Something went wrong. Please try again.")
+      setError(
+        err.message ||
+          (lang === "ar"
+            ? "حدث خطأ، حاول مرة أخرى."
+            : "Something went wrong. Please try again.")
+      )
+      setTurnstileToken("")
+      turnstileRef.current?.reset?.()
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
@@ -135,9 +161,7 @@ export default function Contact() {
               >
                 ✓
               </div>
-              <p className="text-lg font-semibold">
-                {t.contact_success}
-              </p>
+              <p className="text-lg font-semibold">{t.contact_success}</p>
             </motion.div>
           ) : (
             <motion.form
@@ -149,13 +173,14 @@ export default function Contact() {
               className="space-y-5"
               dir={isRTL ? "rtl" : "ltr"}
             >
-              {/* Honeypot */}
               <input
                 type="text"
                 name="company"
                 value={form.company}
                 onChange={handleChange}
                 style={{ display: "none" }}
+                tabIndex={-1}
+                autoComplete="off"
               />
 
               <input
@@ -189,6 +214,28 @@ export default function Contact() {
                 value={form.message}
                 onChange={handleChange}
               />
+
+              <div className={isRTL ? "flex justify-end" : "flex justify-start"}>
+                <Turnstile
+                  ref={turnstileRef}
+                  sitekey={TURNSTILE_SITE_KEY}
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken("")}
+                  onError={() => {
+                    setTurnstileToken("")
+                    setError(
+                      lang === "ar"
+                        ? "فشل التحقق الأمني، حاول مرة أخرى."
+                        : "Security verification failed. Please try again."
+                    )
+                  }}
+                  options={{
+                    theme: "dark",
+                    size: "normal",
+                    language: lang === "ar" ? "ar" : "en",
+                  }}
+                />
+              </div>
 
               {error && (
                 <p

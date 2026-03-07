@@ -63,7 +63,7 @@ navigate(`/${profile.slug}/edit`)
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-lg">
 
         <h2 className="text-xl font-bold mb-2">
-          Admin Login
+          Login
         </h2>
 
         {err && (
