@@ -1,172 +1,467 @@
-import { useEffect,useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "react-router-dom"
+import { supabase } from "../lib/supabase"
 import { validateInvite } from "../services/signup"
+import { useI18n } from "../i18n/i18n"
 
-export default function Signup(){
-
-const [params] = useSearchParams()
-const inviteCode = params.get("invite")
-
-const [invite,setInvite] = useState(null)
-const [loading,setLoading] = useState(true)
-const [error,setError] = useState(null)
-
-const [firstName,setFirstName] = useState("")
-const [lastName,setLastName] = useState("")
-const [username,setUsername] = useState("")
-const [slug,setSlug] = useState("")
-
-const [email,setEmail] = useState("")
-const [password,setPassword] = useState("")
-
-useEffect(()=>{
-
-async function check(){
-
-if(!inviteCode){
-setError("Signup is invite only")
-setLoading(false)
-return
+function normalizeUsername(value) {
+  return value.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9_]/g, "")
 }
 
-try{
-
-const data = await validateInvite(inviteCode)
-setInvite(data)
-
-}catch(e){
-
-setError(e.message)
-
+function normalizeSlug(value) {
+  return value.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9-]/g, "")
 }
 
-setLoading(false)
-
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-check()
+function getLocalizedSignupError(errorCode, t, lang) {
+  const map = {
+    TOO_MANY_REQUESTS:
+      lang === "ar"
+        ? "طلبات كثيرة جدًا. حاول مرة أخرى بعد قليل."
+        : "Too many requests. Please try again later.",
+    UNAUTHORIZED:
+      lang === "ar"
+        ? "غير مصرح لك بهذا الإجراء."
+        : "Unauthorized.",
+    USERNAME_REQUIRED: t.signup_username_invalid,
+    MISSING_REQUIRED_FIELDS: t.signup_missing_fields,
+    INVALID_EMAIL: t.signup_invalid_email,
+    PASSWORD_TOO_SHORT: t.signup_password_too_short,
+    INVALID_SLUG: t.signup_slug_invalid,
+    INVALID_INVITE: t.signup_invalid_invite,
+    INVITE_EXPIRED: t.signup_invalid_invite,
+    INVITE_ALREADY_USED: t.signup_invalid_invite,
+    SLUG_ALREADY_TAKEN: t.signup_slug_taken,
+    USERNAME_ALREADY_TAKEN: t.signup_username_taken,
+    FAILED_TO_CREATE_USER:
+      lang === "ar" ? "فشل إنشاء المستخدم." : "Failed to create user.",
+    FAILED_TO_CREATE_PROFILE:
+      lang === "ar" ? "فشل إنشاء الملف الشخصي." : "Failed to create profile.",
+    FAILED_TO_CREATE_SETTINGS:
+      lang === "ar" ? "فشل إنشاء الإعدادات." : "Failed to create settings.",
+    FAILED_TO_CREATE_SUBSCRIPTION:
+      lang === "ar" ? "فشل إنشاء الاشتراك." : "Failed to create subscription.",
+    FAILED_TO_UPDATE_INVITE_USAGE:
+      lang === "ar"
+        ? "فشل تحديث استخدام الدعوة."
+        : "Failed to update invite usage.",
+    SERVER_ERROR: t.signup_unexpected_error,
+  }
 
-},[])
+  return map[errorCode] || t.signup_unexpected_error
+}
 
-async function handleSignup(e){
+export default function Signup() {
+  const { t, lang } = useI18n()
+  const isRTL = lang === "ar"
 
-e.preventDefault()
+  const [params] = useSearchParams()
+  const inviteCode = params.get("invite")
 
-const res = await fetch(
-`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
-{
-method:"POST",
-headers:{
-"Content-Type":"application/json",
+  const [invite, setInvite] = useState(null)
+  const [loadingInvite, setLoadingInvite] = useState(true)
+  const [pageError, setPageError] = useState("")
 
-// مهم جدا لتمرير سياسة Edge Functions
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [username, setUsername] = useState("")
+  const [slug, setSlug] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
 
-      // ده السر اللي بتشيّك عليه في الـ Edge Function
-      "x-admin-secret": import.meta.env.VITE_ADMIN_SECRET
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState("")
+  const [success, setSuccess] = useState("")
 
+  const [checkingUsername, setCheckingUsername] = useState(false)
+  const [checkingSlug, setCheckingSlug] = useState(false)
+  const [usernameTaken, setUsernameTaken] = useState(false)
+  const [slugTaken, setSlugTaken] = useState(false)
 
+  const normalizedUsername = useMemo(
+    () => normalizeUsername(username),
+    [username]
+  )
+
+  const normalizedSlug = useMemo(() => normalizeSlug(slug), [slug])
+
+  const isUsernameFormatValid =
+    normalizedUsername.length > 0 && /^[a-z0-9_]+$/.test(normalizedUsername)
+
+  const isSlugFormatValid =
+    normalizedSlug.length > 0 && /^[a-z0-9-]+$/.test(normalizedSlug)
+
+  useEffect(() => {
+    async function check() {
+      if (!inviteCode) {
+        setPageError(t.signup_invite_only)
+        setLoadingInvite(false)
+        return
+      }
+
+      try {
+        const data = await validateInvite(inviteCode)
+        setInvite(data)
+      } catch (e) {
+        setPageError(e?.message || t.signup_invalid_invite)
+      } finally {
+        setLoadingInvite(false)
+      }
+    }
+
+    check()
+  }, [inviteCode, t.signup_invite_only, t.signup_invalid_invite])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function checkUsernameAvailability() {
+      if (!normalizedUsername || !isUsernameFormatValid) {
+        setUsernameTaken(false)
+        return
+      }
+
+      setCheckingUsername(true)
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", normalizedUsername)
+        .maybeSingle()
+
+      if (!ignore) {
+        setUsernameTaken(!!data && !error)
+        setCheckingUsername(false)
+      }
+    }
+
+    const timeout = setTimeout(checkUsernameAvailability, 400)
+    return () => {
+      ignore = true
+      clearTimeout(timeout)
+    }
+  }, [normalizedUsername, isUsernameFormatValid])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function checkSlugAvailability() {
+      if (!normalizedSlug || !isSlugFormatValid) {
+        setSlugTaken(false)
+        return
+      }
+
+      setCheckingSlug(true)
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("slug", normalizedSlug)
+        .maybeSingle()
+
+      if (!ignore) {
+        setSlugTaken(!!data && !error)
+        setCheckingSlug(false)
+      }
+    }
+
+    const timeout = setTimeout(checkSlugAvailability, 400)
+    return () => {
+      ignore = true
+      clearTimeout(timeout)
+    }
+  }, [normalizedSlug, isSlugFormatValid])
+
+  const allFieldsFilled =
+    firstName.trim() &&
+    lastName.trim() &&
+    normalizedUsername &&
+    normalizedSlug &&
+    email.trim() &&
+    password &&
+    confirmPassword
+
+  const passwordValid = password.length >= 8
+  const passwordsMatch = password === confirmPassword
+  const emailValid = isValidEmail(email)
+
+  const canSubmit =
+    !!allFieldsFilled &&
+    emailValid &&
+    passwordValid &&
+    passwordsMatch &&
+    isUsernameFormatValid &&
+    isSlugFormatValid &&
+    !usernameTaken &&
+    !slugTaken &&
+    !checkingUsername &&
+    !checkingSlug &&
+    !submitting
+
+  async function handleSignup(e) {
+    e.preventDefault()
+    setFormError("")
+    setSuccess("")
+
+    if (!allFieldsFilled) {
+      setFormError(t.signup_missing_fields)
+      return
+    }
+
+    if (!emailValid) {
+      setFormError(t.signup_invalid_email)
+      return
+    }
+
+    if (!isUsernameFormatValid) {
+      setFormError(t.signup_username_invalid)
+      return
+    }
+
+    if (!isSlugFormatValid) {
+      setFormError(t.signup_slug_invalid)
+      return
+    }
+
+    if (usernameTaken) {
+      setFormError(t.signup_username_taken)
+      return
+    }
+
+    if (slugTaken) {
+      setFormError(t.signup_slug_taken)
+      return
+    }
+
+    if (!passwordValid) {
+      setFormError(t.signup_password_too_short)
+      return
+    }
+
+    if (!passwordsMatch) {
+      setFormError(t.signup_password_mismatch)
+      return
+    }
+
+    try {
+      setSubmitting(true)
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/signup-with-invite`,
+        {
+          method: "POST",
+          headers: {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
 },
-body:JSON.stringify({
-firstName,
-lastName,
-username,
-slug,
-email,
-password,
-inviteCode
-})
-}
-)
+          body: JSON.stringify({
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            username: normalizedUsername,
+            slug: normalizedSlug,
+            email: email.trim(),
+            password,
+            inviteCode,
+          }),
+        }
+      )
 
-const data = await res.json()
+      const data = await res.json()
 
-if(!res.ok){
-alert(data.error || "Signup failed")
-return
-}
+      if (!res.ok) {
+        setFormError(getLocalizedSignupError(data?.error, t, lang))
+        return
+      }
 
-alert("Account created. You can login now.")
+      setSuccess(t.signup_success)
+      setFirstName("")
+      setLastName("")
+      setUsername("")
+      setSlug("")
+      setEmail("")
+      setPassword("")
+      setConfirmPassword("")
+    } catch (e) {
+      console.error("Signup error:", e)
+      setFormError(t.signup_unexpected_error)
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
-}
+  if (loadingInvite) {
+    return (
+      <p className="text-center mt-20">
+        {t.signup_checking_invite}
+      </p>
+    )
+  }
 
-if(loading) return <p>Checking invite...</p>
-if(error) return <p>{error}</p>
+  if (pageError) {
+    return (
+      <p className="text-center mt-20 text-red-400">
+        {pageError}
+      </p>
+    )
+  }
 
-return(
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-lg">
+        <h1 className={`text-2xl font-bold mb-6 ${isRTL ? "text-right" : ""}`}>
+          {t.signup_title}
+        </h1>
 
-<div className="max-w-md mx-auto mt-20">
+        {invite && (
+          <div className={`text-xs opacity-70 mb-4 ${isRTL ? "text-right" : ""}`}>
+            {lang === "ar"
+              ? `الدعوة صالحة`
+              : `Invite is valid`}
+          </div>
+        )}
 
-<h1 className="text-2xl font-bold mb-6">
-Create account
-</h1>
+        {formError && (
+          <div className={`text-sm text-red-400 mb-3 ${isRTL ? "text-right" : ""}`}>
+            {formError}
+          </div>
+        )}
 
-<form onSubmit={handleSignup} className="space-y-4">
+        {success && (
+          <div className={`text-sm text-green-400 mb-3 ${isRTL ? "text-right" : ""}`}>
+            {success}
+          </div>
+        )}
 
-<input
-type="text"
-placeholder="First name"
-value={firstName}
-onChange={e=>setFirstName(e.target.value)}
-className="input"
-/>
+        <form onSubmit={handleSignup} className="space-y-4">
+          <input
+            type="text"
+            placeholder={t.signup_first_name}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            className="input w-full"
+          />
 
-<input
-type="text"
-placeholder="Last name"
-value={lastName}
-onChange={e=>setLastName(e.target.value)}
-className="input"
-/>
+          <input
+            type="text"
+            placeholder={t.signup_last_name}
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            className="input w-full"
+          />
 
-<input
-type="text"
-placeholder="Username"
-value={username}
-onChange={e=>setUsername(e.target.value)}
-className="input"
-/>
+          <div>
+            <input
+              type="text"
+              placeholder={t.signup_username}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="input w-full"
+              dir="ltr"
+            />
+            {username && !isUsernameFormatValid && (
+              <p className="text-xs text-red-400 mt-1">
+                {t.signup_username_invalid}
+              </p>
+            )}
+            {isUsernameFormatValid && usernameTaken && (
+              <p className="text-xs text-red-400 mt-1">
+                {t.signup_username_taken}
+              </p>
+            )}
+            {checkingUsername && (
+              <p className="text-xs opacity-70 mt-1">
+                {lang === "ar" ? "جارٍ التحقق..." : "Checking..."}
+              </p>
+            )}
+          </div>
 
-<div className="flex items-center bg-black/20 border border-white/10 rounded-lg overflow-hidden">
+          <div>
+            <div className="flex items-center bg-black/20 border border-white/10 rounded-lg overflow-hidden">
+              <span className="px-3 text-sm text-white/50 whitespace-nowrap" dir="ltr">
+                {t.signup_slug_prefix}
+              </span>
 
-<span className="px-3 text-sm text-white/50">
-https://shofni.online/
-</span>
+              <input
+                type="text"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                className="flex-1 bg-transparent outline-none p-2"
+                placeholder="your-name"
+                dir="ltr"
+              />
+            </div>
 
-<input
-type="text"
-value={slug}
-onChange={e=>setSlug(e.target.value)}
-className="flex-1 bg-transparent outline-none p-2"
-placeholder="your-name"
-/>
+            {slug && !isSlugFormatValid && (
+              <p className="text-xs text-red-400 mt-1">
+                {t.signup_slug_invalid}
+              </p>
+            )}
+            {isSlugFormatValid && slugTaken && (
+              <p className="text-xs text-red-400 mt-1">
+                {t.signup_slug_taken}
+              </p>
+            )}
+            {checkingSlug && (
+              <p className="text-xs opacity-70 mt-1">
+                {lang === "ar" ? "جارٍ التحقق..." : "Checking..."}
+              </p>
+            )}
+          </div>
 
-</div>
+          <input
+            type="email"
+            placeholder={t.signup_email}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="input w-full"
+            dir="ltr"
+          />
 
-<input
-type="email"
-placeholder="Email"
-value={email}
-onChange={e=>setEmail(e.target.value)}
-className="input"
-/>
+          <input
+            type="password"
+            placeholder={t.signup_password}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="input w-full"
+            dir="ltr"
+          />
 
-<input
-type="password"
-placeholder="Password"
-value={password}
-onChange={e=>setPassword(e.target.value)}
-className="input"
-/>
+          {password && !passwordValid && (
+            <p className="text-xs text-red-400 -mt-2">
+              {t.signup_password_too_short}
+            </p>
+          )}
 
-<button className="btn btn-primary w-full">
-Create account
-</button>
+          <input
+            type="password"
+            placeholder={t.signup_confirm_password}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="input w-full"
+            dir="ltr"
+          />
 
-</form>
+          {confirmPassword && !passwordsMatch && (
+            <p className="text-xs text-red-400 -mt-2">
+              {t.signup_password_mismatch}
+            </p>
+          )}
 
-</div>
-
-)
-
+          <button
+            className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!canSubmit}
+          >
+            {submitting ? t.signup_loading : t.signup_button}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
 }

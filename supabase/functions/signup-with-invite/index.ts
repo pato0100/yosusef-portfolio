@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-admin-secret, content-type",
+  "Access-Control-Allow-Headers": "authorization, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Content-Type": "application/json",
 }
@@ -44,6 +44,14 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+function isValidUsername(username: string): boolean {
+  return /^(?!_)[a-z0-9_]{3,30}(?<!_)$/.test(username)
+}
+
+function isValidSlug(slug: string): boolean {
+  return /^(?!-)[a-z0-9-]{3,50}(?<!-)$/.test(slug)
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -66,12 +74,6 @@ serve(async (req) => {
 
     ipRequests.set(ip, now)
 
-    const adminSecret = req.headers.get("x-admin-secret")
-
-    if (!adminSecret || adminSecret !== Deno.env.get("ADMIN_SECRET")) {
-      return jsonResponse({ error: "UNAUTHORIZED" }, 401)
-    }
-
     const body = await req.json()
 
     const firstName = normalizeText(body.firstName, 50)
@@ -81,6 +83,7 @@ serve(async (req) => {
     const inviteCode = normalizeText(body.inviteCode, 100)
     const username = normalizeUsername(body.username)
     const userSlug = normalizeSlug(body.slug)
+    const lang = body.lang === "ar" ? "ar" : "en"
 
     if (!username) {
       return jsonResponse({ error: "USERNAME_REQUIRED" }, 400)
@@ -94,13 +97,17 @@ serve(async (req) => {
       return jsonResponse({ error: "INVALID_EMAIL" }, 400)
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return jsonResponse({ error: "PASSWORD_TOO_SHORT" }, 400)
+    }
+
+    if (!isValidUsername(username)) {
+      return jsonResponse({ error: "INVALID_USERNAME" }, 400)
     }
 
     const slug = normalizeSlug(userSlug || username)
 
-    if (!slug) {
+    if (!slug || !isValidSlug(slug)) {
       return jsonResponse({ error: "INVALID_SLUG" }, 400)
     }
 
@@ -162,7 +169,7 @@ serve(async (req) => {
       return jsonResponse({ error: "USERNAME_ALREADY_TAKEN" }, 400)
     }
 
-    // Create user
+    // Create auth user
     const { data: user, error: userError } =
       await supabase.auth.admin.createUser({
         email,
@@ -181,13 +188,14 @@ serve(async (req) => {
       )
     }
 
+    const userId = user.user.id
     const fullName = `${firstName || ""} ${lastName || ""}`.trim()
 
     // Create profile
     const { error: profileError } = await supabase
       .from("profiles")
       .insert({
-        id: user.user.id,
+        id: userId,
         email,
         slug,
         username,
@@ -196,6 +204,7 @@ serve(async (req) => {
 
     if (profileError) {
       console.error("Profile insert error:", profileError)
+      await supabase.auth.admin.deleteUser(userId)
       return jsonResponse({ error: "FAILED_TO_CREATE_PROFILE" }, 500)
     }
 
@@ -203,13 +212,15 @@ serve(async (req) => {
     const { error: settingsError } = await supabase
       .from("settings")
       .insert({
-        owner_id: user.user.id,
-        default_lang: "en",
-        default_theme: "dark",
+        owner_id: userId,
+        default_lang: lang,
+        default_theme: "agogovich",
       })
 
     if (settingsError) {
       console.error("Settings insert error:", settingsError)
+      await supabase.from("profiles").delete().eq("id", userId)
+      await supabase.auth.admin.deleteUser(userId)
       return jsonResponse({ error: "FAILED_TO_CREATE_SETTINGS" }, 500)
     }
 
@@ -218,7 +229,7 @@ serve(async (req) => {
       const { error: subscriptionError } = await supabase
         .from("subscriptions")
         .insert({
-          user_id: user.user.id,
+          user_id: userId,
           plan_id: invite.plan_id,
           status: "active",
           start_date: new Date().toISOString(),
@@ -226,6 +237,9 @@ serve(async (req) => {
 
       if (subscriptionError) {
         console.error("Subscription insert error:", subscriptionError)
+        await supabase.from("settings").delete().eq("owner_id", userId)
+        await supabase.from("profiles").delete().eq("id", userId)
+        await supabase.auth.admin.deleteUser(userId)
         return jsonResponse({ error: "FAILED_TO_CREATE_SUBSCRIPTION" }, 500)
       }
     }
@@ -240,6 +254,10 @@ serve(async (req) => {
 
     if (inviteUpdateError) {
       console.error("Invite update error:", inviteUpdateError)
+      await supabase.from("subscriptions").delete().eq("user_id", userId)
+      await supabase.from("settings").delete().eq("owner_id", userId)
+      await supabase.from("profiles").delete().eq("id", userId)
+      await supabase.auth.admin.deleteUser(userId)
       return jsonResponse({ error: "FAILED_TO_UPDATE_INVITE_USAGE" }, 500)
     }
 
@@ -248,7 +266,7 @@ serve(async (req) => {
       slug,
     })
   } catch (e) {
-    console.error("admin-create-user error:", e)
+    console.error("signup-with-invite error:", e)
     return jsonResponse({ error: "SERVER_ERROR" }, 500)
   }
 })
