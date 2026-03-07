@@ -36,6 +36,52 @@ export default function Contact() {
     }))
   }
 
+  const getLocalizedError = (errorCode) => {
+    const errorMap = {
+      MISSING_REQUIRED_FIELDS: t.contact_required,
+      INVALID_EMAIL: t.contact_invalid_email,
+      MISSING_SECURITY_TOKEN:
+        lang === "ar"
+          ? "من فضلك أكمل التحقق الأمني."
+          : "Please complete the security check.",
+      SECURITY_VERIFICATION_FAILED:
+        lang === "ar"
+          ? "فشل التحقق الأمني، حاول مرة أخرى."
+          : "Security verification failed. Please try again.",
+      PROFILE_NOT_FOUND:
+        lang === "ar" ? "الملف الشخصي غير موجود." : "Profile not found.",
+      PROFILE_EMAIL_MISSING:
+        lang === "ar"
+          ? "البريد الإلكتروني الخاص بالملف الشخصي غير متوفر."
+          : "Profile email is missing.",
+      RATE_LIMIT_EXCEEDED:
+        lang === "ar"
+          ? "تم إرسال عدد كبير من الرسائل مؤخرًا. حاول مرة أخرى لاحقًا."
+          : "Too many messages sent recently. Please try again later.",
+      RATE_LIMIT_CHECK_FAILED:
+        lang === "ar"
+          ? "تعذر التحقق من عدد المحاولات. حاول مرة أخرى."
+          : "Failed to validate request. Please try again.",
+      FAILED_TO_SAVE_MESSAGE:
+        lang === "ar"
+          ? "فشل حفظ الرسالة. حاول مرة أخرى."
+          : "Failed to save message. Please try again.",
+      SERVER_ERROR:
+        lang === "ar"
+          ? "حدث خطأ في الخادم. حاول مرة أخرى."
+          : "Server error. Please try again.",
+      METHOD_NOT_ALLOWED:
+        lang === "ar" ? "الطلب غير مسموح." : "Method not allowed.",
+    }
+
+    return (
+      errorMap[errorCode] ||
+      (lang === "ar"
+        ? "حدث خطأ غير متوقع."
+        : "Something went wrong.")
+    )
+  }
+
   const validate = () => {
     if (!form.name || !form.email || !form.message) {
       return t.contact_required
@@ -116,12 +162,16 @@ export default function Contact() {
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data?.error || "Failed to send message.")
+        throw new Error(getLocalizedError(data?.error))
       }
 
       localStorage.setItem("lastContactTime", Date.now().toString())
       setSuccess(true)
       resetForm()
+
+      if (data?.warning === "EMAIL_NOTIFICATION_FAILED") {
+        console.warn("Message saved, but email notification failed.")
+      }
 
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
@@ -217,35 +267,35 @@ export default function Contact() {
 
               <div className={isRTL ? "flex justify-end" : "flex justify-start"}>
                 <Turnstile
-  ref={turnstileRef}
-  sitekey={TURNSTILE_SITE_KEY}
-  onVerify={(token) => {
-    setTurnstileToken(token)
-    setError("")
-  }}
-  onExpire={() => {
-    setTurnstileToken("")
-    setError(
-      lang === "ar"
-        ? "انتهت صلاحية التحقق الأمني، من فضلك أعد التحقق."
-        : "Security verification expired. Please verify again."
-    )
-    turnstileRef.current?.reset?.()
-  }}
-  onError={() => {
-    setTurnstileToken("")
-    setError(
-      lang === "ar"
-        ? "فشل التحقق الأمني، حاول مرة أخرى."
-        : "Security verification failed. Please try again."
-    )
-  }}
-  options={{
-    theme: "dark",
-    size: "normal",
-    language: lang === "ar" ? "ar" : "en",
-  }}
-/>
+                  ref={turnstileRef}
+                  sitekey={TURNSTILE_SITE_KEY}
+                  onVerify={(token) => {
+                    setTurnstileToken(token)
+                    setError("")
+                  }}
+                  onExpire={() => {
+                    setTurnstileToken("")
+                    setError(
+                      lang === "ar"
+                        ? "انتهت صلاحية التحقق الأمني، من فضلك أعد التحقق."
+                        : "Security verification expired. Please verify again."
+                    )
+                    turnstileRef.current?.reset?.()
+                  }}
+                  onError={() => {
+                    setTurnstileToken("")
+                    setError(
+                      lang === "ar"
+                        ? "فشل التحقق الأمني، حاول مرة أخرى."
+                        : "Security verification failed. Please try again."
+                    )
+                  }}
+                  options={{
+                    theme: "dark",
+                    size: "normal",
+                    language: lang === "ar" ? "ar" : "en",
+                  }}
+                />
               </div>
 
               {error && (
