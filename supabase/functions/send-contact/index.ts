@@ -30,6 +30,10 @@ function getClientIp(req: Request): string | null {
   return null
 }
 
+function getUserAgent(req: Request): string | null {
+  return req.headers.get("user-agent")?.trim() || null
+}
+
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
@@ -107,8 +111,8 @@ serve(async (req) => {
     }
 
     const ip = getClientIp(req)
+    const userAgent = getUserAgent(req)
 
-    // 1) Verify Turnstile
     const turnstileResult = await verifyTurnstileToken(turnstileToken, ip)
 
     if (!turnstileResult?.success) {
@@ -126,7 +130,6 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     )
 
-    // 2) Get profile by slug
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id, email")
@@ -141,30 +144,47 @@ serve(async (req) => {
       return jsonResponse({ error: "Profile email missing" }, 400)
     }
 
-    // 3) Basic rate limit by owner + email + recent time window
-    // ملحوظة: ده حل مبدئي لأن جدولك الحالي لا يحتوي على ip
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
 
-    const { count: recentCount, error: rateLimitError } = await supabase
-      .from("contact_messages")
-      .select("*", { count: "exact", head: true })
-      .eq("owner_id", profile.id)
-      .eq("email", email)
-      .gte("created_at", tenMinutesAgo)
+    let recentCount = 0
 
-    if (rateLimitError) {
-      console.error("Rate limit check failed:", rateLimitError)
-      return jsonResponse({ error: "Failed to validate request" }, 500)
+    if (ip) {
+      const { count, error: rateLimitError } = await supabase
+        .from("contact_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("owner_id", profile.id)
+        .eq("ip", ip)
+        .gte("created_at", tenMinutesAgo)
+
+      if (rateLimitError) {
+        console.error("IP rate limit check failed:", rateLimitError)
+        return jsonResponse({ error: "Failed to validate request" }, 500)
+      }
+
+      recentCount = count ?? 0
+    } else {
+      const { count, error: rateLimitError } = await supabase
+        .from("contact_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("owner_id", profile.id)
+        .eq("email", email)
+        .gte("created_at", tenMinutesAgo)
+
+      if (rateLimitError) {
+        console.error("Email rate limit check failed:", rateLimitError)
+        return jsonResponse({ error: "Failed to validate request" }, 500)
+      }
+
+      recentCount = count ?? 0
     }
 
-    if ((recentCount ?? 0) >= 3) {
+    if (recentCount >= 3) {
       return jsonResponse(
         { error: "Too many messages sent recently. Please try again later." },
         429
       )
     }
 
-    // 4) Save message
     const { error: insertError } = await supabase
       .from("contact_messages")
       .insert({
@@ -173,6 +193,8 @@ serve(async (req) => {
         email,
         subject,
         message,
+        ip,
+        user_agent: userAgent,
       })
 
     if (insertError) {
@@ -180,7 +202,6 @@ serve(async (req) => {
       return jsonResponse({ error: "Failed to save message" }, 500)
     }
 
-    // 5) Send email notification
     const safeName = escapeHtml(name)
     const safeEmail = escapeHtml(email)
     const safeSubject = escapeHtml(subject || "New Contact Message")
@@ -202,6 +223,7 @@ serve(async (req) => {
             <p><strong>Name:</strong> ${safeName}</p>
             <p><strong>Email:</strong> ${safeEmail}</p>
             <p><strong>Subject:</strong> ${safeSubject}</p>
+            <p><strong>IP:</strong> ${escapeHtml(ip || "Unknown")}</p>
             <hr />
             <p>${safeMessage}</p>
           </div>
@@ -213,9 +235,6 @@ serve(async (req) => {
 
     if (!emailRes.ok) {
       console.error("Resend error:", emailData)
-
-      // هنا الرسالة اتحفظت بالفعل، لكن الإيميل فشل
-      // وده أفضل من فقدان الرسالة نفسها
       return jsonResponse({
         success: true,
         warning: "Message saved, but email notification failed",
