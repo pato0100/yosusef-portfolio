@@ -217,24 +217,35 @@ export default function Contact() {
 
               <div className={isRTL ? "flex justify-end" : "flex justify-start"}>
                 <Turnstile
-                  ref={turnstileRef}
-                  sitekey={TURNSTILE_SITE_KEY}
-                  onVerify={(token) => setTurnstileToken(token)}
-                  onExpire={() => setTurnstileToken("")}
-                  onError={() => {
-                    setTurnstileToken("")
-                    setError(
-                      lang === "ar"
-                        ? "فشل التحقق الأمني، حاول مرة أخرى."
-                        : "Security verification failed. Please try again."
-                    )
-                  }}
-                  options={{
-                    theme: "dark",
-                    size: "normal",
-                    language: lang === "ar" ? "ar" : "en",
-                  }}
-                />
+  ref={turnstileRef}
+  sitekey={TURNSTILE_SITE_KEY}
+  onVerify={(token) => {
+    setTurnstileToken(token)
+    setError("")
+  }}
+  onExpire={() => {
+    setTurnstileToken("")
+    setError(
+      lang === "ar"
+        ? "انتهت صلاحية التحقق الأمني، من فضلك أعد التحقق."
+        : "Security verification expired. Please verify again."
+    )
+    turnstileRef.current?.reset?.()
+  }}
+  onError={() => {
+    setTurnstileToken("")
+    setError(
+      lang === "ar"
+        ? "فشل التحقق الأمني، حاول مرة أخرى."
+        : "Security verification failed. Please try again."
+    )
+  }}
+  options={{
+    theme: "dark",
+    size: "normal",
+    language: lang === "ar" ? "ar" : "en",
+  }}
+/>
               </div>
 
               {error && (
