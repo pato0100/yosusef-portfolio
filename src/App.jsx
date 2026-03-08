@@ -5,7 +5,7 @@ import Profile from './pages/Profile.jsx'
 import Projects from './pages/Projects.jsx'
 import ProjectDetails from './pages/ProjectDetails.jsx'
 import Contact from './pages/Contact.jsx'
-import Edit from './pages/Edit.jsx'
+import DashboardPage from './pages/UserDashboard/DashboardPage'
 import RootRedirect from './pages/RootRedirect.jsx'
 import RedirectToMyEdit from "./pages/RedirectToMyEdit"
 import ProtectedRoute from "./components/ProtectedRoute"
@@ -121,7 +121,7 @@ export default function App() {
   path="/:slug/edit"
   element={
     <ProtectedRoute>
-      <Edit />
+      <DashboardPage />
     </ProtectedRoute>
   }
 />
