@@ -188,17 +188,16 @@ const hasLoadedProfileRef = useRef(false)
 }, [userId])
 
   useEffect(() => {
-    const root = document.documentElement
+  const root = document.documentElement
 
-    root.setAttribute('data-theme', settings.defaultTheme ?? 'dark')
-
-    if (settings.defaultTheme === 'custom' && customTheme) {
-      root.style.setProperty('--custom-brand', customTheme.brand)
-      root.style.setProperty('--custom-bg', customTheme.background)
-      root.style.setProperty('--custom-card', customTheme.card)
-      root.style.setProperty('--custom-text', customTheme.text)
-    }
-  }, [settings.defaultTheme, customTheme])
+  if (settings.defaultTheme === 'custom' && customTheme) {
+    root.setAttribute('data-theme', 'custom')
+    root.style.setProperty('--custom-brand', customTheme.brand)
+    root.style.setProperty('--custom-bg', customTheme.background)
+    root.style.setProperty('--custom-card', customTheme.card)
+    root.style.setProperty('--custom-text', customTheme.text)
+  }
+}, [settings.defaultTheme, customTheme])
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, currentSession) => {
