@@ -52,7 +52,7 @@ export default function App() {
 
             if (cached?.defaultTheme) {
               root.setAttribute('data-theme', cached.defaultTheme)
-              root.classList.toggle('dark', cached.defaultTheme === 'dark')
+              root.classList.toggle('agogovich', cached.defaultTheme === 'agogovich')
             }
 
             if (cached?.defaultLang) {
@@ -73,7 +73,7 @@ export default function App() {
         sessionStorage.setItem(cacheKey, JSON.stringify(data))
 
         root.setAttribute('data-theme', data.defaultTheme)
-        root.classList.toggle('dark', data.defaultTheme === 'dark')
+        root.classList.toggle('agogovich', data.defaultTheme === 'agogovich')
 
         setLang(data.defaultLang)
       } catch (err) {
