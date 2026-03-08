@@ -118,16 +118,28 @@ export async function upsertProfile(profile) {
   p.id = uid
   p.updated_at = new Date().toISOString()
 
+if (!p.username) {
+  throw new Error('Username is required')
+}
+
+if (!p.slug) {
+  throw new Error('Slug is required')
+}
+  
   // record snake_case
   const record = {
   id: p.id,
 
-  slug: p.slug ?? null,   // 🔥 أضف السطر ده
+  username: p.username ?? null,
+  slug: p.slug ?? null,
 
   email: p.email ?? null,
-  name_en: p.name_en,       name_ar: p.name_ar,
-  title_en: p.title_en,     title_ar: p.title_ar,
-  about_en: p.about_en,     about_ar: p.about_ar,
+  name_en: p.name_en,
+  name_ar: p.name_ar,
+  title_en: p.title_en,
+  title_ar: p.title_ar,
+  about_en: p.about_en,
+  about_ar: p.about_ar,
 
   phone: p.phone ?? null,
   phone2: p.phone2 ?? null,
@@ -139,8 +151,8 @@ export async function upsertProfile(profile) {
   phone2_label_ar: p.phone2Label_ar ?? p.phone2_label_ar ?? null,
 
   image_url: p.image_url ?? null,
-  cv_url:    p.cv_url ?? null,
-  socials:   p.socials,
+  cv_url: p.cv_url ?? null,
+  socials: p.socials,
   updated_at: p.updated_at,
 }
 

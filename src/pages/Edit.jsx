@@ -182,17 +182,33 @@ const navigate = useNavigate()
 const { slug: slugFromUrl } = useParams()
 
 const [username, setUsername] = useState('')
+const [slugValue, setSlugValue] = useState('')
+
 const [usernameStatus, setUsernameStatus] = useState(null)
 // null | checking | available | taken | same
 
-const debounceRef = useRef(null)
+const [slugStatus, setSlugStatus] = useState(null)
+// null | checking | available | taken | same
+
+const usernameDebounceRef = useRef(null)
+const slugDebounceRef = useRef(null)
+
 
 function cleanUsername(value) {
   return value
     .toLowerCase()
     .trim()
+    .replace(/\s+/g, '')
+    .replace(/[^a-z0-9]/g, '')
+}
+
+function cleanSlug(value) {
+  return value
+    .toLowerCase()
+    .trim()
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
 }
 
 function cleanProjectSlug(value) {
@@ -244,36 +260,81 @@ async function checkUsernameAvailability(value) {
     return
   }
 
-  if (value === data.slug) {
+  if (value === data.username) {
     setUsernameStatus('same')
     return
   }
 
   setUsernameStatus('checking')
 
-  const { data: existing } = await supabase
+  const { data: existing, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('username', value)
+    .maybeSingle()
+
+  if (error) {
+    console.error('Username check failed:', error)
+    setUsernameStatus(null)
+    return
+  }
+
+  setUsernameStatus(existing ? 'taken' : 'available')
+}
+
+async function checkSlugAvailability(value) {
+  if (!value || value.length < 3) {
+    setSlugStatus(null)
+    return
+  }
+
+  if (value === data.slug) {
+    setSlugStatus('same')
+    return
+  }
+
+  setSlugStatus('checking')
+
+  const { data: existing, error } = await supabase
     .from('profiles')
     .select('id')
     .eq('slug', value)
     .maybeSingle()
 
-  if (!existing) setUsernameStatus('available')
-  else setUsernameStatus('taken')
+  if (error) {
+    console.error('Slug check failed:', error)
+    setSlugStatus(null)
+    return
+  }
+
+  setSlugStatus(existing ? 'taken' : 'available')
 }
 
 function handleUsernameChange(e) {
   const cleaned = cleanUsername(e.target.value)
   setUsername(cleaned)
 
-  if (debounceRef.current) {
-    clearTimeout(debounceRef.current)
+  if (usernameDebounceRef.current) {
+    clearTimeout(usernameDebounceRef.current)
   }
 
-  debounceRef.current = setTimeout(() => {
+  usernameDebounceRef.current = setTimeout(() => {
     checkUsernameAvailability(cleaned)
   }, 500)
 }
 
+function handleSlugChange(e) {
+  const cleaned = cleanSlug(e.target.value)
+  setSlugValue(cleaned)
+
+  if (slugDebounceRef.current) {
+    clearTimeout(slugDebounceRef.current)
+  }
+
+  slugDebounceRef.current = setTimeout(() => {
+    checkSlugAvailability(cleaned)
+  }, 500)
+}
 
   // ✅ حالة تحميل/حفظ لواجهة أحسن
   const [loading, setLoading] = useState(true)
@@ -379,9 +440,9 @@ useEffect(() => {
         navigate(`/${profile.slug}/edit`, { replace: true })
         return
       }
-
-      setData(profile)
-      setUsername(profile.slug)
+setData(profile)
+setUsername(profile.username || '')
+setSlugValue(profile.slug || '')
 
     } catch (e) {
       console.error('load profile failed', e)
@@ -436,8 +497,12 @@ useEffect(() => {
 
 useEffect(() => {
   return () => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current)
+    if (usernameDebounceRef.current) {
+      clearTimeout(usernameDebounceRef.current)
+    }
+
+    if (slugDebounceRef.current) {
+      clearTimeout(slugDebounceRef.current)
     }
   }
 }, [])
@@ -861,13 +926,18 @@ async function moveImage(project, imageUrl, direction) {
 async function onSave(e) {
   e.preventDefault()
 
-  if (!data.slug && !username) {
-    alert('Choose a username first')
-    return
-  }
+ if (!username || !slugValue) {
+  alert('Please choose username and slug first')
+  return
+}
 
-  if (!data.slug && usernameStatus !== 'available') {
+if (!data.username && usernameStatus !== 'available') {
   alert('Please choose an available username')
+  return
+}
+
+if (!data.slug && slugStatus !== 'available') {
+  alert('Please choose an available slug')
   return
 }
 
@@ -878,7 +948,8 @@ async function onSave(e) {
 
     await upsertProfile({
   ...data,
-  slug: username
+  username,
+  slug: slugValue
 })
 
 
@@ -887,14 +958,15 @@ async function onSave(e) {
 // 🔥 مهم جدًا
 setData(prev => ({
   ...prev,
-  slug: username
+  username,
+  slug: slugValue
 }))
 
     alert(t.saved)
 
     if (isFirstTime) {
-      navigate(`/${username}`)
-    }
+  navigate(`/${slugValue}`)
+}
 
   } catch (err) {
     if (err.message?.includes('duplicate')) {
@@ -1013,36 +1085,94 @@ setData(prev => ({
             <p className="mt-1 text-xs opacity-70">{lang === 'ar' ? 'سنستخدمه لزر “إرسال بريد” في صفحة البروفايل.' : 'Used for the “Send Email” button on your profile.'}</p>
           </div>
 
-         {/* Username / Slug */}
-<div className="md:col-span-2">
+{/* Username */}
+<div>
   <label className="block text-sm font-medium mb-1">
-    Username (Profile URL)
+    {lang === 'ar' ? 'اسم المستخدم' : 'Username'}
   </label>
 
   <input
     type="text"
     value={username}
     onChange={handleUsernameChange}
-    disabled={!!data.slug}
+    disabled={!!data.username}
     className="input"
-    placeholder="your-username"
+    placeholder={lang === 'ar' ? 'youssef123' : 'youssef123'}
+    dir="ltr"
   />
 
   {usernameStatus === 'checking' && (
-    <p className="text-xs opacity-60 mt-1">Checking...</p>
+    <p className="text-xs opacity-60 mt-1">
+      {lang === 'ar' ? 'جارٍ التحقق...' : 'Checking...'}
+    </p>
   )}
 
   {usernameStatus === 'available' && (
-    <p className="text-xs text-green-500 mt-1">Available ✅</p>
+    <p className="text-xs text-green-500 mt-1">
+      {lang === 'ar' ? 'متاح ✅' : 'Available ✅'}
+    </p>
   )}
 
   {usernameStatus === 'taken' && (
-    <p className="text-xs text-red-500 mt-1">Already taken ❌</p>
+    <p className="text-xs text-red-500 mt-1">
+      {lang === 'ar' ? 'اسم المستخدم مستخدم بالفعل ❌' : 'Already taken ❌'}
+    </p>
+  )}
+
+  {data.username && (
+    <p className="text-xs opacity-60 mt-1">
+      {lang === 'ar'
+        ? 'اسم المستخدم ثابت بعد أول حفظ.'
+        : 'Username is locked after first save.'}
+    </p>
+  )}
+</div>
+
+{/* Slug */}
+<div>
+  <label className="block text-sm font-medium mb-1">
+    {lang === 'ar' ? 'الرابط الشخصي' : 'Profile URL'}
+  </label>
+
+  <div className="flex items-center rounded-xl border border-white/15 bg-white/5 overflow-hidden">
+    <span className="px-3 text-xs opacity-60 whitespace-nowrap" dir="ltr">
+      https://shofni.online/
+    </span>
+
+    <input
+      type="text"
+      value={slugValue}
+      onChange={handleSlugChange}
+      disabled={!!data.slug}
+      className="flex-1 bg-transparent px-2 py-2 outline-none"
+      placeholder="your-name"
+      dir="ltr"
+    />
+  </div>
+
+  {slugStatus === 'checking' && (
+    <p className="text-xs opacity-60 mt-1">
+      {lang === 'ar' ? 'جارٍ التحقق...' : 'Checking...'}
+    </p>
+  )}
+
+  {slugStatus === 'available' && (
+    <p className="text-xs text-green-500 mt-1">
+      {lang === 'ar' ? 'الرابط متاح ✅' : 'Slug available ✅'}
+    </p>
+  )}
+
+  {slugStatus === 'taken' && (
+    <p className="text-xs text-red-500 mt-1">
+      {lang === 'ar' ? 'الرابط مستخدم بالفعل ❌' : 'Slug already taken ❌'}
+    </p>
   )}
 
   {data.slug && (
     <p className="text-xs opacity-60 mt-1">
-      Username locked after first save.
+      {lang === 'ar'
+        ? 'الرابط ثابت بعد أول حفظ.'
+        : 'Slug is locked after first save.'}
     </p>
   )}
 </div>
