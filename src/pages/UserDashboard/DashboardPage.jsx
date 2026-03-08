@@ -21,6 +21,9 @@ export default function DashboardPage() {
   const [session, setSession] = useState(null)
   const [loadingSession, setLoadingSession] = useState(true)
 
+  const userId = session?.user?.id
+const hasLoadedProfileRef = useRef(false)
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -179,17 +182,10 @@ export default function DashboardPage() {
   }, [session, loadingSession, navigate])
 
   useEffect(() => {
-    if (session) {
-      ;(async () => {
-        const { data, error } = await supabase.auth.getUser()
-        if (error) {
-          console.error('Failed to fetch UID:', error)
-        } else {
-          console.log('🆔 My UID:', data?.user?.id)
-        }
-      })()
-    }
-  }, [session])
+  if (userId) {
+    console.log('🆔 My UID:', userId)
+  }
+}, [userId])
 
   useEffect(() => {
     const root = document.documentElement
@@ -218,78 +214,113 @@ export default function DashboardPage() {
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  useEffect(() => {
-    if (!session) return
+  
 
-    ;(async () => {
-      try {
+useEffect(() => {
+  if (!userId) return
+
+  let cancelled = false
+
+  ;(async () => {
+    try {
+      const isFirstLoad = !hasLoadedProfileRef.current
+
+      if (isFirstLoad) {
         setLoading(true)
+      }
 
-        const profile = await getMyProfile()
+      const profile = await getMyProfile()
+      if (cancelled) return
 
-        if (!profile) {
-          navigate('/login', { replace: true })
-          return
-        }
-
-        if (!profile.slug) {
-          navigate('/onboarding', { replace: true })
-          return
-        }
-
-        if (slugFromUrl !== profile.slug) {
-          navigate(`/${profile.slug}/edit`, { replace: true })
-          return
-        }
-
-        setData(profile)
-        setUsername(profile.username || '')
-        setSlugValue(profile.slug || '')
-      } catch (e) {
-        console.error('load profile failed', e)
+      if (!profile) {
         navigate('/login', { replace: true })
-      } finally {
+        return
+      }
+
+      if (!profile.slug) {
+        navigate('/onboarding', { replace: true })
+        return
+      }
+
+      if (slugFromUrl !== profile.slug) {
+        navigate(`/${profile.slug}/edit`, { replace: true })
+        return
+      }
+
+      setData(profile)
+      setUsername(profile.username || '')
+      setSlugValue(profile.slug || '')
+
+      hasLoadedProfileRef.current = true
+
+      if (isFirstLoad) {
         setLoading(false)
       }
-    })()
-  }, [session, slugFromUrl, navigate])
-
-  useEffect(() => {
-    if (!session || !slugFromUrl) {
-      setLoadingSettings(false)
-      return
+    } catch (e) {
+      console.error('load profile failed', e)
+      if (!cancelled) {
+        navigate('/login', { replace: true })
+      }
+    } finally {
+      if (!cancelled && !hasLoadedProfileRef.current) {
+        setLoading(false)
+      }
     }
+  })()
 
-    ;(async () => {
-      try {
-        setLoadingSettings(true)
+  return () => {
+    cancelled = true
+  }
+}, [userId, slugFromUrl, navigate])
 
-        const remote = await getSettings(slugFromUrl)
-        const loaded = remote || DEFAULT_SETTINGS
+ useEffect(() => {
+  if (!userId || !slugFromUrl) {
+    setLoadingSettings(false)
+    return
+  }
 
-        setSettings(loaded)
-        setOriginalSettings({
-          ...loaded,
-          custom_theme: loaded.custom_theme,
-        })
+  let cancelled = false
 
-        if (loaded.custom_theme) {
-          setCustomTheme(loaded.custom_theme)
-        }
-      } catch (err) {
-        console.error('settings load failed', err)
+  ;(async () => {
+    try {
+      setLoadingSettings(true)
+
+      const remote = await getSettings(slugFromUrl)
+      if (cancelled) return
+
+      const loaded = remote || DEFAULT_SETTINGS
+
+      setSettings(loaded)
+      setOriginalSettings({
+        ...loaded,
+        custom_theme: loaded.custom_theme,
+      })
+
+      if (loaded.custom_theme) {
+        setCustomTheme(loaded.custom_theme)
+      }
+    } catch (err) {
+      console.error('settings load failed', err)
+      if (!cancelled) {
         setSettings(DEFAULT_SETTINGS)
-      } finally {
+      }
+    } finally {
+      if (!cancelled) {
         setLoadingSettings(false)
       }
-    })()
-  }, [session, slugFromUrl])
+    }
+  })()
+
+  return () => {
+    cancelled = true
+  }
+}, [userId, slugFromUrl])
 
   useEffect(() => {
-    if (session) {
-      getMyProjects()
-    }
-  }, [session])
+  if (userId) {
+    getMyProjects()
+  }
+}, [userId])
 
   useEffect(() => {
     return () => {
