@@ -1,4 +1,4 @@
-import CoverCropper from '../components/CoverCropper'
+import CoverCropper from '../../components/CoverCropper'
 
 export default function ProjectManagement({
   lang,

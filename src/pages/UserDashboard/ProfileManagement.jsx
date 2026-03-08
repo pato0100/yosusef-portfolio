@@ -1,4 +1,4 @@
-import ProfileCropper from '../components/ProfileCropper'
+import ProfileCropper from '../../components/ProfileCropper'
 
 export default function ProfileManagement({
   lang,

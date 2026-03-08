@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import defaults from '../data/defaultProfile.json'
-import { useI18n } from '../i18n/i18n'
-import { supabase, signOut } from '../lib/supabase'
-import { getSettings, updateSettings, DEFAULT_SETTINGS } from '../services/settings'
-import { upsertProfile, getMyProfile } from '../services/cloudStorage'
+import defaults from '../../data/defaultProfile.json'
+import { useI18n } from '../../i18n/i18n'
+import { supabase, signOut } from '../../lib/supabase'
+import { getSettings, updateSettings, DEFAULT_SETTINGS } from '../../services/settings'
+import { upsertProfile, getMyProfile } from '../../services/cloudStorage'
 
 import ProfileManagement from './ProfileManagement'
 import Settings from './Settings'

@@ -1,5 +1,5 @@
-import { THEME_OPTIONS } from '../data/themes'
-import Dropdown from '../components/Dropdown'
+import { THEME_OPTIONS } from '../../data/themes'
+import Dropdown from '../../components/Dropdown'
 
 function ThemeSelector({ value, onChange, customTheme }) {
   const previewTheme = (theme) => {
