@@ -5,7 +5,7 @@ import { THEME_OPTIONS, isValidTheme } from "../data/themes";
 
 export default function ThemeSwitcher({ defaultTheme, onChangeTheme }) {
   const [theme, setThemeState] = useState(
-    defaultTheme && isValidTheme(defaultTheme) ? defaultTheme : null
+    defaultTheme && isValidTheme(defaultTheme) ? defaultTheme : "agogovich"
   );
 
   useEffect(() => {
@@ -14,26 +14,21 @@ export default function ThemeSwitcher({ defaultTheme, onChangeTheme }) {
     }
   }, [defaultTheme]);
 
-  useEffect(() => {
-    if (!theme || !isValidTheme(theme)) return;
-    applyTheme(theme);
-  }, [theme]);
-
   function applyTheme(value) {
     const root = document.documentElement;
-
     root.classList.toggle("agogovich", value === "agogovich");
     root.setAttribute("data-theme", value);
-
     persistTheme(value);
     onChangeTheme?.(value);
   }
 
   return (
     <FancySelect
-      value={theme || defaultTheme || "agogovich"}
+      value={theme}
       onChange={(v) => {
-        if (isValidTheme(v)) setThemeState(v);
+        if (!isValidTheme(v)) return;
+        setThemeState(v);
+        applyTheme(v);
       }}
       options={THEME_OPTIONS}
       width="w-42"
