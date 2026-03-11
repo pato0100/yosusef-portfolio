@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { supabase } from "../lib/supabase"
-import { validateInvite } from "../services/signup"
+import { validateInvite } from "../services/invites"
 import { useI18n } from "../i18n/i18n"
 
 function normalizeUsername(value) {
@@ -27,6 +27,7 @@ function getLocalizedSignupError(errorCode, t, lang) {
         ? "غير مصرح لك بهذا الإجراء."
         : "Unauthorized.",
     USERNAME_REQUIRED: t.signup_username_invalid,
+    INVALID_USERNAME: t.signup_username_invalid,
     MISSING_REQUIRED_FIELDS: t.signup_missing_fields,
     INVALID_EMAIL: t.signup_invalid_email,
     PASSWORD_TOO_SHORT: t.signup_password_too_short,
@@ -107,14 +108,15 @@ export default function Signup() {
         const data = await validateInvite(inviteCode)
         setInvite(data)
       } catch (e) {
-        setPageError(e?.message || t.signup_invalid_invite)
+        const code = e?.message || "INVALID_INVITE"
+        setPageError(getLocalizedSignupError(code, t, lang))
       } finally {
         setLoadingInvite(false)
       }
     }
 
     check()
-  }, [inviteCode, t.signup_invite_only, t.signup_invalid_invite])
+  }, [inviteCode, t, lang])
 
   useEffect(() => {
     let ignore = false
@@ -140,6 +142,7 @@ export default function Signup() {
     }
 
     const timeout = setTimeout(checkUsernameAvailability, 400)
+
     return () => {
       ignore = true
       clearTimeout(timeout)
@@ -170,6 +173,7 @@ export default function Signup() {
     }
 
     const timeout = setTimeout(checkSlugAvailability, 400)
+
     return () => {
       ignore = true
       clearTimeout(timeout)
@@ -200,12 +204,18 @@ export default function Signup() {
     !slugTaken &&
     !checkingUsername &&
     !checkingSlug &&
-    !submitting
+    !submitting &&
+    !!invite
 
   async function handleSignup(e) {
     e.preventDefault()
     setFormError("")
     setSuccess("")
+
+    if (!inviteCode) {
+      setFormError(t.signup_invalid_invite)
+      return
+    }
 
     if (!allFieldsFilled) {
       setFormError(t.signup_missing_fields)
@@ -255,9 +265,9 @@ export default function Signup() {
         {
           method: "POST",
           headers: {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-},
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
           body: JSON.stringify({
             firstName: firstName.trim(),
             lastName: lastName.trim(),
@@ -266,6 +276,7 @@ export default function Signup() {
             email: email.trim(),
             password,
             inviteCode,
+            lang,
           }),
         }
       )
@@ -294,19 +305,11 @@ export default function Signup() {
   }
 
   if (loadingInvite) {
-    return (
-      <p className="text-center mt-20">
-        {t.signup_checking_invite}
-      </p>
-    )
+    return <p className="mt-20 text-center">{t.signup_checking_invite}</p>
   }
 
   if (pageError) {
-    return (
-      <p className="text-center mt-20 text-red-400">
-        {pageError}
-      </p>
-    )
+    return <p className="mt-20 text-center text-red-400">{pageError}</p>
   }
 
   return (
@@ -314,27 +317,28 @@ export default function Signup() {
       className="min-h-screen flex items-center justify-center p-4"
       dir={isRTL ? "rtl" : "ltr"}
     >
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-lg">
-        <h1 className={`text-2xl font-bold mb-6 ${isRTL ? "text-right" : ""}`}>
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg backdrop-blur">
+        <h1 className={`mb-6 text-2xl font-bold ${isRTL ? "text-right" : ""}`}>
           {t.signup_title}
         </h1>
 
         {invite && (
-          <div className={`text-xs opacity-70 mb-4 ${isRTL ? "text-right" : ""}`}>
-            {lang === "ar"
-              ? `الدعوة صالحة`
-              : `Invite is valid`}
+          <div className={`mb-4 text-xs opacity-70 ${isRTL ? "text-right" : ""}`}>
+            {lang === "ar" ? "الدعوة صالحة" : "Invite is valid"}
+            {invite.plan?.name
+              ? ` — ${lang === "ar" ? "الخطة" : "Plan"}: ${invite.plan.name}`
+              : ""}
           </div>
         )}
 
         {formError && (
-          <div className={`text-sm text-red-400 mb-3 ${isRTL ? "text-right" : ""}`}>
+          <div className={`mb-3 text-sm text-red-400 ${isRTL ? "text-right" : ""}`}>
             {formError}
           </div>
         )}
 
         {success && (
-          <div className={`text-sm text-green-400 mb-3 ${isRTL ? "text-right" : ""}`}>
+          <div className={`mb-3 text-sm text-green-400 ${isRTL ? "text-right" : ""}`}>
             {success}
           </div>
         )}
@@ -365,26 +369,32 @@ export default function Signup() {
               className="input w-full"
               dir="ltr"
             />
+
             {username && !isUsernameFormatValid && (
-              <p className="text-xs text-red-400 mt-1">
+              <p className="mt-1 text-xs text-red-400">
                 {t.signup_username_invalid}
               </p>
             )}
+
             {isUsernameFormatValid && usernameTaken && (
-              <p className="text-xs text-red-400 mt-1">
+              <p className="mt-1 text-xs text-red-400">
                 {t.signup_username_taken}
               </p>
             )}
+
             {checkingUsername && (
-              <p className="text-xs opacity-70 mt-1">
+              <p className="mt-1 text-xs opacity-70">
                 {lang === "ar" ? "جارٍ التحقق..." : "Checking..."}
               </p>
             )}
           </div>
 
           <div>
-            <div className="flex items-center bg-black/20 border border-white/10 rounded-lg overflow-hidden">
-              <span className="px-3 text-sm text-white/50 whitespace-nowrap" dir="ltr">
+            <div className="flex items-center overflow-hidden rounded-lg border border-white/10 bg-black/20">
+              <span
+                className="whitespace-nowrap px-3 text-sm text-white/50"
+                dir="ltr"
+              >
                 {t.signup_slug_prefix}
               </span>
 
@@ -392,24 +402,26 @@ export default function Signup() {
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                className="flex-1 bg-transparent outline-none p-2"
+                className="flex-1 bg-transparent p-2 outline-none"
                 placeholder="your-name"
                 dir="ltr"
               />
             </div>
 
             {slug && !isSlugFormatValid && (
-              <p className="text-xs text-red-400 mt-1">
+              <p className="mt-1 text-xs text-red-400">
                 {t.signup_slug_invalid}
               </p>
             )}
+
             {isSlugFormatValid && slugTaken && (
-              <p className="text-xs text-red-400 mt-1">
+              <p className="mt-1 text-xs text-red-400">
                 {t.signup_slug_taken}
               </p>
             )}
+
             {checkingSlug && (
-              <p className="text-xs opacity-70 mt-1">
+              <p className="mt-1 text-xs opacity-70">
                 {lang === "ar" ? "جارٍ التحقق..." : "Checking..."}
               </p>
             )}
@@ -434,7 +446,7 @@ export default function Signup() {
           />
 
           {password && !passwordValid && (
-            <p className="text-xs text-red-400 -mt-2">
+            <p className="-mt-2 text-xs text-red-400">
               {t.signup_password_too_short}
             </p>
           )}
@@ -449,13 +461,13 @@ export default function Signup() {
           />
 
           {confirmPassword && !passwordsMatch && (
-            <p className="text-xs text-red-400 -mt-2">
+            <p className="-mt-2 text-xs text-red-400">
               {t.signup_password_mismatch}
             </p>
           )}
 
           <button
-            className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!canSubmit}
           >
             {submitting ? t.signup_loading : t.signup_button}

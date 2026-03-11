@@ -119,9 +119,9 @@ serve(async (req) => {
     // Validate invite
     const { data: invite, error: inviteError } = await supabase
       .from("invites")
-      .select("*")
+      .select("id, code, plan_id, used_count, max_uses, expires_at")
       .eq("code", inviteCode)
-      .single()
+      .maybeSingle()
 
     if (inviteError || !invite) {
       return jsonResponse({ error: "INVALID_INVITE" }, 400)
@@ -133,7 +133,11 @@ serve(async (req) => {
       return jsonResponse({ error: "INVITE_EXPIRED" }, 400)
     }
 
-    if (invite.max_uses && invite.used_count >= invite.max_uses) {
+    if (
+      typeof invite.max_uses === "number" &&
+      typeof invite.used_count === "number" &&
+      invite.used_count >= invite.max_uses
+    ) {
       return jsonResponse({ error: "INVITE_ALREADY_USED" }, 400)
     }
 
@@ -150,7 +154,7 @@ serve(async (req) => {
     }
 
     if (existingSlug) {
-      return jsonResponse({ error: "SLUG_ALREADY_TAKEN" }, 400)
+      return jsonResponse({ error: "SLUG_ALREADY_TAKEN" }, 409)
     }
 
     // Check username uniqueness
@@ -166,10 +170,30 @@ serve(async (req) => {
     }
 
     if (existingUsername) {
-      return jsonResponse({ error: "USERNAME_ALREADY_TAKEN" }, 400)
+      return jsonResponse({ error: "USERNAME_ALREADY_TAKEN" }, 409)
     }
 
-    // Create auth user
+    // Resolve plan:
+    // 1) invite plan if exists
+    // 2) fallback to free active plan if invite has no plan
+    let selectedPlanId: string | null = invite.plan_id || null
+
+    if (!selectedPlanId) {
+      const { data: freePlan, error: freePlanError } = await supabase
+        .from("plans")
+        .select("id")
+        .eq("code", "free")
+        .eq("is_active", true)
+        .maybeSingle()
+
+      if (freePlanError) {
+        console.error("Free plan lookup error:", freePlanError)
+        return jsonResponse({ error: "FAILED_TO_RESOLVE_PLAN" }, 500)
+      }
+
+      selectedPlanId = freePlan?.id || null
+    }
+
     const { data: user, error: userError } =
       await supabase.auth.admin.createUser({
         email,
@@ -200,6 +224,7 @@ serve(async (req) => {
         slug,
         username,
         name_en: fullName,
+        banned: false,
       })
 
     if (profileError) {
@@ -224,15 +249,24 @@ serve(async (req) => {
       return jsonResponse({ error: "FAILED_TO_CREATE_SETTINGS" }, 500)
     }
 
-    // Create subscription if invite has plan
-    if (invite.plan_id) {
+    // Create subscription if plan resolved
+    if (selectedPlanId) {
+      const startDate = new Date().toISOString()
+      const endDate = new Date()
+      endDate.setMonth(endDate.getMonth() + 1)
+
       const { error: subscriptionError } = await supabase
         .from("subscriptions")
         .insert({
           user_id: userId,
-          plan_id: invite.plan_id,
+          plan_id: selectedPlanId,
           status: "active",
-          start_date: new Date().toISOString(),
+          start_date: startDate,
+          end_date: endDate.toISOString(),
+          is_lifetime: false,
+          source: "invite",
+          invite_id: invite.id,
+          notes: `Assigned from invite ${invite.code}`,
         })
 
       if (subscriptionError) {
@@ -248,7 +282,7 @@ serve(async (req) => {
     const { error: inviteUpdateError } = await supabase
       .from("invites")
       .update({
-        used_count: invite.used_count + 1,
+        used_count: (invite.used_count || 0) + 1,
       })
       .eq("id", invite.id)
 
