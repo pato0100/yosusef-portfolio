@@ -17,7 +17,6 @@ import Navbar from './components/Navbar.jsx'
 import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import LanguageToggle from './components/LanguageToggle.jsx'
 import AdminRoute from "./admin/AdminRoute"
-import Plans from "./admin/Plans"
 import AdminLayout from "./admin/AdminLayout"
 import Dashboard from "./admin/Dashboard"
 import Users from "./admin/Users"
