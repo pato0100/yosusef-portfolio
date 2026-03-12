@@ -16,6 +16,8 @@ import ResetPassword from "./pages/ResetPassword"
 import Navbar from './components/Navbar.jsx'
 import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import LanguageToggle from './components/LanguageToggle.jsx'
+import AdminRoute from "./admin/AdminRoute"
+import Plans from "./admin/Plans"
 import AdminLayout from "./admin/AdminLayout"
 import Dashboard from "./admin/Dashboard"
 import Users from "./admin/Users"
@@ -134,13 +136,20 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/edit" element={<RedirectToMyEdit />} />
 
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="users" element={<Users />} />
-              <Route path="users/:id" element={<UserDetails />} />
-              <Route path="invites" element={<Invites />} />
-              <Route path="plans" element={<Plans />} />
-            </Route>
+            <Route
+  path="/admin"
+  element={
+    <AdminRoute>
+      <AdminLayout />
+    </AdminRoute>
+  }
+>
+  <Route index element={<Dashboard />} />
+  <Route path="users" element={<Users />} />
+  <Route path="users/:id" element={<UserDetails />} />
+  <Route path="invites" element={<Invites />} />
+  <Route path="plans" element={<Plans />} />
+</Route>
 
             <Route
               path="/:slug/edit"
